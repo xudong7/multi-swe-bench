@@ -1,0 +1,18 @@
+{
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.convertImportFormat": "always",
+            "source.unusedImports": "always",
+        },
+    },
+    "isort.args": [
+        "--profile",
+        "black"
+    ],
+    "python.analysis.exclude": [
+        "tmp",
+        "temp",
+    ]
+}
