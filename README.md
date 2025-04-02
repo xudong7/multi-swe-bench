@@ -71,7 +71,7 @@ To run the evaluation, you need to prepare the following:
    - `repo`: Repository Name
    - `number`: Pull Request Number
    - `fix_patch`: Fix Patch Content
-2. Dataset Files: Dataset files in JSONL format available on Hugging Face, such as [Multi-SWE-bench](https://huggingface.co/datasets/Multi-SWE-RL/Multi-SWE-bench) or [Multi-SWE-RL](https://huggingface.co/datasets/Multi-SWE-RL/Multi-SWE-RL)
+2. Dataset Files: Dataset files in JSONL format available on Hugging Face, such as [Multi-SWE-bench](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench) or [Multi-SWE-RL](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-RL)
 
 Then you can run the evaluation using the following command:
 
@@ -150,6 +150,8 @@ Full details: [Contribution Incentive Plan](docs/contribution-incentive-plan.md)
 **Get Started in 2 Steps:**
 1. **Learn**: [Quick-Start Guide](docs/build-dataset-quick-start.md)  
 2. **Try**: Follow our [Contribution Demo](docs/contribution-demo.md)  
+
+Welcome to our [Discord](https://discord.gg/EtfbkfqUuN) to join in Multi-SWE-RL and Multi-SWE-bench related discussions!
 
 ## 🌟 Star Growth Trends
 
