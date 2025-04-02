@@ -3,9 +3,9 @@
 This document is a brief introduction to the interfaces involved in building datasets,please refer to the detailed 👉[contribution demo](contribution-demo.md) for more information.
 
 This interfaces including three modules:
-* Multi-SWE-Bench data collection module
-* Multi-SWE-Bench dataset construction module
-* Multi-SWE-Bench report generation Module
+* Multi-SWE-bench data collection module
+* Multi-SWE-bench dataset construction module
+* Multi-SWE-bench report generation Module
 
 The following sections describe the use of each module in turn !
 
@@ -21,7 +21,7 @@ cd multi-swe-bench
 pip install -r requirements.txt
 ```
 
-## 1.Multi-SWE-Bench data collection module
+## 1.Multi-SWE-bench data collection module
 
 This module is used to automate the collection of software engineering benchmark datasets, primarily Pull Requests containing issue fixes and their associated Issues from GitHub repositories.
 
@@ -53,9 +53,9 @@ your_output_dir/
 └── <ORG>__<REPO>_dataset.jsonl         # Raw data of the PR
 ```
 
-## 2.Multi-SWE-Bench dataset building module
+## 2.Multi-SWE-bench dataset building module
 
-This is a module for building and processing Multi-SWE-Bench datasets.
+This is a module for building and processing Multi-SWE-bench datasets.
 
 ### Usage
 
@@ -146,9 +146,9 @@ your_workdir/
 └── ...
 ```
 
-## 3.Multi-SWE-Bench report generation module
+## 3.Multi-SWE-bench report generation module
 
-This is a module for generating reports on Multi-SWE-Bench datasets.
+This is a module for generating reports on Multi-SWE-bench datasets.
 
 ### Usage
 
