@@ -40,7 +40,7 @@
 </p>
 
 
-We are extremely delighted to release **Multi-SWE-Bench**! Multi-SWE-Bench addresses the lack of multilingual benchmarks for evaluating LLMs in real-world code issue resolution. Unlike existing Python-centric benchmarks (e.g., SWE-bench), our framework spans ​7 languages (Java, Go, Rust, TypeScript, JavaScript, C, C++) with ​1,632 high-quality instances, curated from 2,803 candidates by ​88 expert annotators for reliability.
+We are extremely delighted to release **Multi-SWE-bench**! Multi-SWE-bench addresses the lack of multilingual benchmarks for evaluating LLMs in real-world code issue resolution. Unlike existing Python-centric benchmarks (e.g., SWE-bench), our framework spans ​7 languages (Java, Go, Rust, TypeScript, JavaScript, C, C++) with ​1,632 high-quality instances, curated from 2,803 candidates by ​88 expert annotators for reliability.
 
 We aim to accelerate progress in automated issue resolution and RL, bridging the gap toward AGI. Let's join the **Multi-SWE-RL community** to expand datasets, tools, and research collaboration!
 
@@ -71,7 +71,7 @@ To run the evaluation, you need to prepare the following:
    - `repo`: Repository Name
    - `number`: Pull Request Number
    - `fix_patch`: Fix Patch Content
-2. Dataset Files: Dataset files in JSONL format available on Hugging Face, such as [Multi-SWE-Bench](https://huggingface.co/datasets/Multi-SWE-RL/Multi-SWE-Bench) or [Multi-SWE-RL](https://huggingface.co/datasets/Multi-SWE-RL/Multi-SWE-RL)
+2. Dataset Files: Dataset files in JSONL format available on Hugging Face, such as [Multi-SWE-bench](https://huggingface.co/datasets/Multi-SWE-RL/Multi-SWE-bench) or [Multi-SWE-RL](https://huggingface.co/datasets/Multi-SWE-RL/Multi-SWE-RL)
 
 Then you can run the evaluation using the following command:
 
@@ -131,7 +131,7 @@ python -m multi_swe_bench.harness.run_evaluation --config /path/to/your/config.j
 | `log_dir` | Directory for log files |
 | `log_level` | Logging level. Options: `"DEBUG"`, `"INFO"`, `"WARNING"`, `"ERROR"`, `"CRITICAL"` |
 
-## TODO
+#### TODO
 - Merge the Java instances from [previous work](https://github.com/multi-swe-bench/multi-swe-bench-env).
 - Integrate the Python instances from the [SWE-bench](https://github.com/swe-bench/SWE-bench) project.
 
