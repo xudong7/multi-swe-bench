@@ -159,8 +159,8 @@ Full details: [Contribution Incentive Plan](docs/contribution-incentive-plan.md)
   </a>
 </p>
 
-## 📜 License
-This project is licensed under Apache License 2.0. See the [LICENSE](/LICENSE) flie for details.
+## 🙏 Acknowledgements
+We express our deepest gratitude to the creators of the [SWE-bench](https://www.swebench.com) dataset. This project references their [repository](https://github.com/SWE-bench/SWE-bench) and builds upon their work.
 ## 📖 Citation
 If you find XXX useful for your research and applications, feel free to give us a star ⭐ or cite us using:
 
@@ -172,6 +172,8 @@ If you find XXX useful for your research and applications, feel free to give us 
   year={2024}
 }
 ```
+## 📜 License
+This project is licensed under Apache License 2.0. See the [LICENSE](/LICENSE) flie for details.
 ## 🏢 About [ByteDance Seed Team](https://team.doubao.com/)
 
 Founded in 2023, ByteDance Seed Team is dedicated to crafting the industry's most advanced AI foundation models. The team aspires to become a world-class research team and make significant contributions to the advancement of science and society.
