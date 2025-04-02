@@ -72,6 +72,17 @@ To run the evaluation, you need to prepare the following:
    - `number`: Pull Request Number
    - `fix_patch`: Fix Patch Content
 2. Dataset Files: Dataset files in JSONL format available on Hugging Face, such as [Multi-SWE-bench](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench) or [Multi-SWE-RL](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-RL)
+3. (Optional) Docker Images: You can download required Docker images using `scripts/download_images.ps1` (for Windows) or `scripts/download_images.sh` (for Linux/macOS) with either verified images or RL images:
+   ```bash
+   # For Windows
+   .\scripts\download_images.ps1 scripts\images_verified.txt  # For verified images
+   .\scripts\download_images.ps1 scripts\images_rl.txt        # For RL images
+   
+   # For Linux/macOS
+   bash scripts/download_images.sh scripts/images_verified.txt  # For verified images
+   bash scripts/download_images.sh scripts/images_rl.txt        # For RL images
+   ```
+   This step is optional. If images don't exist locally, they will be built during evaluation.
 
 Then you can run the evaluation using the following command:
 
