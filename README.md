@@ -90,6 +90,8 @@ Then you can run the evaluation using the following command:
 python -m multi_swe_bench.harness.run_evaluation --config /path/to/your/config.json
 ```
 
+The evaluation process will generate a `final_report.json` file in your specified `output_dir`, which provides a summary of results including resolved_instances, unresolved_instances, and other metrics. For detailed information about failed instances and specific error reasons, you can check the log files in the `log_dir` directory.
+
 #### Configuration File Example
 
 ```json
