@@ -19,8 +19,6 @@
 
 ![seed logo](https://github.com/user-attachments/assets/c42e675e-497c-4508-8bb9-093ad4d1f216)
 
-<!-- 注释：以上为Seed官方信息，可直接复制使用，请注意导入"Seed WeChat"（第12行）、"Seed logo"(第20行)图片替换 -->
-
 
 ## 🚀 Multi-SWE-bench: A Multilingual Benchmark for Issue Resolving
 <p align="center">
@@ -40,25 +38,18 @@
 </p>
 
 
-We are extremely delighted to release **Multi-SWE-bench**! Multi-SWE-bench addresses the lack of multilingual benchmarks for evaluating LLMs in real-world code issue resolution. Unlike existing Python-centric benchmarks (e.g., SWE-bench), our framework spans ​7 languages (Java, Go, Rust, TypeScript, JavaScript, C, C++) with ​1,632 high-quality instances, curated from 2,803 candidates by ​88 expert annotators for reliability.
+We are extremely delighted to release **Multi-SWE-bench**! Multi-SWE-bench addresses the lack of multilingual benchmarks for evaluating LLMs in real-world code issue resolution. Unlike existing Python-centric benchmarks (e.g., SWE-bench), our framework spans ​7 languages (i.e., Java, TypeScript, JavaScript, Go, Rust, C, and C++) with ​1,632 high-quality instances, curated from 2,456 candidates by ​68 expert annotators for reliability.
 
 We aim to accelerate progress in automated issue resolution and RL, bridging the gap toward AGI. Let's join the **Multi-SWE-RL community** to expand datasets, tools, and research collaboration!
 
-<!-- 注释：以上为项目基础信息，以项目COMET举例，Comet一级标题（第25行）、徽章Comet名字（第28、30、32、34行）记得替换，徽章可按需使用
-请注意，徽章可根据具体项目自定义，如技术成果落地页、技术成果报告/Paper、Hugging Face、项目微信交流群、License、打榜榜单等，更换名字和链接即可；
-专属微信群出现在两个位置，第34行、第42行，可以联系EB同学创建 -->
 ## ⚡ Features
 
-- **Comprehensive Evaluation**: Tests top models (GPT-4o, Claude 3.5/3.7, DeepSeek V3/R1, Doubao-Pro, etc.) across frameworks (Agentless, SWE-agent, OpenHands), yielding actionable insights.  
-- **Multi-SWE-RL Community**: Open-source initiative for large-scale reinforcement learning (RL) datasets. Initial release includes **4723 structured instances** across languages to advance RL research.  
-- **Open Infrastructure**: Full data pipeline and tutorials open-sourced to foster community contributions and scalability.  
+- **Comprehensive Evaluation**: Evaluating nine powerful models (GPT-4o, OpenAI-o1, OpenAI-o3-mini-high, Claude-3.5-Sonnet, Claude-3.7-Sonnet, DeepSeek-V3, DeepSeek-R1, Qwen2.5-72B-Instruct, and Doubao-1.5-Pro) across three agent frameworks (Agentless, SWE-agent, OpenHands), yielding several valuable insights.  
+- **Multi-SWE-RL Community**: Open-source initiative for large-scale RL datasets. Initial release includes **4723 instances** to advance RL research.  
+- **Fully Open Source Data, Code, and Environment**: All data, code, and container images are publicly released, along with detailed tutorials, to foster community contributions and enable scalable extension.
 
 ## 📢 News
-[2025/03/XX]🔥We have supported XXXXXX.
-<br>
-[2025/02/XX]🔥XXX is accepted as XXXXXX.
-<br>
-[2025/01/XX]🔥We release XXX.
+[2025/04/03]🔥We release [Multi-SWE-bench](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench) and [Multi-SWE-RL](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-RL).
 
 ## 📊 Evaluation
 
