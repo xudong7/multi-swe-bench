@@ -135,9 +135,13 @@ The evaluation process will generate a `final_report.json` file in your specifie
 | `log_dir` | Directory for log files |
 | `log_level` | Logging level. Options: `"DEBUG"`, `"INFO"`, `"WARNING"`, `"ERROR"`, `"CRITICAL"` |
 
-#### TODO
-- Merge the Java instances from [previous work](https://github.com/multi-swe-bench/multi-swe-bench-env).
-- Integrate the Python instances from the [SWE-bench](https://github.com/swe-bench/SWE-bench) project.
+#### ✅ Integration Checklist
+
+We are working to unify instances from prior benchmarks or training dataset into our framework for consistent comparison and reuse.
+
+- [ ] Integrate 78 Java instances from [SWE-bench-java](https://arxiv.org/abs/2408.14354)
+- [ ] Integrate 500 Python instances from [SWE-bench verified](https://arxiv.org/abs/2310.06770) 
+- [ ] Integrate 2,438 Python instances from [SWE-gym](https://arxiv.org/abs/2412.21139)
 
 
 ## [🏆 Multi-SWE-RL Community](https://huggingface.co/Multi-SWE-RL)
@@ -168,14 +172,14 @@ Welcome to our [Discord](https://discord.gg/EtfbkfqUuN) to join in Multi-SWE-RL 
 ## 🙏 Acknowledgements
 We express our deepest gratitude to the creators of the [SWE-bench](https://www.swebench.com) dataset. This project references their [repository](https://github.com/SWE-bench/SWE-bench) and builds upon their work.
 ## 📖 Citation
-If you find XXX useful for your research and applications, feel free to give us a star ⭐ or cite us using:
+If you find [Multi-SWE-bench](https://multi-swe-bench.github.io) useful for your research and applications, feel free to give us a star ⭐ or cite us using:
 
 ```bibtex
 @article{zan2024swe,
-  title={Swe-bench-java: A github issue resolving benchmark for java},
-  author={Zan, Daoguang and Huang, Zhirong and Yu, Ailun and Lin, Shaoxin and Shi, Yifan and Liu, Wei and Chen, Dong and Qi, Zongshuai and Yu, Hao and Yu, Lei and others},
-  journal={arXiv preprint arXiv:2408.14354},
-  year={2024}
+  title={Multi-SWE-bench: A Multilingual Benchmark for Issue Resolving},
+  author={xxx},
+  journal={arXiv preprint arXiv:xxx},
+  year={2025}
 }
 ```
 ## 📜 License
@@ -183,5 +187,3 @@ This project is licensed under Apache License 2.0. See the [LICENSE](/LICENSE) f
 ## 🏢 About [ByteDance Seed Team](https://team.doubao.com/)
 
 Founded in 2023, ByteDance Seed Team is dedicated to crafting the industry's most advanced AI foundation models. The team aspires to become a world-class research team and make significant contributions to the advancement of science and society.
-
-<!-- 注释：About ByteDance Seed Team可直接复制使用 -->
