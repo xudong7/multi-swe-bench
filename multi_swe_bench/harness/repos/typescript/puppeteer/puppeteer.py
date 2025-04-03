@@ -63,6 +63,7 @@ RUN apt-get update && apt-get install -y wget gnupg \
     && apt-get update \
     && apt-get install -y google-chrome-stable --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
+    
 {code}
 
 {self.clear_env}
@@ -154,7 +155,6 @@ set -e
 cd /home/{pr.repo}
 npm run unit -- --verbose
 
-
 """.format(
                     pr=self.pr
                 ),
@@ -168,7 +168,6 @@ set -e
 cd /home/{pr.repo}
 git apply /home/test.patch
 npm run unit -- --verbose
-
 
 """.format(
                     pr=self.pr
@@ -226,7 +225,6 @@ class Puppeteer(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-
         return PuppeteerImageDefault(self.pr, self._config)
 
     def run(self) -> str:

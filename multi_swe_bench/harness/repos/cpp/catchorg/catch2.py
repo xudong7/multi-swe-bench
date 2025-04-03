@@ -48,6 +48,7 @@ class Catch2ImageBase(Image):
 WORKDIR /home/
 
 {code}
+
 RUN apt-get update && apt-get install -y \
     libbrotli-dev \
     libcurl4-openssl-dev \
@@ -105,6 +106,7 @@ class Catch2ImageBaseCpp12(Image):
 WORKDIR /home/
 
 {code}
+
 RUN apt-get update && apt-get install -y \
     libbrotli-dev \
     libcurl4-openssl-dev \
@@ -162,6 +164,7 @@ class Catch2ImageBaseCpp7(Image):
 WORKDIR /home/
 
 {code}
+
 RUN apt-get update && apt-get install -y \
     libbrotli-dev \
     libcurl4-openssl-dev \

@@ -47,7 +47,6 @@ def main(out_dir: Path, org: str, repo: str):
             for issue_number in pull["resolved_issues"]:
                 if issue_number not in issues:
                     continue
-                    # raise ValueError(f"Missing issue {issue_number}")
                 resolved_issues.append(issues[issue_number])
 
             pull["resolved_issues"] = resolved_issues

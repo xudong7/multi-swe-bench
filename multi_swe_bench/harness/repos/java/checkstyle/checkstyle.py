@@ -45,11 +45,13 @@ class CheckstyleImageBase(Image):
         return f"""FROM {image_name}
 
 {self.global_env}
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 WORKDIR /home/
 RUN apt-get update && apt-get install -y git openjdk-11-jdk maven
+
 {code}
 
 
@@ -72,9 +74,6 @@ class CheckstyleImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        # if self.pr.number <= 958:
-        #     return checkstyleImageBaseCpp7(self.pr, self._config)
-
         return CheckstyleImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:
@@ -218,7 +217,7 @@ mvn clean test -Dstyle.color=never
         proxy_cleanup = ""
 
         if self.global_env:
-            # 提取代理host和port
+            # Extract proxy host and port
             proxy_host = None
             proxy_port = None
 
@@ -266,6 +265,7 @@ mvn clean test -Dstyle.color=never
         return f"""FROM {name}:{tag}
 
 {self.global_env}
+
 {proxy_setup}
 
 {copy_commands}
@@ -273,6 +273,7 @@ mvn clean test -Dstyle.color=never
 {prepare_commands}
 
 {proxy_cleanup}
+
 {self.clear_env}
 
 """

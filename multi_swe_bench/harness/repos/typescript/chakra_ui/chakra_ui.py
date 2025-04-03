@@ -50,7 +50,6 @@ RUN apt update && apt install -y git
 RUN npm install -g pnpm
 RUN apt install -y jq
 
-
 {code}
 
 {self.clear_env}
@@ -101,7 +100,6 @@ WORKDIR /home/
 RUN apt update && apt install -y git 
 RUN npm install -g pnpm
 RUN apt install -y jq
-
 
 {code}
 
@@ -193,8 +191,6 @@ set -e
 cd /home/{pr.repo}
 pnpm test 
 
-
-
 """.format(
                     pr=self.pr
                 ),
@@ -208,8 +204,6 @@ set -e
 cd /home/{pr.repo}
 git apply /home/test.patch
 pnpm test 
-
-
 
 """.format(
                     pr=self.pr
@@ -338,8 +332,6 @@ set -e
 cd /home/{pr.repo}
 pnpm test -- --verbose
 
-
-
 """.format(
                     pr=self.pr
                 ),
@@ -353,8 +345,6 @@ set -e
 cd /home/{pr.repo}
 git apply /home/test.patch
 pnpm test -- --verbose
-
-
 
 """.format(
                     pr=self.pr
@@ -414,8 +404,6 @@ class ChakraUi(Instance):
     def dependency(self) -> Optional[Image]:
         if self.pr.number <= 7792:
             return ImageDefault7792(self.pr, self._config)
-        # elif self.pr.number <= 33415:
-        #     return MaterialUiImageDefault33415(self.pr, self._config)
 
         return ImageDefault(self.pr, self._config)
 

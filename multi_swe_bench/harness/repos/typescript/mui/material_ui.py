@@ -52,6 +52,7 @@ class MaterialUiImageBase(Image):
 WORKDIR /home/
 
 {code}
+
 RUN apt update && apt install -y git 
 RUN npm install -g pnpm@9
 RUN apt install -y jq
@@ -103,6 +104,7 @@ class MaterialUiImageBase40180(Image):
 WORKDIR /home/
 
 {code}
+
 RUN apt update && apt install -y git 
 RUN apt install -y jq
 
@@ -479,8 +481,6 @@ set -e
 cd /home/{pr.repo}
 yarn run test:unit --reporter json  --exit
 
-
-
 """.format(
                     pr=self.pr
                 ),
@@ -494,7 +494,6 @@ set -e
 cd /home/{pr.repo}
 git apply /home/test.patch
 yarn run test:unit --reporter json  --exit
-
 
 """.format(
                     pr=self.pr

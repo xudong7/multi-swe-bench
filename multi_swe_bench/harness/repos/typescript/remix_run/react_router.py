@@ -49,7 +49,6 @@ WORKDIR /home/
 RUN npm install -g pnpm
 RUN apt update && apt install -y jq
 
-
 {code}
 
 {self.clear_env}
@@ -142,7 +141,6 @@ cd /home/{pr.repo}
 pnpm build
 pnpm test -- --verbose --testLocationInResults
 
-
 """.format(
                     pr=self.pr
                 ),
@@ -157,7 +155,6 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 pnpm build
 pnpm test -- --verbose --testLocationInResults
-
 
 """.format(
                     pr=self.pr
@@ -289,7 +286,6 @@ cd /home/{pr.repo}
 yarn build
 yarn test -- --verbose
 
-
 """.format(
                     pr=self.pr
                 ),
@@ -304,7 +300,6 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 yarn build
 yarn test -- --verbose
-
 
 """.format(
                     pr=self.pr

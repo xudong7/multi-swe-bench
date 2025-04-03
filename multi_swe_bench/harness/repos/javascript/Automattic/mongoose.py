@@ -46,6 +46,7 @@ class ImageBase(Image):
 {self.global_env}
 
 WORKDIR /home/
+
 {code}
 
 {self.clear_env}
@@ -95,7 +96,8 @@ class ImageBase14761(Image):
 WORKDIR /home/
 RUN apt update && apt install -y git curl && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt install -y nodejs 
+    apt install -y nodejs
+     
 {code}
 
 {self.clear_env}
@@ -353,7 +355,6 @@ set -e
 cd /home/{pr.repo}
 git apply  --exclude package-lock.json --whitespace=nowarn /home/test.patch /home/fix.patch
 npm test
-
 
 """.format(
                     pr=self.pr

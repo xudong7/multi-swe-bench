@@ -61,8 +61,6 @@ RUN apt-get update && apt-get install -y clang-tools lld llvm-dev libclang-dev l
 
 {code}
 
-
-
 {self.clear_env}
 
 """
@@ -127,8 +125,6 @@ RUN apt install -y libpng-dev libjpeg-dev libgl-dev python3-dev python3-numpy py
 
 {code}
 
-
-
 {self.clear_env}
 
 """
@@ -184,8 +180,6 @@ RUN apt update && apt install -y --fix-missing clang-tools lld llvm-dev libclang
 
 {code}
 
-
-
 {self.clear_env}
 
 """
@@ -239,8 +233,6 @@ RUN apt update && apt install -y --fix-missing git clang-tools lld llvm-dev libc
                   libopenblas-dev libeigen3-dev libatlas-base-dev \
                   doxygen ninja-build cmake
 {code}
-
-
 
 {self.clear_env}
 

@@ -46,6 +46,7 @@ class ImageBase(Image):
 {self.global_env}
 
 WORKDIR /home/
+
 {code}
 
 {self.clear_env}

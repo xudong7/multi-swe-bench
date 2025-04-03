@@ -50,7 +50,6 @@ RUN apt update && apt install -y git
 RUN npm install -g pnpm
 RUN apt install -y jq
 
-
 {code}
 
 {self.clear_env}
@@ -143,8 +142,6 @@ pnpm dev:prepare
 pnpm test:unit -- --verbose
 pnpm test:runtime  --no-watch
 
-
-
 """.format(
                     pr=self.pr
                 ),
@@ -160,8 +157,6 @@ git apply /home/test.patch
 pnpm dev:prepare 
 pnpm test:unit -- --verbose
 pnpm test:runtime  --no-watch
-
-
 
 """.format(
                     pr=self.pr
@@ -294,8 +289,6 @@ pnpm build:stub
 pnpm test:unit -- --verbose
 pnpm test:runtime  --no-watch
 
-
-
 """.format(
                     pr=self.pr
                 ),
@@ -311,8 +304,6 @@ git apply /home/test.patch
 pnpm build:stub
 pnpm test:unit -- --verbose
 pnpm test:runtime  --no-watch
-
-
 
 """.format(
                     pr=self.pr
@@ -374,8 +365,6 @@ class Nuxt(Instance):
     def dependency(self) -> Optional[Image]:
         if self.pr.number <= 24709:
             return ImageDefault24709(self.pr, self._config)
-        # elif self.pr.number <= 33415:
-        #     return MaterialUiImageDefault33415(self.pr, self._config)
 
         return ImageDefault(self.pr, self._config)
 

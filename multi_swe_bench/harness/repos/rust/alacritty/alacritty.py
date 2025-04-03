@@ -48,6 +48,7 @@ class AlacrittyImageBase(Image):
 WORKDIR /home/
 
 {code}
+
 RUN apt update && apt install -y cmake g++ pkg-config libfreetype6-dev libfontconfig1-dev libxcb-xfixes0-dev libxkbcommon-dev python3
 
 {self.clear_env}

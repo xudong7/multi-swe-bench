@@ -50,7 +50,6 @@ RUN apt update && apt install -y git
 RUN npm install -g pnpm@9
 RUN apt install -y jq
 
-
 {code}
 
 {self.clear_env}
@@ -141,8 +140,6 @@ set -e
 cd /home/{pr.repo}
 pnpm test-ci --reporter=verbose
 
-
-
 """.format(
                     pr=self.pr
                 ),
@@ -156,8 +153,6 @@ set -e
 cd /home/{pr.repo}
 git apply --exclude pnpm-lock.yaml --whitespace=nowarn /home/test.patch
 pnpm test-ci --reporter=verbose
-
-
 
 """.format(
                     pr=self.pr
@@ -286,8 +281,6 @@ set -e
 cd /home/{pr.repo}
 pnpm turbo --filter tests test-ci
 
-
-
 """.format(
                     pr=self.pr
                 ),
@@ -301,8 +294,6 @@ set -e
 cd /home/{pr.repo}
 git apply --exclude pnpm-lock.yaml --whitespace=nowarn /home/test.patch
 pnpm turbo --filter tests test-ci
-
-
 
 """.format(
                     pr=self.pr
@@ -362,8 +353,6 @@ class Trpc(Instance):
     def dependency(self) -> Optional[Image]:
         if self.pr.number <= 5560:
             return ImageDefault5560(self.pr, self._config)
-        # elif self.pr.number <= 33415:
-        #     return MaterialUiImageDefault33415(self.pr, self._config)
 
         return ImageDefault(self.pr, self._config)
 

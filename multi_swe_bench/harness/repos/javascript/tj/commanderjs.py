@@ -46,6 +46,7 @@ class ImageBase(Image):
 {self.global_env}
 
 WORKDIR /home/
+
 {code}
 
 {self.clear_env}
@@ -162,7 +163,6 @@ set -e
 cd /home/{pr.repo}
 git apply  --exclude package-lock.json --whitespace=nowarn /home/test.patch /home/fix.patch
 npx jest --verbose
-
 
 """.format(
                     pr=self.pr
@@ -304,7 +304,6 @@ set -e
 cd /home/{pr.repo}
 git apply  --exclude package-lock.json --whitespace=nowarn /home/test.patch /home/fix.patch
 npm test
-
 
 """.format(
                     pr=self.pr

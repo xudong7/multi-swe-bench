@@ -168,7 +168,6 @@ git apply  --exclude package.json  --exclude yarn.lock --whitespace=nowarn /home
 npm run test:unit -- --verbose  
 npm run test:ssr  -- --verbose 
 
-
 """.format(
                     pr=self.pr
                 ),

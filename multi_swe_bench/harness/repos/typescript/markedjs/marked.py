@@ -47,7 +47,6 @@ class ImageBase(Image):
 
 WORKDIR /home/
 
-
 {code}
 
 {self.clear_env}
@@ -141,7 +140,6 @@ npm run test:unit
 npm run test:specs
 npm run test:umd
 
-
 """.format(
                     pr=self.pr
                 ),
@@ -158,7 +156,6 @@ npm run build
 npm run test:unit
 npm run test:specs
 npm run test:umd
-
 
 """.format(
                     pr=self.pr
@@ -219,7 +216,6 @@ class Zod(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-
         return ImageDefault(self.pr, self._config)
 
     def run(self) -> str:

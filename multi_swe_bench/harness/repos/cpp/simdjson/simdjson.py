@@ -48,9 +48,9 @@ class SimdjsonImageBase(Image):
 WORKDIR /home/
 
 {code}
+
 RUN apt-get update && apt-get install -y libbrotli-dev libcurl4-openssl-dev
 RUN apt-get install -y clang build-essential cmake pkg-config
-
 
 {self.clear_env}
 
@@ -98,6 +98,7 @@ class SimdjsonImageBaseCpp7(Image):
 WORKDIR /home/
 
 {code}
+
 RUN apt-get update && \
     apt-get install -y \
     build-essential \
@@ -110,6 +111,7 @@ RUN apt-get update && \
     ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake && \
     rm cmake-3.14.0-Linux-x86_64.tar.gz
 RUN apt-get install -y cmake
+
 {self.clear_env}
 
 """

@@ -46,7 +46,6 @@ class PuppeteerImageBase(Image):
 
 WORKDIR /home/
 
-
 {code}
 
 {self.clear_env}
@@ -137,7 +136,6 @@ set -e
 cd /home/{pr.repo}
 yarn test
 
-
 """.format(
                     pr=self.pr
                 ),
@@ -151,7 +149,6 @@ set -e
 cd /home/{pr.repo}
 git apply /home/test.patch
 yarn test
-
 
 """.format(
                     pr=self.pr

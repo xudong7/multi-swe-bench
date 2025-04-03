@@ -48,6 +48,7 @@ class DarkreaderImageBase(Image):
 WORKDIR /home/
 
 RUN apt update && apt install -y git
+
 {code}
 
 {self.clear_env}

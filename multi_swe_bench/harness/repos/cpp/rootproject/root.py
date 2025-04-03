@@ -48,6 +48,7 @@ class RootImageBase(Image):
 WORKDIR /home/
 
 {code}
+
 RUN apt-get update && \
     apt-get install -y \
     wget \
@@ -60,155 +61,6 @@ RUN apt-get update && \
 
 RUN apt-get install -y binutils cmake dpkg-dev libssl-dev git libx11-dev \
 libxext-dev libxft-dev libxpm-dev python3 libtbb-dev libgif-dev
-
-{self.clear_env}
-
-"""
-
-
-class RootImageBaseCpp12(Image):
-    def __init__(self, pr: PullRequest, config: Config):
-        self._pr = pr
-        self._config = config
-
-    @property
-    def pr(self) -> PullRequest:
-        return self._pr
-
-    @property
-    def config(self) -> Config:
-        return self._config
-
-    def dependency(self) -> Union[str, "Image"]:
-        return "gcc:12"
-
-    def image_tag(self) -> str:
-        return "base-cpp-12"
-
-    def workdir(self) -> str:
-        return "base-cpp-12"
-
-    def files(self) -> list[File]:
-        return []
-
-    def dockerfile(self) -> str:
-        image_name = self.dependency()
-        if isinstance(image_name, Image):
-            image_name = image_name.image_full_name()
-
-        if self.config.need_clone:
-            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
-        else:
-            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
-        return f"""FROM {image_name}
-
-{self.global_env}
-
-WORKDIR /home/
-
-{code}
-RUN apt-get update && apt-get install -y libbrotli-dev libcurl4-openssl-dev
-RUN apt-get install -y clang build-essential cmake
-RUN cd /home/ && git clone https://github.com/nlohmann/root_test_data.git
-
-{self.clear_env}
-
-"""
-
-
-class RootImageBaseCpp7(Image):
-    def __init__(self, pr: PullRequest, config: Config):
-        self._pr = pr
-        self._config = config
-
-    @property
-    def pr(self) -> PullRequest:
-        return self._pr
-
-    @property
-    def config(self) -> Config:
-        return self._config
-
-    def dependency(self) -> Union[str, "Image"]:
-        return "gcc:7"
-
-    def image_tag(self) -> str:
-        return "base-cpp-7"
-
-    def workdir(self) -> str:
-        return "base-cpp-7"
-
-    def files(self) -> list[File]:
-        return []
-
-    def dockerfile(self) -> str:
-        image_name = self.dependency()
-        if isinstance(image_name, Image):
-            image_name = image_name.image_full_name()
-
-        if self.config.need_clone:
-            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
-        else:
-            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
-        return f"""FROM {image_name}
-
-{self.global_env}
-
-WORKDIR /home/
-
-{code}
-RUN apt-get update && apt-get install -y libbrotli-dev libcurl4-openssl-dev
-RUN apt-get install -y clang build-essential cmake
-RUN cd /home/ && git clone https://github.com/nlohmann/root_test_data.git
-
-{self.clear_env}
-
-"""
-
-
-class RootImageBaseCpp6(Image):
-    def __init__(self, pr: PullRequest, config: Config):
-        self._pr = pr
-        self._config = config
-
-    @property
-    def pr(self) -> PullRequest:
-        return self._pr
-
-    @property
-    def config(self) -> Config:
-        return self._config
-
-    def dependency(self) -> Union[str, "Image"]:
-        return "gcc:6"
-
-    def image_tag(self) -> str:
-        return "base-cpp-6"
-
-    def workdir(self) -> str:
-        return "base-cpp-6"
-
-    def files(self) -> list[File]:
-        return []
-
-    def dockerfile(self) -> str:
-        image_name = self.dependency()
-        if isinstance(image_name, Image):
-            image_name = image_name.image_full_name()
-
-        if self.config.need_clone:
-            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
-        else:
-            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
-        return f"""FROM {image_name}
-
-{self.global_env}
-
-WORKDIR /home/
-
-{code}
-RUN apt-get update && apt-get install -y cmake
-RUN cd /home/ && git clone https://github.com/nlohmann/root_test_data.git
 
 {self.clear_env}
 
@@ -229,11 +81,6 @@ class RootImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        # if 2825 <= self.pr.number and self.pr.number <= 3685:
-        #     return rootImageBaseCpp12(self.pr, self._config)
-        # elif self.pr.number <= 2576:
-        #     return rootImageBaseCpp7(self.pr, self._config)
-
         return RootImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:

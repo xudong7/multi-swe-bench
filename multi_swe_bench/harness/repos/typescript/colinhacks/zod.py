@@ -48,7 +48,6 @@ class ImageBase(Image):
 WORKDIR /home/
 RUN yarn add typescript@latest
 
-
 {code}
 
 {self.clear_env}
@@ -140,7 +139,6 @@ cd /home/{pr.repo}
 yarn build
 yarn test
 
-
 """.format(
                     pr=self.pr
                 ),
@@ -155,7 +153,6 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 yarn build
 yarn test
-
 
 """.format(
                     pr=self.pr

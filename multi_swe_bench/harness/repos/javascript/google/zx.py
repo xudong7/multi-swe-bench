@@ -46,6 +46,7 @@ class ImageBase(Image):
 {self.global_env}
 
 WORKDIR /home/
+
 {code}
 
 {self.clear_env}
@@ -165,7 +166,6 @@ cd /home/{pr.repo}
 git apply  --exclude package-lock.json --whitespace=nowarn /home/test.patch /home/fix.patch
 npm run build
 npm run test:coverage -- --reporter=verbose
-
 
 """.format(
                     pr=self.pr
@@ -307,7 +307,6 @@ cd /home/{pr.repo}
 git apply  --exclude package-lock.json --whitespace=nowarn /home/test.patch /home/fix.patch
 npm test -- --reporter=verbose
 
-
 """.format(
                     pr=self.pr
                 ),
@@ -368,31 +367,25 @@ class Zx(Instance):
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        # 用于存储当前的子测试名称层级
         stack = []
 
         for line in test_log.splitlines():
-            # 忽略空白行
             if not line.strip():
                 continue
 
-            # 检查子测试头，形如："# Subtest: util" 或带缩进的子测试
             m_subtest = re.match(r"^(\s*)# Subtest:\s*(.+)", line)
             if m_subtest:
                 indent = len(m_subtest.group(1))
                 sub_test_name = m_subtest.group(2).strip()
-                # 根据缩进确定当前层级（假设每4个空格为一级）
                 level = indent // 4
                 stack = stack[:level]  # 弹出深层次测试
                 stack.append(sub_test_name)
                 continue
 
-            # 检查测试结果行，形如 "ok 1 - randomId()" 或 "not ok 3 - formatCwd works"
             m_test = re.match(r"^\s*(ok|not ok)\s+\d+\s+-\s+(.+)", line)
             if m_test:
                 status = m_test.group(1)
                 test_name = m_test.group(2).strip()
-                # 拼接多级测试名：用栈中对应层级的名称拼接，最后一段优先使用当前行里的信息
                 full_test_name = (
                     ":".join(stack[:-1] + [test_name]) if stack else test_name
                 )

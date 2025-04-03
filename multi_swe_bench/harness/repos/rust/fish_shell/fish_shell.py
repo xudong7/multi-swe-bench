@@ -48,6 +48,7 @@ class FishShellImageBase(Image):
 WORKDIR /home/
 
 {code}
+
 RUN apt update && apt install -y python3-sphinx
 
 {self.clear_env}

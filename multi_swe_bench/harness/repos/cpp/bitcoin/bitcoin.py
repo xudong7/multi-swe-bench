@@ -48,7 +48,9 @@ class BitcoinImageBase(Image):
 WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
+
 {code}
+
 RUN wget https://cmake.org/files/v3.22/cmake-3.22.0-linux-x86_64.tar.gz && \
 tar -zxvf cmake-3.22.0-linux-x86_64.tar.gz && \
 mv cmake-3.22.0-linux-x86_64 /opt/cmake && \
@@ -105,7 +107,9 @@ class BitcoinImageBaseCpp11(Image):
 WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
+
 {code}
+
 RUN apt-get update && apt-get install -y libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev libsqlite3-dev libminiupnpc-dev libnatpmp-dev libzmq3-dev systemtap-sdt-dev python3-zmq
 RUN apt-get install -y qtbase5-dev qttools5-dev qttools5-dev-tools qtwayland5 libqrencode-dev
 
@@ -156,7 +160,9 @@ class BitcoinImageBaseCpp11V2(Image):
 WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
+
 {code}
+
 RUN apt-get update && apt-get install -y libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-test-dev libsqlite3-dev libminiupnpc-dev libnatpmp-dev libzmq3-dev systemtap-sdt-dev python3-zmq
 RUN apt-get install -y qtbase5-dev qttools5-dev qttools5-dev-tools qtwayland5 libqrencode-dev
 RUN apt-get install -y libdb-dev libdb++-dev
@@ -207,7 +213,9 @@ class BitcoinImageBaseCpp11V3(Image):
 WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
+
 {code}
+
 RUN apt-get update && apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-dev libboost-system-dev libboost-filesystem-dev libboost-test-dev libboost-thread-dev libsqlite3-dev libminiupnpc-dev libnatpmp-dev libzmq3-dev systemtap-sdt-dev python3-zmq
 RUN apt-get install -y qtbase5-dev qttools5-dev qttools5-dev-tools qtwayland5 libqrencode-dev
 RUN apt-get install -y libdb-dev libdb++-dev
@@ -258,7 +266,9 @@ class BitcoinImageBaseCpp8(Image):
 WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
+
 {code}
+
 RUN apt-get update && apt-get install -y build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libevent-dev libboost-system-dev libboost-filesystem-dev libboost-test-dev libboost-thread-dev libminiupnpc-dev libzmq3-dev python3-zmq
 RUN apt-get install -y libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libqrencode-dev
 RUN apt-get install -y libdb-dev libdb++-dev

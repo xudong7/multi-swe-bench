@@ -52,8 +52,6 @@ RUN apt update && apt install -y cmake flex bison libyaml-dev libssl-dev
 
 {code}
 
-
-
 {self.clear_env}
 
 """
@@ -104,8 +102,6 @@ ENV TZ=Etc/UTC
 RUN apt update && apt install -y cmake flex bison libyaml-dev libssl-dev
 
 {code}
-
-
 
 {self.clear_env}
 

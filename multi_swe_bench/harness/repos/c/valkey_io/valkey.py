@@ -53,57 +53,6 @@ RUN apt update && apt install -y git make gcc pkg-config libjemalloc-dev build-e
 
 {code}
 
-
-
-{self.clear_env}
-
-"""
-
-
-class ValkeyImageBaseCpp7(Image):
-    def __init__(self, pr: PullRequest, config: Config):
-        self._pr = pr
-        self._config = config
-
-    @property
-    def pr(self) -> PullRequest:
-        return self._pr
-
-    @property
-    def config(self) -> Config:
-        return self._config
-
-    def dependency(self) -> Union[str, "Image"]:
-        return "gcc:7"
-
-    def image_tag(self) -> str:
-        return "base-cpp-7"
-
-    def workdir(self) -> str:
-        return "base-cpp-7"
-
-    def files(self) -> list[File]:
-        return []
-
-    def dockerfile(self) -> str:
-        image_name = self.dependency()
-        if isinstance(image_name, Image):
-            image_name = image_name.image_full_name()
-
-        if self.config.need_clone:
-            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
-        else:
-            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
-        return f"""FROM {image_name}
-
-{self.global_env}
-
-WORKDIR /home/
-
-{code}
-RUN apt-get update && apt-get install -y libbrotli-dev libcurl4-openssl-dev
-RUN apt-get install -y clang build-essential cmake pkg-config
-
 {self.clear_env}
 
 """
@@ -123,9 +72,6 @@ class ValkeyImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        # if 2825 <= self.pr.number and self.pr.number <= 3685:
-        #     return valkeyImageBaseCpp7(self.pr, self._config)
-
         return ValkeyImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:
@@ -293,9 +239,6 @@ class Valkey(Instance):
             re.compile(r"^\[err\]: (.+?)( \(.+\))?$"),
             re.compile(r"^\[exception\]: (.+?)( \(.+\))?$"),
         ]
-        # re_skips = [
-        #     re.compile(r"^\[ignore\]: (.+?)( \(.+\))?$"),
-        # ]
 
         for line in test_log.splitlines():
             line = line.strip()
@@ -313,12 +256,6 @@ class Valkey(Instance):
                 if fail_match:
                     test = fail_match.group(1)
                     failed_tests.add(test)
-
-            # for re_skip in re_skips:
-            #     skip_match = re_skip.match(line)
-            #     if skip_match:
-            #         test = skip_match.group(1)
-            #         skipped_tests.add(test)
 
         return TestResult(
             passed_count=len(passed_tests),

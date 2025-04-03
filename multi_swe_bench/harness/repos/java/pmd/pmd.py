@@ -45,72 +45,15 @@ class PmdImageBase(Image):
         return f"""FROM {image_name}
 
 {self.global_env}
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 WORKDIR /home/
 RUN apt-get update && apt-get install -y git openjdk-11-jdk
-{code}
-
-
-{self.clear_env}
-
-"""
-
-
-class PmdImageBaseCpp7(Image):
-    def __init__(self, pr: PullRequest, config: Config):
-        self._pr = pr
-        self._config = config
-
-    @property
-    def pr(self) -> PullRequest:
-        return self._pr
-
-    @property
-    def config(self) -> Config:
-        return self._config
-
-    def dependency(self) -> Union[str, "Image"]:
-        return "gcc:7"
-
-    def image_tag(self) -> str:
-        return "base-cpp-7"
-
-    def workdir(self) -> str:
-        return "base-cpp-7"
-
-    def files(self) -> list[File]:
-        return []
-
-    def dockerfile(self) -> str:
-        image_name = self.dependency()
-        if isinstance(image_name, Image):
-            image_name = image_name.image_full_name()
-
-        if self.config.need_clone:
-            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
-        else:
-            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
-        return f"""FROM {image_name}
-
-{self.global_env}
-
-WORKDIR /home/
 
 {code}
-RUN apt-get update && \
-    apt-get install -y \
-    build-essential \
-    pkg-config \
-    wget \
-    tar && \
-    wget https://cmake.org/files/v3.14/cmake-3.14.0-Linux-x86_64.tar.gz && \
-    tar -zxvf cmake-3.14.0-Linux-x86_64.tar.gz && \
-    mv cmake-3.14.0-Linux-x86_64 /opt/cmake && \
-    ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake && \
-    rm cmake-3.14.0-Linux-x86_64.tar.gz
-RUN apt-get install -y cmake
+
 {self.clear_env}
 
 """
@@ -130,9 +73,6 @@ class PmdImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        # if self.pr.number <= 958:
-        #     return pmdImageBaseCpp7(self.pr, self._config)
-
         return PmdImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:
@@ -276,7 +216,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
         proxy_cleanup = ""
 
         if self.global_env:
-            # 提取代理host和port
+            # Extract proxy host and port
             proxy_host = None
             proxy_port = None
 
@@ -324,6 +264,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
         return f"""FROM {name}:{tag}
 
 {self.global_env}
+
 {proxy_setup}
 
 {copy_commands}
@@ -331,6 +272,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 {prepare_commands}
 
 {proxy_cleanup}
+
 {self.clear_env}
 
 """

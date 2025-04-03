@@ -49,11 +49,13 @@ class SpotbugsImageBase(Image):
         return f"""FROM {image_name}
 
 {self.global_env}
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 WORKDIR /home/
 RUN apt-get update && apt-get install -y git openjdk-21-jdk
+
 {code}
 
 {copy_commands}
@@ -105,11 +107,13 @@ class SpotbugsImageBaseJDK17(Image):
         return f"""FROM {image_name}
 
 {self.global_env}
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 WORKDIR /home/
 RUN apt-get update && apt-get install -y git openjdk-17-jdk
+
 {code}
 
 {copy_commands}
@@ -157,11 +161,13 @@ class SpotbugsImageBaseJDK16(Image):
         return f"""FROM {image_name}
 
 {self.global_env}
+
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 WORKDIR /home/
 RUN apt-get update && apt-get install -y git openjdk-15-jdk
+
 {code}
 
 {self.clear_env}
@@ -183,8 +189,6 @@ class SpotbugsImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        # if 7205 < self.pr.number <= 7298:
-        #     return spotbugsImageBaseJDK11(self.pr, self._config)
         if 1734 < self.pr.number <= 2679:
             return SpotbugsImageBaseJDK17(self.pr, self._config)
         elif self.pr.number <= 1734:
@@ -449,6 +453,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
         return f"""FROM {name}:{tag}
 
 {self.global_env}
+
 {proxy_setup}
 
 {copy_commands}
@@ -456,7 +461,9 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 {prepare_commands}
 
 {proxy_cleanup}
+
 {self.clear_env}
+
 """
 
 

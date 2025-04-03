@@ -49,7 +49,6 @@ WORKDIR /home/
 RUN npm install -g pnpm
 RUN apt update && apt install -y jq
 
-
 {code}
 
 {self.clear_env}
@@ -142,7 +141,6 @@ cd /home/{pr.repo}
 pnpm run build
 pnpm run test 
 
-
 """.format(
                     pr=self.pr
                 ),
@@ -157,7 +155,6 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 pnpm run build
 pnpm run test 
-
 
 """.format(
                     pr=self.pr
@@ -216,7 +213,6 @@ class Astro(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-
         return PuppeteerImageDefault(self.pr, self._config)
 
     def run(self) -> str:

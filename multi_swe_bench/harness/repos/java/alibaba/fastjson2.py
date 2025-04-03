@@ -56,6 +56,7 @@ RUN apt update && apt install -y gnupg ca-certificates git curl
 RUN curl -s https://repos.azul.com/azul-repo.key | gpg --dearmor -o /usr/share/keyrings/azul.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | tee /etc/apt/sources.list.d/zulu.list
 RUN apt update && apt install -y zulu8-jdk
+
 {code}
 
 {self.clear_env}

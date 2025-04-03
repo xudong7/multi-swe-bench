@@ -64,8 +64,6 @@ libc6-dev
 
 {code}
 
-
-
 {self.clear_env}
 
 """
@@ -123,115 +121,6 @@ RUN echo "deb http://archive.debian.org/debian wheezy main" > /etc/apt/sources.l
 RUN apt update && apt install -y --allow-unauthenticated cmake python3
 {code}
 
-
-
-{self.clear_env}
-
-"""
-
-
-class Libgit2ImageBase16(Image):
-    def __init__(self, pr: PullRequest, config: Config):
-        self._pr = pr
-        self._config = config
-
-    @property
-    def pr(self) -> PullRequest:
-        return self._pr
-
-    @property
-    def config(self) -> Config:
-        return self._config
-
-    def dependency(self) -> Union[str, "Image"]:
-        return "ubuntu:16.04"
-
-    def image_tag(self) -> str:
-        return "base-16"
-
-    def workdir(self) -> str:
-        return "base-16"
-
-    def files(self) -> list[File]:
-        return []
-
-    def dockerfile(self) -> str:
-        image_name = self.dependency()
-        if isinstance(image_name, Image):
-            image_name = image_name.image_full_name()
-
-        if self.config.need_clone:
-            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
-        else:
-            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
-
-        return f"""FROM {image_name}
-
-{self.global_env}
-
-WORKDIR /home/
-ENV DEBIAN_FRONTEND=noninteractive
-ENV LANG=C.UTF-8
-ENV LC_ALL=C.UTF-8
-RUN apt update && apt install -y git clang build-essential cmake
-{code}
-
-
-
-{self.clear_env}
-
-"""
-
-
-class Libgit2ImageBase16V2(Image):
-    def __init__(self, pr: PullRequest, config: Config):
-        self._pr = pr
-        self._config = config
-
-    @property
-    def pr(self) -> PullRequest:
-        return self._pr
-
-    @property
-    def config(self) -> Config:
-        return self._config
-
-    def dependency(self) -> Union[str, "Image"]:
-        return "ubuntu:16.04"
-
-    def image_tag(self) -> str:
-        return "base-16V2"
-
-    def workdir(self) -> str:
-        return "base-16V2"
-
-    def files(self) -> list[File]:
-        return []
-
-    def dockerfile(self) -> str:
-        image_name = self.dependency()
-        if isinstance(image_name, Image):
-            image_name = image_name.image_full_name()
-
-        if self.config.need_clone:
-            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
-        else:
-            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
-
-        return f"""FROM {image_name}
-
-{self.global_env}
-
-WORKDIR /home/
-ENV DEBIAN_FRONTEND=noninteractive
-ENV LANG=C.UTF-8
-ENV LC_ALL=C.UTF-8
-RUN apt update && apt install -y git clang build-essential cmake 
-RUN apt install -y llvm-3.9 zlib1g-dev libncurses5-dev
-{code}
-
-
-
 {self.clear_env}
 
 """
@@ -253,10 +142,6 @@ class Libgit2ImageDefault(Image):
     def dependency(self) -> Image | None:
         if self.pr.number <= 4898:
             return Libgit2ImageBase4(self.pr, self._config)
-        # elif 3043 < self.pr.number <= 3442:
-        #     return libgit2ImageBase16(self.pr, self._config)
-        # elif self.pr.number <= 3043:
-        #     return libgit2ImageBase16V2(self.pr, self._config)
         return Libgit2ImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:

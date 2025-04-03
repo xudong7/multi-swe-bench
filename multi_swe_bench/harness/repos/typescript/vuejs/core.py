@@ -49,6 +49,7 @@ WORKDIR /home/
 
 RUN apt update && apt install -y git 
 RUN npm install -g pnpm
+
 {code}
 
 {self.clear_env}

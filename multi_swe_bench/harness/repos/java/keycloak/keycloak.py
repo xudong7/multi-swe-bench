@@ -46,67 +46,9 @@ class KeycloakImageBase(Image):
 
 WORKDIR /home/
 RUN apt-get update && apt-get install -y git openjdk-21-jdk
-{code}
-
-
-{self.clear_env}
-
-"""
-
-
-class KeycloakImageBaseCpp7(Image):
-    def __init__(self, pr: PullRequest, config: Config):
-        self._pr = pr
-        self._config = config
-
-    @property
-    def pr(self) -> PullRequest:
-        return self._pr
-
-    @property
-    def config(self) -> Config:
-        return self._config
-
-    def dependency(self) -> Union[str, "Image"]:
-        return "gcc:7"
-
-    def image_tag(self) -> str:
-        return "base-cpp-7"
-
-    def workdir(self) -> str:
-        return "base-cpp-7"
-
-    def files(self) -> list[File]:
-        return []
-
-    def dockerfile(self) -> str:
-        image_name = self.dependency()
-        if isinstance(image_name, Image):
-            image_name = image_name.image_full_name()
-
-        if self.config.need_clone:
-            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
-        else:
-            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
-        return f"""FROM {image_name}
-
-{self.global_env}
-
-WORKDIR /home/
 
 {code}
-RUN apt-get update && \
-    apt-get install -y \
-    build-essential \
-    pkg-config \
-    wget \
-    tar && \
-    wget https://cmake.org/files/v3.14/cmake-3.14.0-Linux-x86_64.tar.gz && \
-    tar -zxvf cmake-3.14.0-Linux-x86_64.tar.gz && \
-    mv cmake-3.14.0-Linux-x86_64 /opt/cmake && \
-    ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake && \
-    rm cmake-3.14.0-Linux-x86_64.tar.gz
-RUN apt-get install -y cmake
+
 {self.clear_env}
 
 """
@@ -126,9 +68,6 @@ class KeycloakImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        # if self.pr.number <= 958:
-        #     return keycloakImageBaseCpp7(self.pr, self._config)
-
         return KeycloakImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:

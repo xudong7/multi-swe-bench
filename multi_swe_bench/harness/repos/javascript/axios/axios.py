@@ -58,7 +58,8 @@ ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 RUN apt update && apt install -y git curl && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-    apt install -y nodejs 
+    apt install -y nodejs
+     
 {code}
 
 {self.clear_env}

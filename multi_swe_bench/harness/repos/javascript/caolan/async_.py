@@ -309,7 +309,6 @@ cd /home/{pr.repo}
 git apply  --exclude package.json --whitespace=nowarn /home/test.patch /home/fix.patch
 npm test -- --verbose 
 
-
 """.format(
                     pr=self.pr
                 ),

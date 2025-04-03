@@ -57,10 +57,8 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     valgrind \
     && rm -rf /var/lib/apt/lists/*
+    
 {code}
-
-
-
 
 {self.clear_env}
 
@@ -81,9 +79,6 @@ class ImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        # if 2825 <= self.pr.number and self.pr.number <= 3685:
-        #     return valkeyImageBaseCpp7(self.pr, self._config)
-
         return ImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:

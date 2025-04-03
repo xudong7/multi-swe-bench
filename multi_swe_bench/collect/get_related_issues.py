@@ -42,7 +42,7 @@ def get_top_repositories(g: Github, language=None, limit=10):
     if language:
         query += f" language:{language}"
 
-    # 搜索仓库，按 stars 排序
+    # Search repositories and sort by stars
     result = g.search_repositories(query=query, sort="stars", order="desc")
 
     top_repos = []
