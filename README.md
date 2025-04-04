@@ -175,11 +175,14 @@ We express our deepest gratitude to the creators of the [SWE-bench](https://www.
 If you find [Multi-SWE-bench](https://multi-swe-bench.github.io) useful for your research and applications, feel free to give us a star ⭐ or cite us using:
 
 ```bibtex
-@article{zan2024swe,
-  title={Multi-SWE-bench: A Multilingual Benchmark for Issue Resolving},
-  author={xxx},
-  journal={arXiv preprint arXiv:xxx},
-  year={2025}
+@misc{zan2025multisweben,
+      title={Multi-SWE-bench: A Multilingual Benchmark for Issue Resolving}, 
+      author={Daoguang Zan and Zhirong Huang and Wei Liu and Hanwu Chen and Linhao Zhang and Shulin Xin and Lu Chen and Qi Liu and Xiaojian Zhong and Aoyan Li and Siyao Liu and Yongsheng Xiao and Liangqiang Chen and Yuyu Zhang and Jing Su and Tianyu Liu and Rui Long and Kai Shen and Liang Xiang},
+      year={2025},
+      eprint={2504.02605},
+      archivePrefix={arXiv},
+      primaryClass={cs.SE},
+      url={https://arxiv.org/abs/2504.02605}, 
 }
 ```
 ## 📜 License
