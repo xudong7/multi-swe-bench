@@ -175,7 +175,7 @@ We express our deepest gratitude to the creators of the [SWE-bench](https://www.
 If you find [Multi-SWE-bench](https://multi-swe-bench.github.io) useful for your research and applications, feel free to give us a star ⭐ or cite us using:
 
 ```bibtex
-@misc{zan2025multisweben,
+@misc{zan2025multiswebench,
       title={Multi-SWE-bench: A Multilingual Benchmark for Issue Resolving}, 
       author={Daoguang Zan and Zhirong Huang and Wei Liu and Hanwu Chen and Linhao Zhang and Shulin Xin and Lu Chen and Qi Liu and Xiaojian Zhong and Aoyan Li and Siyao Liu and Yongsheng Xiao and Liangqiang Chen and Yuyu Zhang and Jing Su and Tianyu Liu and Rui Long and Kai Shen and Liang Xiang},
       year={2025},
