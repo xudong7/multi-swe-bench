@@ -22,14 +22,14 @@
 
 ## 🚀 Multi-SWE-bench: A Multilingual Benchmark for Issue Resolving
 <p align="center">
-  <a href="https://github.com/multi-swe-bench/multi-swe-bench">
-    <img src="https://img.shields.io/badge/Multi_SWE_bench-Project Page-yellow"></a>
+<!--   <a href="https://github.com/multi-swe-bench/multi-swe-bench">
+    <img src="https://img.shields.io/badge/Multi_SWE_bench-Project Page-yellow"></a> -->
   <a href="https://arxiv.org/pdf/2504.02605">
     <img src="https://img.shields.io/badge/Multi_SWE_bench-Tech Report-red"></a>
-  <a href="https://huggingface.co/datasets/Multi-SWE-RL/Multi-SWE-Bench">
+  <a href="https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench">
     <img src="https://img.shields.io/badge/Multi_SWE_bench-Hugging Face-orange"></a>
   <br>
-  <a href="https://huggingface.co/Multi-SWE-RL">
+  <a href="https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-RL">
     <img src="https://img.shields.io/badge/Multi_SWE_RL_Community-Hugging Face-EE9A12"></a>
   <a href="https://discord.gg/EtfbkfqUuN">
     <img src="https://img.shields.io/badge/Multi_SWE_RL_Community-Discord-1449DA"></a>
