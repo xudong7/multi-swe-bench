@@ -62,6 +62,17 @@ To run the evaluation, you need to prepare the following:
    - `repo`: Repository Name
    - `number`: Pull Request Number
    - `fix_patch`: Fix Patch Content
+
+    Example:
+    ```json
+    {
+        "org": "zeromicro",
+        "repo": "go-zero",
+        "number": "2787",
+        "fix_patch": "diff --git ...."
+    }
+    ```
+
 2. Dataset Files: Dataset files in JSONL format available on Hugging Face, such as [Multi-SWE-bench](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench) or [Multi-SWE-RL](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-RL)
 3. (Optional) Docker Images: You can download required Docker images using `scripts/download_images.ps1` (for Windows) or `scripts/download_images.sh` (for Linux/macOS) with either verified images or RL images:
    ```bash
