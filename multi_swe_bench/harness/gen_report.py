@@ -525,7 +525,7 @@ class CliArgs:
         reports, invalid_reports, failed_tasks = self.gen_eval_reports(tasks)
         final_report = FinalReport.from_reports(reports, invalid_reports, failed_tasks)
         with open(self.output_dir / FINAL_REPORT_FILE, "w", encoding="utf-8") as f:
-            f.write(final_report.json())
+            f.write(final_report.to_json(indent=4, ensure_ascii=False))
 
     def run_dataset(self):
         tasks = self.collect_report_tasks()
