@@ -4,6 +4,7 @@ from enum import Enum
 from dataclasses_json import config, dataclass_json
 from unidiff import PatchSet
 
+
 class TestStatus(Enum):
     PASS = "PASS"
     FAIL = "FAIL"
@@ -107,6 +108,7 @@ class TestResult:
     def all_count(self) -> int:
         return len(self._tests)
 
+
 def mapping_to_testresult(test_status_map) -> TestResult:
     passed_tests = set()
     failed_tests = set()
@@ -118,16 +120,15 @@ def mapping_to_testresult(test_status_map) -> TestResult:
             failed_tests.add(test_name)
         elif status in [TestStatus.SKIPPED.value]:
             skipped_tests.add(test_name)
-          
-    
+
     return TestResult(
-            passed_count=len(passed_tests),
-            failed_count=len(failed_tests),
-            skipped_count=len(skipped_tests),
-            passed_tests=passed_tests,
-            failed_tests=failed_tests,
-            skipped_tests=skipped_tests,
-        )
+        passed_count=len(passed_tests),
+        failed_count=len(failed_tests),
+        skipped_count=len(skipped_tests),
+        passed_tests=passed_tests,
+        failed_tests=failed_tests,
+        skipped_tests=skipped_tests,
+    )
 
 
 def get_modified_files(patch: str) -> list[str]:

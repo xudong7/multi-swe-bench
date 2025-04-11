@@ -1,5 +1,5 @@
-from typing import Optional
 import re
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, Image, SWEImageDefault
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -23,7 +23,7 @@ class Pylint(Instance):
 
     def fix_patch_run(self) -> str:
         return "bash /home/fix-run.sh"
-      
+
     def parse_log(self, log: str) -> TestResult:
         option_pattern = re.compile(r"(.*?)\[(.*)\]")
         test_status_map = {}
@@ -48,5 +48,5 @@ class Pylint(Instance):
                 else:
                     test_name = test_case[1]
                 test_status_map[test_name] = test_case[0]
- 
+
         return mapping_to_testresult(test_status_map)

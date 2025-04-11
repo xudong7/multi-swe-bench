@@ -120,12 +120,12 @@ class SWEImageDefault(Image):
 
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
-    
+
     def files(self) -> list[File]:
-        test_files =  get_modified_files(self.pr.test_patch)
-        test_files = ' '.join(test_files)
+        test_files = get_modified_files(self.pr.test_patch)
+        test_files = " ".join(test_files)
         return [
-File(
+            File(
                 ".",
                 "fix-run.sh",
                 """#!/bin/bash
@@ -158,7 +158,7 @@ git checkout {pr.base.sha} {test_files}
 
     def dockerfile(self) -> str:
         image = self.dependency()
-       
+
         copy_commands = ""
         for file in self.files():
             copy_commands += f"COPY {file.name} /home/\n"

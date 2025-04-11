@@ -22,7 +22,7 @@ class Flask(Instance):
 
     def fix_patch_run(self) -> str:
         return "bash /home/fix-run.sh"
-      
+
     def parse_log(self, log: str) -> TestResult:
         test_status_map = {}
         for line in log.split("\n"):
@@ -34,5 +34,5 @@ class Flask(Instance):
                 if len(test_case) <= 1:
                     continue
                 test_status_map[test_case[1]] = test_case[0]
- 
+
         return mapping_to_testresult(test_status_map)

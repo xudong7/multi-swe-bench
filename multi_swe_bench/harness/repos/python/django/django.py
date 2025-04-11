@@ -23,7 +23,7 @@ class Django(Instance):
 
     def fix_patch_run(self) -> str:
         return "bash /home/fix-run.sh"
-      
+
     def parse_log(self, log: str) -> TestResult:
         test_status_map = {}
         lines = log.split("\n")
@@ -93,5 +93,5 @@ class Django(Instance):
             for match in re.finditer(pattern, log, re.MULTILINE):
                 test_name = match.group(1)
                 test_status_map[test_name] = TestStatus.PASSED.value
- 
+
         return mapping_to_testresult(test_status_map)

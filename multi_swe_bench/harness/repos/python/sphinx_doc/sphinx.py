@@ -1,5 +1,5 @@
-from typing import Optional
 import re
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, Image, SWEImageDefault
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -23,7 +23,7 @@ class Sphinx(Instance):
 
     def fix_patch_run(self) -> str:
         return "bash /home/fix-run.sh"
-      
+
     def parse_log(self, log: str) -> TestResult:
         test_status_map = {}
         escapes = "".join([chr(char) for char in range(1, 32)])
@@ -42,5 +42,5 @@ class Sphinx(Instance):
                 test_case = line.split()
                 if len(test_case) >= 2:
                     test_status_map[test_case[0]] = test_case[1]
- 
+
         return mapping_to_testresult(test_status_map)

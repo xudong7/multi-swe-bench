@@ -1,5 +1,5 @@
-from typing import Optional
 import re
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, Image, SWEImageDefault
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -23,7 +23,7 @@ class Sympy(Instance):
 
     def fix_patch_run(self) -> str:
         return "bash /home/fix-run.sh"
-      
+
     def parse_log(self, log: str) -> TestResult:
         test_status_map = {}
         pattern = r"(_*) (.*)\.py:(.*) (_*)"
@@ -43,5 +43,5 @@ class Sympy(Instance):
                 if line.endswith(" ok"):
                     test = line.split()[0]
                     test_status_map[test] = TestStatus.PASSED.value
-    
+
         return mapping_to_testresult(test_status_map)
