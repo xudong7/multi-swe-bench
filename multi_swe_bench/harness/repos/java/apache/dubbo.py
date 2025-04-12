@@ -50,7 +50,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 WORKDIR /home/
-RUN apt-get update && apt-get install -y git openjdk-17-jdk maven
+RUN apt-get update && apt-get install -y git openjdk-17-jdk
+RUN apt-get install -y maven
 
 {code}
 
@@ -278,6 +279,12 @@ class Dubbo(Instance):
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
+
+        def remove_ansi_escape_sequences(text):
+            ansi_escape_pattern = re.compile(r"\x1B\[[0-?9;]*[mK]")
+            return ansi_escape_pattern.sub("", text)
+
+        test_log = remove_ansi_escape_sequences(test_log)
 
         pattern = re.compile(
             r"Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+), Time elapsed: [\d.]+ .+? in (.+)"

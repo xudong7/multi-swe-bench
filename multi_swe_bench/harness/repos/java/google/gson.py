@@ -50,7 +50,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 WORKDIR /home/
-RUN apt-get update && apt-get install -y git openjdk-11-jdk maven
+RUN apt-get update && apt-get install -y git openjdk-11-jdk
+RUN apt-get install -y maven
 
 {code}
 
@@ -279,19 +280,25 @@ class Gson(Instance):
         failed_tests = set()
         skipped_tests = set()
 
-        pattern = re.compile(
-            r"Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+), Time elapsed: [\d.]+ .+? in (.+)"
-        )
+        re_pass_tests = [
+            re.compile(
+                r"Running (.+?)\nTests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+), Time elapsed: [\d\.]+ sec"
+            )
+        ]
+        re_fail_tests = [
+            re.compile(
+                r"Running (.+?)\nTests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+), Time elapsed: [\d\.]+ sec +<<< FAILURE!"
+            )
+        ]
 
-        for line in test_log.splitlines():
-            match = pattern.search(line)
-            if match:
-                tests_run = int(match.group(1))
-                failures = int(match.group(2))
-                errors = int(match.group(3))
-                skipped = int(match.group(4))
-                test_name = match.group(5)
-
+        for re_pass_test in re_pass_tests:
+            tests = re_pass_test.findall(test_log, re.MULTILINE)
+            for test in tests:
+                test_name = test[0]
+                tests_run = int(test[1])
+                failures = int(test[2])
+                errors = int(test[3])
+                skipped = int(test[4])
                 if (
                     tests_run > 0
                     and failures == 0
@@ -303,6 +310,12 @@ class Gson(Instance):
                     failed_tests.add(test_name)
                 elif skipped == tests_run:
                     skipped_tests.add(test_name)
+
+        for re_fail_test in re_fail_tests:
+            tests = re_fail_test.findall(test_log, re.MULTILINE)
+            for test in tests:
+                test_name = test[0]
+                failed_tests.add(test_name)
 
         return TestResult(
             passed_count=len(passed_tests),

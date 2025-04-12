@@ -50,7 +50,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 WORKDIR /home/
-RUN apt-get update && apt-get install -y git openjdk-8-jdk maven
+RUN apt-get update && apt-get install -y git openjdk-8-jdk
+RUN apt-get install -y maven
 
 {code}
 
@@ -127,6 +128,9 @@ git reset --hard
 bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
+
+file="/home/{pr.repo}/pom.xml"
+sed -i 's/2\.15\.0-rc2-SNAPSHOT/2.15.5-SNAPSHOT/g' "$file"
 
 mvn clean test -Dmaven.test.skip=false -DfailIfNoTests=false || true
 """.format(
@@ -278,6 +282,12 @@ class JacksonDatabind(Instance):
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
+
+        def remove_ansi_escape_sequences(text):
+            ansi_escape_pattern = re.compile(r"\x1B\[[0-?9;]*[mK]")
+            return ansi_escape_pattern.sub("", text)
+
+        test_log = remove_ansi_escape_sequences(test_log)
 
         pattern = re.compile(
             r"Tests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+), Time elapsed: [\d.]+ .+? in (.+)"
