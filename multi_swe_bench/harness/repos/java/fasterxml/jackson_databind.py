@@ -82,6 +82,98 @@ class JacksonDatabindImageDefault(Image):
     def workdir(self) -> str:
         return f"pr-{self.pr.number}"
 
+    def old_version(self) -> str:
+        old_versions: dict[int, str] = {
+            3371: "2.14.0-SNAPSHOT",
+            3509: "2.14.0-SNAPSHOT",
+            3560: "2.14.0-SNAPSHOT",
+            3621: "2.13.5-SNAPSHOT",
+            3625: "2.14.0-SNAPSHOT",
+            3626: "2.14.0-SNAPSHOT",
+            3666: "2.14.1-SNAPSHOT",
+            3701: "2.14.2-SNAPSHOT",
+            3716: "2.14.2-SNAPSHOT",
+            3851: "2.15.0-rc3-SNAPSHOT",
+            3860: "2.15.0-rc3-SNAPSHOT",
+            4013: "2.16.0-SNAPSHOT",
+            4015: "2.16.0-SNAPSHOT",
+            4048: "2.16.0-SNAPSHOT",
+            4050: "2.16.0-SNAPSHOT",
+            4072: "2.16.0-SNAPSHOT",
+            4087: "2.16.0-SNAPSHOT",
+            4131: "2.16.0-SNAPSHOT",
+            4132: "2.16.0-SNAPSHOT",
+            4159: "2.16.0-rc1-SNAPSHOT",
+            4186: "2.16.0-SNAPSHOT",
+            4189: "2.15.4-SNAPSHOT",
+            4219: "2.16.1-SNAPSHOT",
+            4228: "2.17.0-SNAPSHOT",
+            4230: "2.16.1-SNAPSHOT",
+            4257: "2.17.0-SNAPSHOT",
+            4304: "2.15.4-SNAPSHOT",
+            4311: "2.16.2-SNAPSHOT",
+            4320: "2.17.0-SNAPSHOT",
+            4325: "2.16.2-SNAPSHOT",
+            4338: "2.17.0-SNAPSHOT",
+            4360: "2.16.2-SNAPSHOT",
+            4365: "2.17.0-SNAPSHOT",
+            4426: "2.17.0-SNAPSHOT",
+            4468: "2.17.1-SNAPSHOT",
+            4469: "2.17.1-SNAPSHOT",
+            4486: "2.17.1-SNAPSHOT",
+            4487: "2.18.0-SNAPSHOT",
+            4615: "2.18.0-SNAPSHOT",
+            4641: "2.18.0-SNAPSHOT",
+        }
+
+        return old_versions.get(self.pr.number, "2.15.0-rc2-SNAPSHOT")
+
+    def new_version(self) -> str:
+        new_versions: dict[int, str] = {
+            3371: "2.14.4-SNAPSHOT",
+            3509: "2.14.4-SNAPSHOT",
+            3560: "2.14.4-SNAPSHOT",
+            3621: "2.13.6-SNAPSHOT",
+            3625: "2.14.4-SNAPSHOT",
+            3626: "2.14.4-SNAPSHOT",
+            3666: "2.14.4-SNAPSHOT",
+            3701: "2.14.4-SNAPSHOT",
+            3716: "2.14.4-SNAPSHOT",
+            3851: "2.15.5-SNAPSHOT",
+            3860: "2.15.5-SNAPSHOT",
+            4013: "2.16.3-SNAPSHOT",
+            4015: "2.16.3-SNAPSHOT",
+            4048: "2.16.3-SNAPSHOT",
+            4050: "2.16.3-SNAPSHOT",
+            4072: "2.16.3-SNAPSHOT",
+            4087: "2.16.3-SNAPSHOT",
+            4131: "2.16.3-SNAPSHOT",
+            4132: "2.16.3-SNAPSHOT",
+            4159: "2.16.3-SNAPSHOT",
+            4186: "2.16.3-SNAPSHOT",
+            4189: "2.15.5-SNAPSHOT",
+            4219: "2.16.3-SNAPSHOT",
+            4228: "2.17.4-SNAPSHOT",
+            4230: "2.16.3-SNAPSHOT",
+            4257: "2.17.4-SNAPSHOT",
+            4304: "2.15.5-SNAPSHOT",
+            4311: "2.16.3-SNAPSHOT",
+            4320: "2.17.4-SNAPSHOT",
+            4325: "2.16.3-SNAPSHOT",
+            4338: "2.17.4-SNAPSHOT",
+            4360: "2.16.3-SNAPSHOT",
+            4365: "2.17.4-SNAPSHOT",
+            4426: "2.17.4-SNAPSHOT",
+            4468: "2.17.4-SNAPSHOT",
+            4469: "2.17.4-SNAPSHOT",
+            4486: "2.17.4-SNAPSHOT",
+            4487: "2.18.4-SNAPSHOT",
+            4615: "2.18.4-SNAPSHOT",
+            4641: "2.18.4-SNAPSHOT",
+        }
+
+        return new_versions.get(self.pr.number, "2.15.5-SNAPSHOT")
+
     def files(self) -> list[File]:
         return [
             File(
@@ -130,11 +222,15 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
 file="/home/{pr.repo}/pom.xml"
-sed -i 's/2\.15\.0-rc2-SNAPSHOT/2.15.5-SNAPSHOT/g' "$file"
+old_version="{old_version}"
+new_version="{new_version}"
+sed -i "s/$old_version/$new_version/g" "$file"
 
 mvn clean test -Dmaven.test.skip=false -DfailIfNoTests=false || true
 """.format(
-                    pr=self.pr
+                    pr=self.pr,
+                    old_version=self.old_version(),
+                    new_version=self.new_version(),
                 ),
             ),
             File(

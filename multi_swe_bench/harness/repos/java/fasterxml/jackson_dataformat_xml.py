@@ -82,6 +82,28 @@ class JacksonDataformatXmlImageDefault(Image):
     def workdir(self) -> str:
         return f"pr-{self.pr.number}"
 
+    def old_version(self) -> str:
+        old_versions: dict[int, str] = {
+            531: "2.14.0-SNAPSHOT",
+            544: "2.14.0-SNAPSHOT",
+            590: "2.15.0-rc3-SNAPSHOT",
+            638: "2.17.0-SNAPSHOT",
+            644: "2.17.0-SNAPSHOT",
+        }
+
+        return old_versions.get(self.pr.number, "2.15.0-rc2-SNAPSHOT")
+
+    def new_version(self) -> str:
+        new_versions: dict[int, str] = {
+            531: "2.14.4-SNAPSHOT",
+            544: "2.14.4-SNAPSHOT",
+            590: "2.15.5-SNAPSHOT",
+            638: "2.17.4-SNAPSHOT",
+            644: "2.17.4-SNAPSHOT",
+        }
+
+        return new_versions.get(self.pr.number, "2.15.5-SNAPSHOT")
+
     def files(self) -> list[File]:
         return [
             File(
@@ -130,11 +152,15 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
 file="/home/{pr.repo}/pom.xml"
-sed -i 's/2\.15\.0-rc2-SNAPSHOT/2.15.5-SNAPSHOT/g' "$file"
+old_version="{old_version}"
+new_version="{new_version}"
+sed -i "s/$old_version/$new_version/g" "$file"
 
 mvn clean test -Dmaven.test.skip=false -DfailIfNoTests=false || true
 """.format(
-                    pr=self.pr
+                    pr=self.pr,
+                    old_version=self.old_version(),
+                    new_version=self.new_version(),
                 ),
             ),
             File(
