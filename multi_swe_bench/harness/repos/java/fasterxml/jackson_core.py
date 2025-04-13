@@ -94,6 +94,7 @@ class JacksonCoreImageDefault(Image):
             1182: "2.17.0-SNAPSHOT",
             1204: "2.17.0-SNAPSHOT",
             1208: "2.17.0-SNAPSHOT",
+            1263: "2.18.0-SNAPSHOT",
             1309: "2.17.2-SNAPSHOT",
         }
 
@@ -112,6 +113,7 @@ class JacksonCoreImageDefault(Image):
             1204: "2.17.4-SNAPSHOT",
             1208: "2.17.4-SNAPSHOT",
             1263: "2.18.4-SNAPSHOT",
+            1309: "2.17.4-SNAPSHOT"
         }
 
         return new_versions.get(self.pr.number, "2.15.5-SNAPSHOT")
