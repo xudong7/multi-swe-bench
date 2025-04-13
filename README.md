@@ -151,10 +151,11 @@ The evaluation process will generate a `final_report.json` file in your specifie
 We are working to unify instances from prior benchmarks or training dataset into our framework for consistent comparison and reuse.
 
 - [x] Integrate 500 Python instances from [SWE-bench verified](https://arxiv.org/abs/2310.06770) 
-- [ ] Integrate 78 Java instances from [SWE-bench-java](https://arxiv.org/abs/2408.14354)
-- [ ] Integrate 2,438 Python instances from [SWE-gym](https://arxiv.org/abs/2412.21139)
+- [x] Integrate 78 Java instances from [SWE-bench-java](https://arxiv.org/abs/2408.14354)
 - [ ] Optimize patching: replace `git apply` with `patch --batch --fuzz=5 -p1 -i`
 - [ ] Publish as a pip package for easier installation and reuse
+- [ ] Integrate 2,438 Python instances from [SWE-gym](https://arxiv.org/abs/2412.21139)
+- [ ] Integrate instances from [R2E-Gym](https://github.com/R2E-Gym/R2E-Gym)
 
 
 ## [🏆 Multi-SWE-RL Community](https://huggingface.co/Multi-SWE-RL)
