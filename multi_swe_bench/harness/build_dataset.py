@@ -373,9 +373,9 @@ class CliArgs:
             for pr in self.raw_dataset.values():
                 try:
                     instance: Instance = Instance.create(pr, config)
-                    if not self.check_specific(instance.pr.repo_full_name):
+                    if not self.check_specific(instance.pr.id):
                         continue
-                    if self.check_skip(instance.pr.repo_full_name):
+                    if self.check_skip(instance.pr.id):
                         continue
                     self._instances.append(instance)
                 except Exception as e:
