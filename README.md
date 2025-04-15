@@ -42,14 +42,16 @@ We are extremely delighted to release **Multi-SWE-bench**! Multi-SWE-bench addre
 
 We aim to accelerate progress in automated issue resolution and RL, bridging the gap toward AGI. Let's join the **Multi-SWE-RL community** to expand datasets, tools, and research collaboration!
 
+## 📢 News
+[2025/04/15]🔥We released [Multi-SWE-bench mini](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench_mini)! A lightweight version of the full benchmark — 400 instances in total, covering 8 languages, designed to reduce compute cost and make evaluation faster and easier.
+
+[2025/04/03]🔥We released [Multi-SWE-bench](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench) and [Multi-SWE-RL](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-RL).
+
 ## ⚡ Features
 
 - **Comprehensive Evaluation**: Evaluating nine powerful models (GPT-4o, OpenAI-o1, OpenAI-o3-mini-high, Claude-3.5-Sonnet, Claude-3.7-Sonnet, DeepSeek-V3, DeepSeek-R1, Qwen2.5-72B-Instruct, and Doubao-1.5-Pro) across three agent frameworks (Agentless, SWE-agent, OpenHands), yielding several valuable insights.  
 - **Multi-SWE-RL Community**: Open-source initiative for large-scale RL datasets. Initial release includes **4723 instances** to advance RL research.  
 - **Fully Open Source Data, Code, and Environment**: All data, code, and container images are publicly released, along with detailed tutorials, to foster community contributions and enable scalable extension.
-
-## 📢 News
-[2025/04/03]🔥We release [Multi-SWE-bench](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench) and [Multi-SWE-RL](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-RL).
 
 ## 📊 Evaluation
 
