@@ -215,13 +215,22 @@ class Astro(Instance):
     def dependency(self) -> Optional[Image]:
         return PuppeteerImageDefault(self.pr, self._config)
 
-    def run(self) -> str:
+    def run(self, run_cmd: str = "") -> str:
+        if run_cmd:
+            return run_cmd
+
         return "bash /home/run.sh"
 
-    def test_patch_run(self) -> str:
+    def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
+        if test_patch_run_cmd:
+            return test_patch_run_cmd
+
         return "bash /home/test-run.sh"
 
-    def fix_patch_run(self) -> str:
+    def fix_patch_run(self, fix_patch_run_cmd: str = "") -> str:
+        if fix_patch_run_cmd:
+            return fix_patch_run_cmd
+
         return "bash /home/fix-run.sh"
 
     def parse_log(self, test_log: str) -> TestResult:

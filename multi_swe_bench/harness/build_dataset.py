@@ -152,6 +152,27 @@ def get_parser() -> ArgumentParser:
         help="The maximum number of workers to use for running the instance.",
     )
     parser.add_argument(
+        "--run_cmd",
+        type=str,
+        required=False,
+        default="",
+        help="The command to run the image.",
+    )
+    parser.add_argument(
+        "--test_patch_run_cmd",
+        type=str,
+        required=False,
+        default="",
+        help="The command to run the test patch.",
+    )
+    parser.add_argument(
+        "--fix_patch_run_cmd",
+        type=str,
+        required=False,
+        default="",
+        help="The command to run the fix patch.",
+    )
+    parser.add_argument(
         "--log_dir",
         type=Path,
         required=False,
@@ -200,6 +221,9 @@ class CliArgs:
     max_workers: int
     max_workers_build_image: int
     max_workers_run_instance: int
+    run_cmd: str
+    test_patch_run_cmd: str
+    fix_patch_run_cmd: str
     log_dir: Path
     log_level: str
     log_to_console: bool
@@ -620,16 +644,16 @@ class CliArgs:
             return output
 
         output_run = run_and_save_output(
-            instance.name(), instance.run(), instance_dir / RUN_LOG_FILE
+            instance.name(), instance.run(self.run_cmd), instance_dir / RUN_LOG_FILE
         )
         output_test = run_and_save_output(
             instance.name(),
-            instance.test_patch_run(),
+            instance.test_patch_run(self.test_patch_run_cmd),
             instance_dir / TEST_PATCH_RUN_LOG_FILE,
         )
         output_fix = run_and_save_output(
             instance.name(),
-            instance.fix_patch_run(),
+            instance.fix_patch_run(self.fix_patch_run_cmd),
             instance_dir / FIX_PATCH_RUN_LOG_FILE,
         )
 
