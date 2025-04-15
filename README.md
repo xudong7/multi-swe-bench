@@ -200,7 +200,7 @@ If you find [Multi-SWE-bench](https://multi-swe-bench.github.io) useful for your
 }
 ```
 ## 📜 License
-This project is licensed under Apache License 2.0. See the [LICENSE](/LICENSE) flie for details.
+This project is licensed under Apache License 2.0. See the [LICENSE](/LICENSE) file for details.
 ## 🏢 About [ByteDance Seed Team](https://team.doubao.com/)
 
 Founded in 2023, ByteDance Seed Team is dedicated to crafting the industry's most advanced AI foundation models. The team aspires to become a world-class research team and make significant contributions to the advancement of science and society.
