@@ -255,6 +255,189 @@ git apply /home/test.patch /home/fix.patch
 """
 
 
+class JibImage2688(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
+
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Image | None:
+        return JibImageBase(self.pr, self._config)
+
+    def image_tag(self) -> str:
+        return f"pr-{self.pr.number}"
+
+    def workdir(self) -> str:
+        return f"pr-{self.pr.number}"
+
+    def files(self) -> list[File]:
+        return [
+            File(
+                ".",
+                "fix.patch",
+                f"{self.pr.fix_patch}",
+            ),
+            File(
+                ".",
+                "test.patch",
+                f"{self.pr.test_patch}",
+            ),
+            File(
+                ".",
+                "check_git_changes.sh",
+                """#!/bin/bash
+set -e
+
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  echo "check_git_changes: Not inside a git repository"
+  exit 1
+fi
+
+if [[ -n $(git status --porcelain) ]]; then
+  echo "check_git_changes: Uncommitted changes"
+  exit 1
+fi
+
+echo "check_git_changes: No uncommitted changes"
+exit 0
+
+""".format(
+                    pr=self.pr
+                ),
+            ),
+            File(
+                ".",
+                "prepare.sh",
+                """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git reset --hard
+bash /home/check_git_changes.sh
+git checkout {pr.base.sha}
+bash /home/check_git_changes.sh
+
+./gradlew clean test --continue || true
+
+""".format(
+                    pr=self.pr
+                ),
+            ),
+            File(
+                ".",
+                "run.sh",
+                """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+./gradlew jib-maven-plugin:test --tests com.google.cloud.tools.jib.maven.MavenProjectPropertiesTest
+
+""".format(
+                    pr=self.pr
+                ),
+            ),
+            File(
+                ".",
+                "test-run.sh",
+                """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply /home/test.patch
+./gradlew jib-maven-plugin:test --tests com.google.cloud.tools.jib.maven.MavenProjectPropertiesTest
+
+""".format(
+                    pr=self.pr
+                ),
+            ),
+            File(
+                ".",
+                "fix-run.sh",
+                """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply /home/test.patch /home/fix.patch
+./gradlew jib-maven-plugin:test --tests com.google.cloud.tools.jib.maven.MavenProjectPropertiesTest
+
+""".format(
+                    pr=self.pr
+                ),
+            ),
+        ]
+
+    def dockerfile(self) -> str:
+        image = self.dependency()
+        name = image.image_name()
+        tag = image.image_tag()
+
+        copy_commands = ""
+        for file in self.files():
+            copy_commands += f"COPY {file.name} /home/\n"
+
+        prepare_commands = "RUN bash /home/prepare.sh"
+
+        proxy_setup = ""
+        proxy_cleanup = ""
+        if self.global_env:
+            proxy_host = None
+            proxy_port = None
+
+            for line in self.global_env.splitlines():
+                match = re.match(
+                    r"^ENV\s*(http[s]?_proxy)=http[s]?://([^:]+):(\d+)", line
+                )
+                if match:
+                    proxy_host = match.group(2)
+                    proxy_port = match.group(3)
+                    break
+            if proxy_host and proxy_port:
+                proxy_setup = textwrap.dedent(
+                    f"""
+                    RUN mkdir -p ~/.gradle && \\
+                        if [ ! -f "$HOME/.gradle/gradle.properties" ]; then \\
+                            touch "$HOME/.gradle/gradle.properties"; \\
+                        fi && \\
+                        if ! grep -q "systemProp.http.proxyHost" "$HOME/.gradle/gradle.properties"; then \\
+                            echo 'systemProp.http.proxyHost={proxy_host}' >> "$HOME/.gradle/gradle.properties" && \\
+                            echo 'systemProp.http.proxyPort={proxy_port}' >> "$HOME/.gradle/gradle.properties" && \\
+                            echo 'systemProp.https.proxyHost={proxy_host}' >> "$HOME/.gradle/gradle.properties" && \\
+                            echo 'systemProp.https.proxyPort={proxy_port}' >> "$HOME/.gradle/gradle.properties"; \\
+                        fi && \\
+                        echo 'export GRADLE_USER_HOME=/root/.gradle' >> ~/.bashrc && \\
+                        /bin/bash -c "source ~/.bashrc"
+                """
+                )
+
+                proxy_cleanup = textwrap.dedent(
+                    """
+                    RUN rm -f ~/.gradle/gradle.properties
+                """
+                )
+        return f"""FROM {name}:{tag}
+
+{self.global_env}
+
+{proxy_setup}
+
+{copy_commands}
+
+{prepare_commands}
+
+{proxy_cleanup}
+
+{self.clear_env}
+
+"""
+
+
 @Instance.register("googlecontainertools", "jib")
 class Jib(Instance):
     def __init__(self, pr: PullRequest, config: Config, *args, **kwargs):
@@ -267,6 +450,9 @@ class Jib(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
+        if self.pr.number == 2688:
+            return JibImage2688(self.pr, self._config)
+
         return JibImageDefault(self.pr, self._config)
 
     def run(self) -> str:
@@ -301,22 +487,36 @@ class Jib(Instance):
         ]
 
         for line in test_log.splitlines():
+            line = line.strip()
             for passed_re in passed_res:
                 m = passed_re.match(line)
-                if m and m.group(1) not in failed_tests:
-                    passed_tests.add(m.group(1))
+                if m:
+                    test_name = m.group(1)
+                    if test_name in failed_tests:
+                        continue
+                    if test_name in skipped_tests:
+                        skipped_tests.remove(test_name)
+                    passed_tests.add(test_name)
 
             for failed_re in failed_res:
                 m = failed_re.match(line)
                 if m:
-                    failed_tests.add(m.group(1))
-                    if m.group(1) in passed_tests:
-                        passed_tests.remove(m.group(1))
+                    test_name = m.group(1)
+                    if test_name in passed_tests:
+                        passed_tests.remove(test_name)
+                    if test_name in skipped_tests:
+                        skipped_tests.remove(test_name)
+                    failed_tests.add(test_name)
 
             for skipped_re in skipped_res:
                 m = skipped_re.match(line)
                 if m:
-                    skipped_tests.add(m.group(1))
+                    test_name = m.group(1)
+                    if test_name in passed_tests:
+                        continue
+                    if test_name not in failed_tests:
+                        continue
+                    skipped_tests.add(test_name)
 
         return TestResult(
             passed_count=len(passed_tests),
