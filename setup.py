@@ -1,5 +1,9 @@
 from setuptools import find_packages, setup
 
+# 读取 requirements.txt 中的依赖
+with open("requirements.txt") as f:
+    requirements = f.read().splitlines()
+
 setup(
     name="multi-swe-bench",
     version="0.1.1",
