@@ -5,4 +5,5 @@ gitpython
 toml
 pyyaml
 PyGithub
-unidiff 
+unidiff
+python-dotenv
