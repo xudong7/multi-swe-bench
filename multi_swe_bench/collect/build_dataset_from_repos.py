@@ -4,7 +4,6 @@ import argparse
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
-import math
 import shutil
 
 
