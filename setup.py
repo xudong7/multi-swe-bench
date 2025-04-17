@@ -1,14 +1,19 @@
 from setuptools import find_packages, setup
 
-# 读取 requirements.txt 中的依赖
-with open("requirements.txt") as f:
-    requirements = f.read().splitlines()
-
 setup(
     name="multi-swe-bench",
     version="0.1.1",
     packages=find_packages(),
-    install_requires=requirements,
+    install_requires=[
+        "dataclasses_json",
+        "docker",
+        "tqdm",
+        "gitpython",
+        "toml",
+        "pyyaml",
+        "PyGithub",
+        "unidiff",
+    ],
     author="Daoguang Zan",
     author_email="zandaoguang@bytedance.com",
     description="Multi-SWE-bench: A Multilingual Benchmark for Issue Resolving",
