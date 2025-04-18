@@ -155,7 +155,7 @@ We are working to unify instances from prior benchmarks or training dataset into
 - [x] Integrate 500 Python instances from [SWE-bench verified](https://arxiv.org/abs/2310.06770) 
 - [x] Integrate 78 Java instances from [SWE-bench-java](https://arxiv.org/abs/2408.14354)
 - [x] Support customizing `run.sh`, `test-run.sh`, and `fix-run.sh` commands via configuration file using `"run_cmd"`, `"test_patch_run_cmd"`, and `"fix_patch_run_cmd"`
-- [ ] Publish as a pip package for easier installation and reuse
+- [x] Publish as a [pip package](https://pypi.org/project/multi-swe-bench) for easier installation and reuse
 - [ ] Integrate 2,438 Python instances from [SWE-gym](https://arxiv.org/abs/2412.21139)
 - [ ] Integrate instances from [R2E-Gym](https://github.com/R2E-Gym/R2E-Gym)
 
