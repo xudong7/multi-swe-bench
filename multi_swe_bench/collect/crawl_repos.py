@@ -1,3 +1,17 @@
+# Copyright (c) 2024 Bytedance Ltd. and/or its affiliates
+
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+
+#      http://www.apache.org/licenses/LICENSE-2.0
+
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
 import requests
 import os
 from datetime import datetime
@@ -5,28 +19,28 @@ import argparse
 import csv
 import time
 from tqdm import tqdm
-
+from typing import Optional, List, Dict, Any
+import random
+from multi_swe_bench.collect.util import get_tokens
 
 class GitHubScraper:
-    def __init__(self):
-        self.max_retries = 3
-        self.retry_delay = 10
-        self.request_delay = 2
+    def __init__(self) -> None:
+        self.max_retries: int = 3
+        self.retry_delay: int = 10
+        self.request_delay: int = 2
 
-    def fetch_repositories(self, language, min_stars=0, max_results=1000000, output_format='console', token=None,
-                           output_dir='.'):
+    def fetch_repositories(
+        self,
+        language: str,
+        min_stars: int = 0,
+        max_results: int = 1000000,
+        output_format: str = 'console',
+        token: Optional[str] = None,
+        output_dir: str = '.'
+    ) -> None:
         """
         Fetch GitHub repositories sorted by stars
-
-        Args:
-            language (str): Programming language to search
-            min_stars (int): Minimum star count
-            max_results (int): Maximum results to return
-            output_format (str): 'console' or 'csv'
-            token (str): GitHub personal access token
-            output_dir (str): Directory to save CSV files (will be created if doesn't exist)
         """
-        # Create output directory if it doesn't exist
         try:
             os.makedirs(output_dir, exist_ok=True)
             print(f"Output will be saved to: {os.path.abspath(output_dir)}")
@@ -34,21 +48,21 @@ class GitHubScraper:
             print(f"Error creating output directory: {e}")
             return
 
-        url = "https://api.github.com/search/repositories"
-        headers = {"Accept": "application/vnd.github.v3+json"}
+        url: str = "https://api.github.com/search/repositories"
+        headers: Dict[str, str] = {"Accept": "application/vnd.github.v3+json"}
         if token:
             headers["Authorization"] = f"token {token}"
 
-        all_repositories = []
-        remaining_results = max_results
-        page = 1
+        all_repositories: List[Dict[str, Any]] = []
+        remaining_results: int = max_results
+        page: int = 1
 
         print(f"Fetching repositories for {language} (max {max_results} repos)")
 
         with tqdm(total=max_results, desc="Fetching repos", unit="repo") as pbar:
             while remaining_results > 0:
                 try:
-                    response = self._make_request_with_retry(
+                    response: requests.Response = self._make_request_with_retry(
                         url=url,
                         headers=headers,
                         params={
@@ -60,14 +74,14 @@ class GitHubScraper:
                         }
                     )
 
-                    data = response.json()
-                    repositories = data.get("items", [])
+                    data: Dict[str, Any] = response.json()
+                    repositories: List[Dict[str, Any]] = data.get("items", [])
 
                     if not repositories:
                         break
 
                     all_repositories.extend(repositories)
-                    fetched_count = len(repositories)
+                    fetched_count: int = len(repositories)
                     pbar.update(fetched_count)
                     remaining_results -= fetched_count
                     page += 1
@@ -93,12 +107,17 @@ class GitHubScraper:
         else:
             self._print_results(all_repositories, language)
 
-    def _make_request_with_retry(self, url, headers, params):
+    def _make_request_with_retry(
+        self,
+        url: str,
+        headers: Dict[str, str],
+        params: Dict[str, Any]
+    ) -> requests.Response:
         """Make HTTP request with retry logic"""
-        last_error = None
+        last_error: Optional[Exception] = None
         for attempt in range(self.max_retries):
             try:
-                response = requests.get(url, headers=headers, params=params)
+                response: requests.Response = requests.get(url, headers=headers, params=params)
                 response.raise_for_status()
 
                 if int(response.headers.get('X-RateLimit-Remaining', 1)) <= 1:
@@ -118,7 +137,7 @@ class GitHubScraper:
 
         raise last_error if last_error else Exception("Request failed after retries")
 
-    def _print_results(self, repositories, language):
+    def _print_results(self, repositories: List[Dict[str, Any]], language: str) -> None:
         """Print results to console"""
         print(f"\n{'=' * 50}")
         print(f"Top {len(repositories)} {language} repositories (sorted by stars):")
@@ -133,11 +152,16 @@ class GitHubScraper:
             print(f"   🕒 Last updated: {repo['updated_at']}")
             print("-" * 60)
 
-    def _save_to_csv(self, repositories, language, output_dir):
+    def _save_to_csv(
+        self,
+        repositories: List[Dict[str, Any]],
+        language: str,
+        output_dir: str
+    ) -> None:
         """Save results to CSV in specified directory"""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"github_{language}_repos_{timestamp}.csv"
-        filepath = os.path.join(output_dir, filename)
+        timestamp: str = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename: str = f"github_{language}_repos_{timestamp}.csv"
+        filepath: str = os.path.join(output_dir, filename)
 
         try:
             with open(filepath, mode='w', newline='', encoding='utf-8-sig') as file:
@@ -145,10 +169,8 @@ class GitHubScraper:
                 writer.writerow(['Rank', 'Name', 'Stars', 'Forks', 'Description', 'URL', 'Last Updated'])
 
                 for i, repo in enumerate(repositories, 1):
-                    description = repo['description'] or 'No description'
-                    if description:
-                        description = description.encode('utf-8', 'ignore').decode('utf-8')
-
+                    description: str = repo['description'] or 'No description'
+                    description = description.encode('utf-8', 'ignore').decode('utf-8')
                     writer.writerow([
                         i,
                         repo['full_name'],
@@ -166,29 +188,27 @@ class GitHubScraper:
             print(f"\nFailed to save CSV file: {str(e)}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description='Fetch GitHub repositories sorted by stars')
-    parser.add_argument('--language', required=True,
-                        type=str, help='Programming language to search')
-    parser.add_argument('--min-stars', type=int, default=0, help='Minimum star count (default: 0)')
-    parser.add_argument('--max-results', type=int, default=100,
-                        help='Maximum results to return (default: 100)')
+    parser.add_argument('--language', required=True, type=str, help='Programming language to search')
+    parser.add_argument('--min_stars', type=int, default=0, help='Minimum star count (default: 0)')
+    parser.add_argument('--max_results', type=int, default=100, help='Maximum results to return (default: 100)')
     parser.add_argument('--output', type=str, choices=['console', 'csv'], default='csv',
                         help='Output format: console (default) or csv')
-    parser.add_argument('--token', type=str, default=None,
-                        help='GitHub personal access token for higher rate limits')
-    parser.add_argument('--output-dir', type=str, default='.',
+    parser.add_argument('--token', type=str, default=None, help='GitHub personal access token for higher rate limits')
+    parser.add_argument('--output_dir', type=str, default='.',
                         help='Directory to save CSV files (will be created if doesn\'t exist)')
 
     args = parser.parse_args()
 
     scraper = GitHubScraper()
+    token = random.choice(get_tokens(args.token))
     scraper.fetch_repositories(
         language=args.language,
         min_stars=args.min_stars,
         max_results=args.max_results,
         output_format=args.output,
-        token=args.token,
+        token=token,
         output_dir=args.output_dir
     )
 

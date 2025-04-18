@@ -6,4 +6,3 @@ toml
 pyyaml
 PyGithub
 unidiff
-python-dotenv

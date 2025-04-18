@@ -61,34 +61,53 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-if __name__ == "__main__":
-    parser = get_parser()
-    args = parser.parse_args()
-
-    tokens = get_tokens(args.tokens)
-
+def run_pipeline(
+    out_dir: Path,
+    tokens: list[str],
+    org: str,
+    repo: str,
+    delay_on_error: int = 300,
+    retry_attempts: int = 3,
+    skip_commit_message: bool = False,
+) -> None:
     # step 1: get all pull requests
-    get_all_prs(tokens, args.out_dir, args.org, args.repo)
+    get_all_prs(tokens, out_dir, org, repo)
 
     # step 2: filter to obtain reqired pull requests
     # - closed
     # - resolve some issues
-    pull_file = args.out_dir / f"{args.org}__{args.repo}_prs.jsonl"
-    filter_prs(tokens, args.out_dir, pull_file, args.skip_commit_message)
+    pull_file = out_dir / f"{org}__{repo}_prs.jsonl"
+    filter_prs(tokens, out_dir, pull_file, skip_commit_message)
 
     # step 3: get related issues
-    pull_file = args.out_dir / f"{args.org}__{args.repo}_filtered_prs.jsonl"
-    get_related_issues(tokens, args.out_dir, pull_file)
+    pull_file = out_dir / f"{org}__{repo}_filtered_prs.jsonl"
+    get_related_issues(tokens, out_dir, pull_file)
 
     # step 4: merged filtered pull requests and related issues
-    merge_prs_with_issues(args.out_dir, args.org, args.repo)
+    merge_prs_with_issues(out_dir, org, repo)
 
     # step 5: build a complete dataset
     # - download patch
     # - split patch as fix_patch and test_patch
     dataset_file = (
-        args.out_dir / f"{args.org}__{args.repo}_filtered_prs_with_issues.jsonl"
+        out_dir / f"{org}__{repo}_filtered_prs_with_issues.jsonl"
     )
     build_dataset(
-        tokens, args.out_dir, dataset_file, args.delay_on_error, args.retry_attempts
+        tokens, out_dir, dataset_file, delay_on_error, retry_attempts
+    )
+
+
+if __name__ == "__main__":
+    parser = get_parser()
+    args = parser.parse_args()
+    tokens = get_tokens(args.tokens)
+
+    run_pipeline(
+        out_dir=args.out_dir,
+        tokens=tokens,
+        org=args.org,
+        repo=args.repo,
+        delay_on_error=args.delay_on_error,
+        retry_attempts=args.retry_attempts,
+        skip_commit_message=args.skip_commit_message,
     )
