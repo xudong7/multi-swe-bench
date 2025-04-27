@@ -56,7 +56,10 @@ class Instance:
     def test_patch_run(self) -> str:
         raise NotImplementedError
 
-    def fix_patch_run(self) -> str:
+    def fix_patch_run(self, fix_patch_run_cmd: str = "") -> str:
+        if fix_patch_run_cmd:
+            return fix_patch_run_cmd
+
         raise NotImplementedError
 
     def parse_log(self, test_log: str) -> TestResult:

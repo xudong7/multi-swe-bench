@@ -20,7 +20,10 @@ class Matplotlib(Instance):
     def dependency(self) -> Optional[Image]:
         return SWEImageDefault(self.pr, self._config)
 
-    def fix_patch_run(self) -> str:
+    def fix_patch_run(self, fix_patch_run_cmd: str = "") -> str:
+        if fix_patch_run_cmd:
+            return fix_patch_run_cmd
+
         return "bash /home/fix-run.sh"
 
     def parse_log(self, log: str) -> TestResult:
