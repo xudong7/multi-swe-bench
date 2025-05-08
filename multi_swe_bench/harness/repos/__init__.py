@@ -8,3 +8,4 @@ from multi_swe_bench.harness.repos.rust import *
 from multi_swe_bench.harness.repos.typescript import *
 from multi_swe_bench.harness.repos.typescript.chakra_ui import *
 from multi_swe_bench.harness.repos.ruby import *
+from multi_swe_bench.harness.repos.php import *
