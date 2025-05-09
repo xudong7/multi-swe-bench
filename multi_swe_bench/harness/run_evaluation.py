@@ -531,6 +531,11 @@ class CliArgs:
                 git_util.clone_repository(self.repo_dir / repo.org, repo.org, repo.repo)
 
             is_clean, error_msg = git_util.is_clean(repo_dir)
+            #if it is not clean, try to clean it
+            if not is_clean:
+                is_clean, error_msg = True, ""
+                git_util.clean(repo_dir)
+            #check if it is clean again
             if not is_clean:
                 self.logger.error(error_msg)
                 error_happened = True
