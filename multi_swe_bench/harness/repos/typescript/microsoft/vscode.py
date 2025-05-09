@@ -320,27 +320,6 @@ class vscode(Instance):
         failed_tests = set()
         skipped_tests = set()
 
-        re_pass_tests = [re.compile(r"^\d+/\d+\s*Test\s*#\d+:\s*(.*?)\s*\.+\s*Passed")]
-        re_fail_tests = [
-            re.compile(r"^\d+/\d+\s*Test\s*#\d+:\s*(.*?)\s*\.+\s*\*+Failed$")
-        ]
-
-        for line in test_log.splitlines():
-            line = line.strip()
-            if not line:
-                continue
-
-            for re_pass_test in re_pass_tests:
-                pass_match = re_pass_test.match(line)
-                if pass_match:
-                    test = pass_match.group(1)
-                    passed_tests.add(test)
-
-            for re_fail_test in re_fail_tests:
-                fail_match = re_fail_test.match(line)
-                if fail_match:
-                    test = fail_match.group(1)
-                    failed_tests.add(test)
 
         return TestResult(
             passed_count=len(passed_tests),
