@@ -69,8 +69,6 @@ def extract_patches(pull: dict, token: str) -> tuple[str, str]:
     patch = requests.get(pull["diff_url"], headers=headers).text
     test_patch = ""
     fix_patch = ""
-    # print(f"patch: {patch}")
-    # Detect GitHub rate limit HTML page
     if "exceeded a secondary rate limit" in patch or "Access to this site has been restricted" in patch:
         print("GitHub API rate limit exceeded or Network error.")
         raise Exception("GitHub API rate limit exceeded. Please wait before making additional requests, or check your network connection.")
