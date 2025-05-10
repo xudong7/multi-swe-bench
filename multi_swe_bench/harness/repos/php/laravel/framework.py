@@ -64,6 +64,64 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 """
 
+class ImageBase7(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
+
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Union[str, "Image"]:
+        return "php:7.2-cli"
+
+    def image_tag(self) -> str:
+        return "base"
+
+    def workdir(self) -> str:
+        return "base"
+
+    def files(self) -> list[File]:
+        return []
+
+    def dockerfile(self) -> str:
+        image_name = self.dependency()
+        if isinstance(image_name, Image):
+            image_name = image_name.image_full_name()
+
+        if self.config.need_clone:
+            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
+        else:
+            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
+
+        return f"""FROM {image_name}
+
+
+
+WORKDIR /home/
+
+{code}
+
+{self.global_env}
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    libpq-dev \
+    libgmp-dev \
+    libssl-dev  \
+    && docker-php-ext-install pdo_mysql pdo_pgsql gmp ftp
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+
+{self.clear_env}
+
+"""
 
 class ImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
@@ -79,7 +137,10 @@ class ImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        return ImageBase(self.pr, self.config)
+        if self.pr.number <= 34640:
+            return ImageBase7(self.pr, self.config)
+        else:
+            return ImageBase(self.pr, self.config)
 
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
