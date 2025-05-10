@@ -66,3 +66,7 @@ def get_all_commit_hashes(repo_path: Path, logger: logging.Logger) -> set[str]:
     except GitError as e:
         logger.error(f"Git error occurred: {e}")
         return set()
+
+def clean(repo_dir):
+    subprocess.run(["git", "reset", "--hard"], cwd=repo_dir, check=True)
+    subprocess.run(["git", "clean", "-fd"], cwd=repo_dir, check=True)
