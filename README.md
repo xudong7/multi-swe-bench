@@ -22,17 +22,15 @@
 
 ## 🚀 Multi-SWE-bench: A Multilingual Benchmark for Issue Resolving
 <p align="center">
-<!--   <a href="https://github.com/multi-swe-bench/multi-swe-bench">
-    <img src="https://img.shields.io/badge/Multi_SWE_bench-Project Page-yellow"></a> -->
   <a href="https://arxiv.org/pdf/2504.02605">
-    <img src="https://img.shields.io/badge/Multi_SWE_bench-Tech Report-red"></a>
+    <img src="https://img.shields.io/badge/Tech Report-arXiv-red"></a>
   <a href="https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench">
-    <img src="https://img.shields.io/badge/Multi_SWE_bench-Hugging Face-orange"></a>
+    <img src="https://img.shields.io/badge/Dataset-HuggingFace-orange"></a>
   <br>
   <a href="https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-RL">
-    <img src="https://img.shields.io/badge/Multi_SWE_RL_Community-Hugging Face-EE9A12"></a>
+    <img src="https://img.shields.io/badge/RL Dataset-HuggingFace-EE9A12"></a>
   <a href="https://discord.gg/EtfbkfqUuN">
-    <img src="https://img.shields.io/badge/Multi_SWE_RL_Community-Discord-1449DA"></a>
+    <img src="https://img.shields.io/badge/Community-Discord-1449DA"></a>
   <a href="https://github.com/multi-swe-bench/multi-swe-bench/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/License-Apache-blue"></a>
 </p>
@@ -43,6 +41,8 @@ We are extremely delighted to release **Multi-SWE-bench**! Multi-SWE-bench addre
 We aim to accelerate progress in automated issue resolution and RL, bridging the gap toward AGI. Let's join the **Multi-SWE-RL community** to expand datasets, tools, and research collaboration!
 
 ## 📢 News
+[2025/05/10]📢 Our EnvAgent is coming soon! It uses LLMs to automate multilingual environment setup, taking Multi-SWE-RL to the next level. Stay tuned!⏰
+
 [2025/04/15]🔥We released [Multi-SWE-bench mini](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench_mini)! A lightweight version of the full benchmark — 400 instances in total, covering 8 languages, designed to reduce compute cost and make evaluation faster and easier.
 
 [2025/04/03]🔥We released [Multi-SWE-bench](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench) and [Multi-SWE-RL](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-RL).
