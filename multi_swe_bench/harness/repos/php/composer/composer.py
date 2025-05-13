@@ -63,6 +63,63 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 {self.clear_env}
 
 """
+class ImageBase7_2(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
+
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Union[str, "Image"]:
+        return "php:7.2-cli"
+
+    def image_tag(self) -> str:
+        return "base7_2"
+
+    def workdir(self) -> str:
+        return "base7_2"
+
+    def files(self) -> list[File]:
+        return []
+
+    def dockerfile(self) -> str:
+        image_name = self.dependency()
+        if isinstance(image_name, Image):
+            image_name = image_name.image_full_name()
+
+        if self.config.need_clone:
+            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
+        else:
+            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
+
+        return f"""FROM {image_name}
+
+
+
+WORKDIR /home/
+
+{code}
+
+{self.global_env}
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    zlib1g-dev \
+    libicu-dev \
+    && docker-php-ext-install intl
+
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+
+{self.clear_env}
+
+"""
 
 class ImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
@@ -78,6 +135,8 @@ class ImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
+        if self.pr.number <= 10314:
+            return ImageBase7_2(self.pr, self.config)
         return ImageBase(self.pr, self.config)
 
     def image_tag(self) -> str:
@@ -242,26 +301,46 @@ class composer(Instance):
 
         current_class = None
         for line in test_log.splitlines():
-            class_match = re.search(r'\x1b\[4m(.+?)\x1b\[0m', line)
-            if class_match:
-                current_class = class_match.group(1).strip()
+            # 情况1：ANSI格式下划线类名
+            class_match_ansi = re.search(r'\x1b\[4m(.+?)\x1b\[0m', line)
+            if class_match_ansi:
+                current_class = class_match_ansi.group(1).strip()
+                continue
+
+            # 情况2：纯文本类名（旧版phpunit输出），没有任何缩进和符号
+            class_match_plain = re.match(r'^[A-Z][\w\\]+$', line.strip())
+            if class_match_plain:
+                current_class = line.strip()
                 continue
 
             if not current_class:
                 continue
 
-            match = re.search(r'\x1b\[\d{2}m([✔✘↩])\x1b\[0m\s+(.*)', line)
-            if match:
-                symbol, name = match.groups()
-                name = re.sub(r'\x1b\[[0-9;]*m', '', name).strip()  
+            # ANSI格式结果匹配
+            match_ansi = re.search(r'\x1b\[\d{2}m([✔✘↩])\x1b\[0m\s+(.*)', line)
+            if match_ansi:
+                symbol, name = match_ansi.groups()
+                name = re.sub(r'\x1b\[[0-9;]*m', '', name).strip()
                 full_name = f"{current_class}::{name}"
-
                 if symbol == '✔':
                     passed_tests.add(full_name)
                 elif symbol == '✘':
                     failed_tests.add(full_name)
                 elif symbol == '↩':
                     skipped_tests.add(full_name)
+                continue
+
+            # 新增：纯文本格式 [x] / [ ] 表示测试状态
+            match_plain = re.match(r'^\s*\[(.)\]\s+(.*)', line)
+            if match_plain:
+                symbol, name = match_plain.groups()
+                name = name.strip()
+                full_name = f"{current_class}::{name}"
+                if symbol.lower() == 'x':
+                    passed_tests.add(full_name)
+                elif symbol == ' ':
+                    failed_tests.add(full_name)
+                continue
 
         return TestResult(
             passed_count=len(passed_tests),
