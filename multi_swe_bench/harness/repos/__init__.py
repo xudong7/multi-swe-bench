@@ -11,3 +11,4 @@ from multi_swe_bench.harness.repos.ruby import *
 from multi_swe_bench.harness.repos.php import *
 from multi_swe_bench.harness.repos.swift import *
 from multi_swe_bench.harness.repos.kotlin import *
+from multi_swe_bench.harness.repos.scala import *
