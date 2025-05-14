@@ -72,10 +72,47 @@ def extract_patches(pull: dict, token: str) -> tuple[str, str]:
     if "exceeded a secondary rate limit" in patch or "Access to this site has been restricted" in patch:
         print("GitHub API rate limit exceeded or Network error.")
         raise Exception("GitHub API rate limit exceeded. Please wait before making additional requests, or check your network connection.")
-  
+
     for hunk in PatchSet(patch):
         if any(
             test_word in hunk.path for test_word in ["test", "tests", "e2e", "testing"]
+        ):
+            test_patch += str(hunk)
+        else:
+            fix_patch += str(hunk)
+    return fix_patch, test_patch
+
+
+def extract_patches_from_compare(pull: dict, token: str) -> tuple[str, str]:
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3.diff",
+    }
+
+    org = pull.get('org')
+    repo = pull.get('repo')
+    base_sha = pull.get('base', {}).get('sha')
+    commits = pull.get('commits', [])
+    test_patch = ""
+    fix_patch = ""
+
+    if not all([org, repo, base_sha]) or not commits:
+        return fix_patch, test_patch
+
+    head_sha = commits[-1].get('sha')
+    if not head_sha:
+        raise ValueError("Missing head SHA in last commit")
+
+    compare_url = f'https://api.github.com/repos/{org}/{repo}/compare/{base_sha}...{head_sha}'
+    response = requests.get(compare_url, headers=headers)
+    if response.status_code != 200:
+        raise Exception(f"Failed to fetch patch: {response.status_code} - {response.text[:300]}")
+
+    patch = response.text
+
+    for hunk in PatchSet(patch):
+        if any(
+                test_word in hunk.path.lower() for test_word in ["test", "tests", "e2e", "testing"]
         ):
             test_patch += str(hunk)
         else:
@@ -159,7 +196,7 @@ def main(
 
             for attempt in range(retry_attempts):
                 try:
-                    fix_patch, test_patch = extract_patches(pr, random.choice(tokens))
+                    fix_patch, test_patch = extract_patches_from_compare(pr, random.choice(tokens))
                     pr["fix_patch"] = fix_patch
                     pr["test_patch"] = test_patch
 

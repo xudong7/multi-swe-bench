@@ -1,6 +1,6 @@
 import re
 from typing import Optional, Union
-
+import textwrap
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
 from multi_swe_bench.harness.pull_request import PullRequest
@@ -184,14 +184,55 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
             copy_commands += f"COPY {file.name} /home/\n"
 
         prepare_commands = "RUN bash /home/prepare.sh"
+        proxy_setup = ""
+        proxy_cleanup = ""
 
+        if self.global_env:
+            proxy_host = None
+            proxy_port = None
+
+            for line in self.global_env.splitlines():
+                match = re.match(
+                    r"^ENV\s*(http[s]?_proxy)=http[s]?://([^:]+):(\d+)", line
+                )
+                if match:
+                    proxy_host = match.group(2)
+                    proxy_port = match.group(3)
+                    break
+            if proxy_host and proxy_port:
+                proxy_setup = textwrap.dedent(
+                    f"""
+                    RUN mkdir -p ~/.gradle && \\
+                        if [ ! -f "$HOME/.gradle/gradle.properties" ]; then \\
+                            touch "$HOME/.gradle/gradle.properties"; \\
+                        fi && \\
+                        if ! grep -q "systemProp.http.proxyHost" "$HOME/.gradle/gradle.properties"; then \\
+                            echo 'systemProp.http.proxyHost={proxy_host}' >> "$HOME/.gradle/gradle.properties" && \\
+                            echo 'systemProp.http.proxyPort={proxy_port}' >> "$HOME/.gradle/gradle.properties" && \\
+                            echo 'systemProp.https.proxyHost={proxy_host}' >> "$HOME/.gradle/gradle.properties" && \\
+                            echo 'systemProp.https.proxyPort={proxy_port}' >> "$HOME/.gradle/gradle.properties"; \\
+                        fi && \\
+                        echo 'export GRADLE_USER_HOME=/root/.gradle' >> ~/.bashrc && \\
+                        /bin/bash -c "source ~/.bashrc"
+                """
+                )
+
+                proxy_cleanup = textwrap.dedent(
+                    """
+                    RUN rm -f ~/.gradle/gradle.properties
+                """
+                )
         return f"""FROM {name}:{tag}
 
 {self.global_env}
 
+{proxy_setup}
+
 {copy_commands}
 
 {prepare_commands}
+
+{proxy_cleanup}
 
 {self.clear_env}
 
