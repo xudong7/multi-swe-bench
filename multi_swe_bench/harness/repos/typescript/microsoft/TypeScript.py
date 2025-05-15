@@ -49,7 +49,7 @@ WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
-RUN npm install -g hereby
+RUN npm install -g hereby gulp-cli
 {code}
 
 {self.clear_env}
@@ -189,7 +189,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
-npm ci
+npm ci || npm install || true
 
 """.format(
                     pr=self.pr
@@ -202,8 +202,8 @@ npm ci
 set -e
 
 cd /home/{pr.repo}
-npm ci
-hereby runtests-parallel
+npm ci || npm install || true
+hereby runtests -r list || gulp runtests --reporter=list
 """.format(
                     pr=self.pr
                 ),
@@ -216,8 +216,8 @@ set -e
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
-npm ci
-hereby runtests-parallel
+npm ci || npm install || true
+hereby runtests -r list || gulp runtests --reporter=list
 
 """.format(
                     pr=self.pr
@@ -231,8 +231,8 @@ set -e
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-npm ci
-hereby runtests-parallel
+npm ci || npm install || true
+hereby runtests -r list || gulp runtests --reporter=list
 
 """.format(
                     pr=self.pr
@@ -301,6 +301,29 @@ class TypeScript(Instance):
         failed_tests = set()
         skipped_tests = set()
 
+        re_pass_tests = [
+            re.compile(r"\x1b\[32m\s*\x1b\[32m✔\x1b\[39m\x1b\[0m\x1b\[90m\s+(.+?)\:\s*\x1b\[0m")
+        ]
+        re_fail_tests = [
+            re.compile(r"\x1b\[31m\s*\d+\) (.+?)(?::)?\x1b\[0m")
+        ]
+
+        for line in test_log.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+
+            for pattern in re_pass_tests:
+                pass_match = pattern.match(line)
+                if pass_match:
+                    passed_tests.add(pass_match.group(1))
+                    break
+
+            for pattern in re_fail_tests:
+                fail_match = pattern.match(line)
+                if fail_match:
+                    failed_tests.add(fail_match.group(1))
+                    break
 
         return TestResult(
             passed_count=len(passed_tests),

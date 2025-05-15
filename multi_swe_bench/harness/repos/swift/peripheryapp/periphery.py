@@ -56,6 +56,108 @@ ENV TZ=Etc/UTC
 """
 
 
+class peripheryImageBaseSwift5_8(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
+
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Union[str, "Image"]:
+        return "swiftfiddle/swift:5.8"
+
+    def image_tag(self) -> str:
+        return "base-swift-5.8"
+
+    def workdir(self) -> str:
+        return "base-swift-5.8"
+
+    def files(self) -> list[File]:
+        return []
+
+    def dockerfile(self) -> str:
+        image_name = self.dependency()
+        if isinstance(image_name, Image):
+            image_name = image_name.image_full_name()
+
+        if self.config.need_clone:
+            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
+        else:
+            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
+
+        return f"""FROM {image_name}
+
+{self.global_env}
+
+WORKDIR /home/
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+{code}
+
+{self.clear_env}
+
+"""
+
+
+
+class peripheryImageBaseSwift5_5(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
+
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Union[str, "Image"]:
+        return "swiftfiddle/swift:5.5"
+
+    def image_tag(self) -> str:
+        return "base-swift-5.5"
+
+    def workdir(self) -> str:
+        return "base-swift-5.5"
+
+    def files(self) -> list[File]:
+        return []
+
+    def dockerfile(self) -> str:
+        image_name = self.dependency()
+        if isinstance(image_name, Image):
+            image_name = image_name.image_full_name()
+
+        if self.config.need_clone:
+            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
+        else:
+            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
+
+        return f"""FROM {image_name}
+
+{self.global_env}
+
+WORKDIR /home/
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+{code}
+
+{self.clear_env}
+
+"""
+
+
+
 class peripheryImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -70,6 +172,10 @@ class peripheryImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
+        if 464 < self.pr.number <= 702:
+            return peripheryImageBaseSwift5_8(self.pr, self._config)
+        elif self.pr.number <= 464:
+            return peripheryImageBaseSwift5_5(self.pr, self._config)
         return peripheryImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:

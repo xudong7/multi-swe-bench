@@ -57,6 +57,56 @@ RUN apt-get update && apt-get install -y nodejs
 """
 
 
+class jekyllImageBaseRuby2_7(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
+
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Union[str, "Image"]:
+        return "ruby:2.7"
+
+    def image_tag(self) -> str:
+        return "base-ruby-2.7"
+
+    def workdir(self) -> str:
+        return "base-ruby-2.7"
+
+    def files(self) -> list[File]:
+        return []
+
+    def dockerfile(self) -> str:
+        image_name = self.dependency()
+        if isinstance(image_name, Image):
+            image_name = image_name.image_full_name()
+
+        if self.config.need_clone:
+            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
+        else:
+            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
+
+        return f"""FROM {image_name}
+
+{self.global_env}
+
+WORKDIR /home/
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+RUN apt-get update && apt-get install -y nodejs
+
+{code}
+
+{self.clear_env}
+
+"""
+
 class jekyllImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -71,6 +121,8 @@ class jekyllImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
+        if self.pr.number <= 8717:
+            return jekyllImageBaseRuby2_7(self.pr, self._config)
         return jekyllImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:
@@ -80,6 +132,104 @@ class jekyllImageDefault(Image):
         return f"pr-{self.pr.number}"
 
     def files(self) -> list[File]:
+        if self.pr.number <= 8717:
+            return [
+                File(
+                    ".",
+                    "fix.patch",
+                    f"{self.pr.fix_patch}",
+                ),
+                File(
+                    ".",
+                    "test.patch",
+                    f"{self.pr.test_patch}",
+                ),
+                File(
+                    ".",
+                    "check_git_changes.sh",
+                    """#!/bin/bash
+set -e
+
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  echo "check_git_changes: Not inside a git repository"
+  exit 1
+fi
+
+if [[ -n $(git status --porcelain) ]]; then
+  echo "check_git_changes: Uncommitted changes"
+  exit 1
+fi
+
+echo "check_git_changes: No uncommitted changes"
+exit 0
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "prepare.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git reset --hard
+bash /home/check_git_changes.sh
+git checkout {pr.base.sha}
+bash /home/check_git_changes.sh
+echo "gem 'test-unit'" >> Gemfile
+gem update --system 3.3.22
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+bundle install 
+bundle exec rake test TESTOPTS="-v"
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "test-run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply --whitespace=nowarn /home/test.patch
+bundle install 
+bundle exec rake test TESTOPTS="-v"
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "fix-run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply --whitespace=nowarn /home/test.patch /home/fix.patch
+bundle install 
+bundle exec rake test TESTOPTS="-v"
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+            ]
         return [
             File(
                 ".",
@@ -137,7 +287,6 @@ bash /home/check_git_changes.sh
 set -e
 
 cd /home/{pr.repo}
-set -e
 bundle install 
 bundle exec rake test TESTOPTS="-v"
 
@@ -153,7 +302,6 @@ set -e
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
-set -e
 bundle install 
 bundle exec rake test TESTOPTS="-v"
 
@@ -169,7 +317,6 @@ set -e
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-set -e
 bundle install 
 bundle exec rake test TESTOPTS="-v"
 
@@ -240,9 +387,11 @@ class jekyll(Instance):
         failed_tests = set()
         skipped_tests = set()
 
-        re_pass_tests = [re.compile(r'^(.+?)\s+=?\s*[\d.]+\s*(?:s\s*)?=\s*\.$')]
+        re_pass_tests = [re.compile(r'^(.+?)\s+=?\s*[\d.]+\s*(?:s\s*)?=\s*\.$'),
+                         re.compile(r'^\s*(.+?):\s+\.\: \([\d.]+\)$')]
         re_fail_tests = [
-            re.compile(r'^(.+?)\s+=?\s*[\d.]+\s*(?:s\s*)?=\s*[FE]$')
+            re.compile(r'^(.+?)\s+=?\s*[\d.]+\s*(?:s\s*)?=\s*[FE]$'),
+            re.compile(r'^\s*(.+?):\s+([.FE])$')
         ]
 
         for line in test_log.splitlines():

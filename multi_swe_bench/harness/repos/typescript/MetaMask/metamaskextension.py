@@ -1,6 +1,6 @@
 import re
 from typing import Optional, Union
-
+import textwrap
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
 from multi_swe_bench.harness.pull_request import PullRequest
@@ -20,7 +20,7 @@ class metamaskextensionImageBase(Image):
         return self._config
 
     def dependency(self) -> Union[str, "Image"]:
-        return "ubuntu:22.04"
+        return "node:18"
 
     def image_tag(self) -> str:
         return "base"
@@ -49,7 +49,7 @@ WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
-RUN apt update && apt install -y git curl
+RUN npm install yarn
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash && \
     export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
@@ -195,8 +195,8 @@ bash /home/check_git_changes.sh
 
 nvm install
 nvm use
-corepack enable
-yes | yarn -v
+corepack enable || true
+yes | yarn -v || true
 yarn install
 
 """.format(
@@ -213,10 +213,10 @@ export NVM_DIR="$HOME/.nvm"
 
 cd /home/{pr.repo}
 nvm use
-node -v
-which yarn
 yarn install
-yarn test:unit
+yarn test:unit --silent || true
+yarn test:integration --silent || true
+FORCE_COLOR=0 yarn test:e2e:global || true
 """.format(
                     pr=self.pr
                 ),
@@ -233,7 +233,9 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 nvm use
 yarn install
-yarn test:unit
+yarn test:unit --silent || true
+yarn test:integration --silent || true
+FORCE_COLOR=0 yarn test:e2e:global || true
 
 """.format(
                     pr=self.pr
@@ -251,7 +253,9 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 nvm use
 yarn install
-yarn test:unit
+yarn test:unit --silent || true
+yarn test:integration --silent || true
+FORCE_COLOR=0 yarn test:e2e:global || true
 
 """.format(
                     pr=self.pr
@@ -269,14 +273,49 @@ yarn test:unit
             copy_commands += f"COPY {file.name} /home/\n"
 
         prepare_commands = "RUN bash /home/prepare.sh"
+        proxy_setup = ""
+        proxy_cleanup = ""
 
+        if self.global_env:
+            proxy_host = None
+            proxy_port = None
+
+            for line in self.global_env.splitlines():
+                match = re.match(
+                    r"^ENV\s*(http[s]?_proxy)=http[s]?://([^:]+):(\d+)", line
+                )
+                if match:
+                    proxy_host = match.group(2)
+                    proxy_port = match.group(3)
+                    break
+
+            if proxy_host and proxy_port:
+                proxy_setup = textwrap.dedent(
+                    f"""
+                    RUN mkdir -p $HOME && \\
+                        touch $HOME/.npmrc && \\
+                        echo "proxy=http://{proxy_host}:{proxy_port}" >> $HOME/.npmrc && \\
+                        echo "https-proxy=http://{proxy_host}:{proxy_port}" >> $HOME/.npmrc && \\
+                        echo "strict-ssl=false" >> $HOME/.npmrc
+                """
+                )
+
+                proxy_cleanup = textwrap.dedent(
+                    """
+                    RUN rm -f $HOME/.npmrc
+                """
+                )
         return f"""FROM {name}:{tag}
 
 {self.global_env}
 
+{proxy_setup}
+
 {copy_commands}
 
 {prepare_commands}
+
+{proxy_cleanup}
 
 {self.clear_env}
 

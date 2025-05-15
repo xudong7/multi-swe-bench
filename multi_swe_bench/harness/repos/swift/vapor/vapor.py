@@ -56,6 +56,56 @@ ENV TZ=Etc/UTC
 """
 
 
+class vaporImageBaseSwift5_2(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
+
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Union[str, "Image"]:
+        return "swiftfiddle/swift:5.2"
+
+    def image_tag(self) -> str:
+        return "base-swift-5.2"
+
+    def workdir(self) -> str:
+        return "base-swift-5.2"
+
+    def files(self) -> list[File]:
+        return []
+
+    def dockerfile(self) -> str:
+        image_name = self.dependency()
+        if isinstance(image_name, Image):
+            image_name = image_name.image_full_name()
+
+        if self.config.need_clone:
+            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
+        else:
+            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
+
+        return f"""FROM {image_name}
+
+{self.global_env}
+
+WORKDIR /home/
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+{code}
+
+{self.clear_env}
+
+"""
+
+
 class vaporImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -70,6 +120,8 @@ class vaporImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
+        if self.pr.number <= 2277:
+            return vaporImageBaseSwift5_2(self.pr, self._config)
         return vaporImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:
@@ -79,6 +131,99 @@ class vaporImageDefault(Image):
         return f"pr-{self.pr.number}"
 
     def files(self) -> list[File]:
+        if self.pr.number <= 2277:
+            return [
+                File(
+                    ".",
+                    "fix.patch",
+                    f"{self.pr.fix_patch}",
+                ),
+                File(
+                    ".",
+                    "test.patch",
+                    f"{self.pr.test_patch}",
+                ),
+                File(
+                    ".",
+                    "check_git_changes.sh",
+                    """#!/bin/bash
+set -e
+
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  echo "check_git_changes: Not inside a git repository"
+  exit 1
+fi
+
+if [[ -n $(git status --porcelain) ]]; then
+  echo "check_git_changes: Uncommitted changes"
+  exit 1
+fi
+
+echo "check_git_changes: No uncommitted changes"
+exit 0
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "prepare.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git reset --hard
+bash /home/check_git_changes.sh
+git checkout {pr.base.sha}
+bash /home/check_git_changes.sh
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+swift test --enable-test-discovery --sanitize=thread
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "test-run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply --whitespace=nowarn /home/test.patch
+swift test --enable-test-discovery --sanitize=thread
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "fix-run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply --whitespace=nowarn /home/test.patch /home/fix.patch
+swift test --enable-test-discovery --sanitize=thread
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+            ]
         return [
             File(
                 ".",

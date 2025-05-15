@@ -79,6 +79,103 @@ class asciidoctorImageDefault(Image):
         return f"pr-{self.pr.number}"
 
     def files(self) -> list[File]:
+        if self.pr.number <= 945:
+            return [
+                File(
+                    ".",
+                    "fix.patch",
+                    f"{self.pr.fix_patch}",
+                ),
+                File(
+                    ".",
+                    "test.patch",
+                    f"{self.pr.test_patch}",
+                ),
+                File(
+                    ".",
+                    "check_git_changes.sh",
+                    """#!/bin/bash
+set -e
+
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  echo "check_git_changes: Not inside a git repository"
+  exit 1
+fi
+
+if [[ -n $(git status --porcelain) ]]; then
+  echo "check_git_changes: Uncommitted changes"
+  exit 1
+fi
+
+echo "check_git_changes: No uncommitted changes"
+exit 0
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "prepare.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git reset --hard
+bash /home/check_git_changes.sh
+git checkout {pr.base.sha}
+bash /home/check_git_changes.sh
+echo "gem 'test-unit'" >> Gemfile
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+bundle install 
+bundle exec rake test TESTOPTS="-v"
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "test-run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply --whitespace=nowarn /home/test.patch
+bundle install 
+bundle exec rake test TESTOPTS="-v"
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "fix-run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply --whitespace=nowarn /home/test.patch /home/fix.patch
+bundle install 
+bundle exec rake test TESTOPTS="-v"
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+            ]
         return [
             File(
                 ".",
@@ -136,7 +233,6 @@ bash /home/check_git_changes.sh
 set -e
 
 cd /home/{pr.repo}
-set -e
 bundle install 
 bundle exec rake test TESTOPTS="-v"
 
@@ -152,7 +248,6 @@ set -e
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
-set -e
 bundle install 
 bundle exec rake test TESTOPTS="-v"
 
@@ -168,7 +263,6 @@ set -e
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-set -e
 bundle install 
 bundle exec rake test TESTOPTS="-v"
 
@@ -239,9 +333,11 @@ class asciidoctor(Instance):
         failed_tests = set()
         skipped_tests = set()
 
-        re_pass_tests = [re.compile(r'^(.+?)\s+=?\s*[\d.]+\s*(?:s\s*)?=\s*\.$')]
+        re_pass_tests = [re.compile(r'^(.+?)\s+=?\s*[\d.]+\s*(?:s\s*)?=\s*\.$'),
+                         re.compile(r'^\s*(.+?):\s+\.\: \([\d.]+\)$')]
         re_fail_tests = [
-            re.compile(r'^(.+?)\s+=?\s*[\d.]+\s*(?:s\s*)?=\s*[FE]$')
+            re.compile(r'^(.+?)\s+=?\s*[\d.]+\s*(?:s\s*)?=\s*[FE]$'),
+            re.compile(r'^\s*(.+?):\s+([.FE])$')
         ]
 
         for line in test_log.splitlines():
