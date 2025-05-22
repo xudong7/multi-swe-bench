@@ -193,11 +193,11 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
-nvm install
-nvm use
+nvm install || true
+nvm use || true
 corepack enable || true
 yes | yarn -v || true
-yarn install
+yarn install || true
 
 """.format(
                     pr=self.pr
@@ -212,8 +212,8 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
 cd /home/{pr.repo}
-nvm use
-yarn install
+nvm use || true
+yarn install || true
 yarn test:unit --silent || true
 yarn test:integration --silent || true
 FORCE_COLOR=0 yarn test:e2e:global || true
@@ -231,8 +231,8 @@ export NVM_DIR="$HOME/.nvm"
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
-nvm use
-yarn install
+nvm use || true
+yarn install || true
 yarn test:unit --silent || true
 yarn test:integration --silent || true
 FORCE_COLOR=0 yarn test:e2e:global || true
@@ -251,8 +251,8 @@ export NVM_DIR="$HOME/.nvm"
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-nvm use
-yarn install
+nvm use || true
+yarn install || true
 yarn test:unit --silent || true
 yarn test:integration --silent || true
 FORCE_COLOR=0 yarn test:e2e:global || true
