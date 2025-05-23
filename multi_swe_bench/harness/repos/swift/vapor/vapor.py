@@ -105,6 +105,55 @@ ENV TZ=Etc/UTC
 
 """
 
+class vaporImageBaseSwift5_1(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
+
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Union[str, "Image"]:
+        return "swiftfiddle/swift:5.1"
+
+    def image_tag(self) -> str:
+        return "base-swift-5.1"
+
+    def workdir(self) -> str:
+        return "base-swift-5.1"
+
+    def files(self) -> list[File]:
+        return []
+
+    def dockerfile(self) -> str:
+        image_name = self.dependency()
+        if isinstance(image_name, Image):
+            image_name = image_name.image_full_name()
+
+        if self.config.need_clone:
+            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
+        else:
+            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
+
+        return f"""FROM {image_name}
+
+{self.global_env}
+
+WORKDIR /home/
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+RUN apt update && apt install -y openssl libssl-dev
+{code}
+
+{self.clear_env}
+
+"""
 
 class vaporImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
@@ -120,8 +169,10 @@ class vaporImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        if self.pr.number <= 2277:
+        if 2190 < self.pr.number <= 2277:
             return vaporImageBaseSwift5_2(self.pr, self._config)
+        elif self.pr.number <= 2190:
+            return vaporImageBaseSwift5_1(self.pr, self._config)
         return vaporImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:

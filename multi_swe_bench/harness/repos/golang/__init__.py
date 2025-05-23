@@ -15,3 +15,5 @@ from multi_swe_bench.harness.repos.golang.nektos import *
 from multi_swe_bench.harness.repos.golang.prometheus import *
 from multi_swe_bench.harness.repos.golang.syncthing import *
 from multi_swe_bench.harness.repos.golang.zeromicro import *
+from multi_swe_bench.harness.repos.golang.concourse import *
+from multi_swe_bench.harness.repos.golang.natsio import *

@@ -79,6 +79,120 @@ class AnkiAndroidImageDefault(Image):
         return f"pr-{self.pr.number}"
 
     def files(self) -> list[File]:
+        if self.pr.number <= 16742:
+            return [
+                File(
+                    ".",
+                    "fix.patch",
+                    f"{self.pr.fix_patch}",
+                ),
+                File(
+                    ".",
+                    "test.patch",
+                    f"{self.pr.test_patch}",
+                ),
+                File(
+                    ".",
+                    "check_git_changes.sh",
+                    """#!/bin/bash
+set -e
+
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  echo "check_git_changes: Not inside a git repository"
+  exit 1
+fi
+
+if [[ -n $(git status --porcelain) ]]; then
+  echo "check_git_changes: Uncommitted changes"
+  exit 1
+fi
+
+echo "check_git_changes: No uncommitted changes"
+exit 0
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "prepare.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git reset --hard
+bash /home/check_git_changes.sh
+git checkout {pr.base.sha}
+bash /home/check_git_changes.sh
+mkdir -p ~/.gradle && cat <<EOF > ~/.gradle/init.gradle
+allprojects {{
+    buildscript {{
+        repositories {{
+            maven {{ url 'https://maven.aliyun.com/repository/public/' }}
+            maven {{ url 'https://maven.aliyun.com/repository/google/' }}
+            maven {{ url 'https://maven.aliyun.com/repository/jcenter/' }}
+            mavenCentral()
+            google()
+        }}
+    }}
+
+    repositories {{
+        maven {{ url 'https://maven.aliyun.com/repository/public/' }}
+        maven {{ url 'https://maven.aliyun.com/repository/google/' }}
+        maven {{ url 'https://maven.aliyun.com/repository/jcenter/' }}
+        mavenCentral()
+        google()
+    }}
+}}
+EOF
+./gradlew clean jacocoUnitTestReport --max-workers 8 --continue || true
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+./gradlew clean jacocoUnitTestReport --max-workers 8 --continue
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "test-run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply --whitespace=nowarn /home/test.patch
+./gradlew clean jacocoUnitTestReport --max-workers 8 --continue
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "fix-run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply --whitespace=nowarn /home/test.patch /home/fix.patch
+./gradlew clean jacocoUnitTestReport --max-workers 8 --continue
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+            ]
         return [
             File(
                 ".",
@@ -274,6 +388,41 @@ class AnkiAndroid(Instance):
         failed_tests = set()
         skipped_tests = set()
 
+        passed_res = [
+            re.compile(r"^> Task :(\S+)$"),
+            re.compile(r"^> Task :(\S+) UP-TO-DATE$"),
+            re.compile(r"^> Task :(\S+) FROM-CACHE$"),
+            re.compile(r"^(.+ > .+) PASSED$"),
+        ]
+
+        failed_res = [
+            re.compile(r"^> Task :(\S+) FAILED$"),
+            re.compile(r"^(.+ > .+) FAILED$"),
+        ]
+
+        skipped_res = [
+            re.compile(r"^> Task :(\S+) SKIPPED$"),
+            re.compile(r"^> Task :(\S+) NO-SOURCE$"),
+            re.compile(r"^(.+ > .+) SKIPPED$"),
+        ]
+
+        for line in test_log.splitlines():
+            for passed_re in passed_res:
+                m = passed_re.match(line)
+                if m and m.group(1) not in failed_tests:
+                    passed_tests.add(m.group(1))
+
+            for failed_re in failed_res:
+                m = failed_re.match(line)
+                if m:
+                    failed_tests.add(m.group(1))
+                    if m.group(1) in passed_tests:
+                        passed_tests.remove(m.group(1))
+
+            for skipped_re in skipped_res:
+                m = skipped_re.match(line)
+                if m:
+                    skipped_tests.add(m.group(1))
 
         return TestResult(
             passed_count=len(passed_tests),

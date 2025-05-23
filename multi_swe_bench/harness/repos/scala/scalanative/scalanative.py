@@ -1,6 +1,6 @@
 import re
 from typing import Optional, Union
-
+import textwrap
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
 from multi_swe_bench.harness.pull_request import PullRequest
@@ -124,7 +124,7 @@ git reset --hard
 bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
-
+sbt test-all || true
 """.format(
                     pr=self.pr
                 ),
@@ -182,6 +182,31 @@ sbt test-all
             copy_commands += f"COPY {file.name} /home/\n"
 
         prepare_commands = "RUN bash /home/prepare.sh"
+        proxy_setup = ""
+        proxy_cleanup = ""
+        if self.global_env:
+            proxy_host = None
+            proxy_port = None
+
+            for line in self.global_env.splitlines():
+                match = re.match(
+                    r"^ENV\s*(http[s]?_proxy)=http[s]?://([^:]+):(\d+)", line
+                )
+                if match:
+                    proxy_host = match.group(2)
+                    proxy_port = match.group(3)
+                    break
+            if proxy_host and proxy_port:
+                proxy_setup = textwrap.dedent(
+                    f"""
+                    ENV SBT_OPTS="-Dhttps.proxyHost={proxy_host} -Dhttps.proxyPort={proxy_port} -Dhttp.proxyHost={proxy_host} -Dhttp.proxyPort={proxy_port}"
+                """
+                )
+                proxy_cleanup = textwrap.dedent(
+                    """
+                    ENV SBT_OPTS=""
+                """
+                )
 
         return f"""FROM {name}:{tag}
 
@@ -189,7 +214,11 @@ sbt test-all
 
 {copy_commands}
 
+{proxy_setup}
+
 {prepare_commands}
+
+{proxy_cleanup}
 
 {self.clear_env}
 

@@ -1,12 +1,12 @@
 import re
 from typing import Optional, Union
-import textwrap
+
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
 from multi_swe_bench.harness.pull_request import PullRequest
 
 
-class scalajsImageBase(Image):
+class concourseImageBase(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -20,7 +20,7 @@ class scalajsImageBase(Image):
         return self._config
 
     def dependency(self) -> Union[str, "Image"]:
-        return "hseeberger/scala-sbt:17.0.2_1.6.2_2.12.15"
+        return "golang:1.24"
 
     def image_tag(self) -> str:
         return "base"
@@ -46,11 +46,7 @@ class scalajsImageBase(Image):
 {self.global_env}
 
 WORKDIR /home/
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Etc/UTC
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt install -y nodejs
-    
+
 {code}
 
 {self.clear_env}
@@ -58,7 +54,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 """
 
 
-class scalajsImageDefault(Image):
+class concourseImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -72,7 +68,7 @@ class scalajsImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        return scalajsImageBase(self.pr, self._config)
+        return concourseImageBase(self.pr, self.config)
 
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
@@ -126,8 +122,9 @@ git reset --hard
 bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
-npm install || true
-sbt testSuite2_12/test || true
+
+go test -v -count=1 ./... || true
+
 """.format(
                     pr=self.pr
                 ),
@@ -139,10 +136,7 @@ sbt testSuite2_12/test || true
 set -e
 
 cd /home/{pr.repo}
-npm install || true
-sbt testSuite2_12/test || true
-sbt partestSuite2_12/test || true
-sbt scalaTestSuite2_12/test || true
+go test -v -count=1 ./...
 
 """.format(
                     pr=self.pr
@@ -155,11 +149,8 @@ sbt scalaTestSuite2_12/test || true
 set -e
 
 cd /home/{pr.repo}
-git apply --whitespace=nowarn /home/test.patch
-npm install || true
-sbt testSuite2_12/test || true
-sbt partestSuite2_12/test || true
-sbt scalaTestSuite2_12/test || true
+git apply /home/test.patch
+go test -v -count=1 ./...
 
 """.format(
                     pr=self.pr
@@ -172,11 +163,8 @@ sbt scalaTestSuite2_12/test || true
 set -e
 
 cd /home/{pr.repo}
-git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-npm install || true
-sbt testSuite2_12/test || true
-sbt partestSuite2_12/test || true
-sbt scalaTestSuite2_12/test || true
+git apply /home/test.patch /home/fix.patch
+go test -v -count=1 ./...
 
 """.format(
                     pr=self.pr
@@ -194,31 +182,6 @@ sbt scalaTestSuite2_12/test || true
             copy_commands += f"COPY {file.name} /home/\n"
 
         prepare_commands = "RUN bash /home/prepare.sh"
-        proxy_setup = ""
-        proxy_cleanup = ""
-        if self.global_env:
-            proxy_host = None
-            proxy_port = None
-
-            for line in self.global_env.splitlines():
-                match = re.match(
-                    r"^ENV\s*(http[s]?_proxy)=http[s]?://([^:]+):(\d+)", line
-                )
-                if match:
-                    proxy_host = match.group(2)
-                    proxy_port = match.group(3)
-                    break
-            if proxy_host and proxy_port:
-                proxy_setup = textwrap.dedent(
-                    f"""
-                    ENV SBT_OPTS="-Dhttps.proxyHost={proxy_host} -Dhttps.proxyPort={proxy_port} -Dhttp.proxyHost={proxy_host} -Dhttp.proxyPort={proxy_port}"
-                """
-                )
-                proxy_cleanup = textwrap.dedent(
-                    """
-                    ENV SBT_OPTS=""
-                """
-                )
 
         return f"""FROM {name}:{tag}
 
@@ -226,19 +189,15 @@ sbt scalaTestSuite2_12/test || true
 
 {copy_commands}
 
-{proxy_setup}
-
 {prepare_commands}
-
-{proxy_cleanup}
 
 {self.clear_env}
 
 """
 
 
-@Instance.register("scala-js", "scala-js")
-class scalajs(Instance):
+@Instance.register("concourse", "concourse")
+class concourse(Instance):
     def __init__(self, pr: PullRequest, config: Config, *args, **kwargs):
         super().__init__()
         self._pr = pr
@@ -249,7 +208,7 @@ class scalajs(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-        return scalajsImageDefault(self.pr, self._config)
+        return concourseImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:
         if run_cmd:
@@ -274,6 +233,48 @@ class scalajs(Instance):
         failed_tests = set()
         skipped_tests = set()
 
+        re_pass_tests = [re.compile(r"--- PASS: (\S+)")]
+        re_fail_tests = [
+            re.compile(r"--- FAIL: (\S+)"),
+            re.compile(r"FAIL:?\s?(.+?)\s"),
+        ]
+        re_skip_tests = [re.compile(r"--- SKIP: (\S+)")]
+
+        def get_base_name(test_name: str) -> str:
+            return test_name
+
+        for line in test_log.splitlines():
+            line = line.strip()
+
+            for re_pass_test in re_pass_tests:
+                pass_match = re_pass_test.match(line)
+                if pass_match:
+                    test_name = pass_match.group(1)
+                    if test_name in failed_tests:
+                        continue
+                    if test_name in skipped_tests:
+                        skipped_tests.remove(test_name)
+                    passed_tests.add(get_base_name(test_name))
+
+            for re_fail_test in re_fail_tests:
+                fail_match = re_fail_test.match(line)
+                if fail_match:
+                    test_name = fail_match.group(1)
+                    if test_name in passed_tests:
+                        passed_tests.remove(test_name)
+                    if test_name in skipped_tests:
+                        skipped_tests.remove(test_name)
+                    failed_tests.add(get_base_name(test_name))
+
+            for re_skip_test in re_skip_tests:
+                skip_match = re_skip_test.match(line)
+                if skip_match:
+                    test_name = skip_match.group(1)
+                    if test_name in passed_tests:
+                        continue
+                    if test_name not in failed_tests:
+                        continue
+                    skipped_tests.add(get_base_name(test_name))
 
         return TestResult(
             passed_count=len(passed_tests),
