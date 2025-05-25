@@ -6,7 +6,7 @@ from multi_swe_bench.harness.instance import Instance, TestResult
 from multi_swe_bench.harness.pull_request import PullRequest
 
 
-class kotlinxcoroutinesImageBase(Image):
+class thunderbirdandroidImageBase(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -20,7 +20,7 @@ class kotlinxcoroutinesImageBase(Image):
         return self._config
 
     def dependency(self) -> Union[str, "Image"]:
-        return "ubuntu:22.04"
+        return "saschpe/android-sdk:34-jdk21.0.6_7"
 
     def image_tag(self) -> str:
         return "base"
@@ -42,15 +42,13 @@ class kotlinxcoroutinesImageBase(Image):
             code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
 
         return f"""FROM {image_name}
-
+USER root
 {self.global_env}
 
 WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
-ENV LANG=C.UTF-8
-ENV LC_ALL=C.UTF-8
-RUN apt-get update && apt-get install -y git openjdk-11-jdk
+
 {code}
 
 {self.clear_env}
@@ -58,7 +56,7 @@ RUN apt-get update && apt-get install -y git openjdk-11-jdk
 """
 
 
-class kotlinxcoroutinesImageDefault(Image):
+class thunderbirdandroidImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -72,7 +70,7 @@ class kotlinxcoroutinesImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        return kotlinxcoroutinesImageBase(self.pr, self._config)
+        return thunderbirdandroidImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
@@ -239,8 +237,8 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 """
 
 
-@Instance.register("Kotlin", "kotlinx.coroutines")
-class kotlinxcoroutines(Instance):
+@Instance.register("thunderbird", "thunderbird-android")
+class thunderbirdandroid(Instance):
     def __init__(self, pr: PullRequest, config: Config, *args, **kwargs):
         super().__init__()
         self._pr = pr
@@ -251,7 +249,7 @@ class kotlinxcoroutines(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-        return kotlinxcoroutinesImageDefault(self.pr, self._config)
+        return thunderbirdandroidImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:
         if run_cmd:
