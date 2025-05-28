@@ -299,7 +299,35 @@ class wpcalypso(Instance):
         failed_tests = set()
         skipped_tests = set()
 
+        passed_res = [
+            re.compile(r"PASS:?\s?(.+?)\s")
+        ]
 
+        failed_res = [
+            re.compile(r"FAIL:?\s?(.+?)\s")
+        ]
+
+        skipped_res = [
+            re.compile(r"SKIP:?\s?(.+?)\s")
+        ]
+
+        for line in test_log.splitlines():
+            for passed_re in passed_res:
+                m = passed_re.match(line)
+                if m and m.group(1) not in failed_tests:
+                    passed_tests.add(m.group(1))
+
+            for failed_re in failed_res:
+                m = failed_re.match(line)
+                if m:
+                    failed_tests.add(m.group(1))
+                    if m.group(1) in passed_tests:
+                        passed_tests.remove(m.group(1))
+
+            for skipped_re in skipped_res:
+                m = skipped_re.match(line)
+                if m:
+                    skipped_tests.add(m.group(1))
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -56,6 +56,56 @@ ENV TZ=Etc/UTC
 """
 
 
+class ktlintImageBaseJDK17(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
+
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Union[str, "Image"]:
+        return "saschpe/android-sdk:32-jdk17.0.8_7"
+
+    def image_tag(self) -> str:
+        return "base-JDK-17"
+
+    def workdir(self) -> str:
+        return "base-JDK-17"
+
+    def files(self) -> list[File]:
+        return []
+
+    def dockerfile(self) -> str:
+        image_name = self.dependency()
+        if isinstance(image_name, Image):
+            image_name = image_name.image_full_name()
+
+        if self.config.need_clone:
+            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
+        else:
+            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
+
+        return f"""FROM {image_name}
+USER root
+{self.global_env}
+
+WORKDIR /home/
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+{code}
+
+{self.clear_env}
+
+"""
+
+
 class ktlintImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -70,6 +120,8 @@ class ktlintImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
+        if self.pr.number <= 2163:
+            return ktlintImageBaseJDK17(self.pr, self._config)
         return ktlintImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:

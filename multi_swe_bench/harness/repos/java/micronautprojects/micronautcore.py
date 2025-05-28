@@ -1,12 +1,13 @@
 import re
-from typing import Optional, Union
 import textwrap
+from typing import Optional, Union
+
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
 from multi_swe_bench.harness.pull_request import PullRequest
 
 
-class thunderbirdandroidImageBase(Image):
+class micronautcoreImageBase(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -20,7 +21,7 @@ class thunderbirdandroidImageBase(Image):
         return self._config
 
     def dependency(self) -> Union[str, "Image"]:
-        return "saschpe/android-sdk:34-jdk21.0.6_7"
+        return "ubuntu:22.04"
 
     def image_tag(self) -> str:
         return "base"
@@ -41,22 +42,30 @@ class thunderbirdandroidImageBase(Image):
         else:
             code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
 
+        copy_commands = ""
+        for file in self.files():
+            copy_commands += f"COPY {file.name} /home/\n"
+
         return f"""FROM {image_name}
-USER root
+
 {self.global_env}
 
-WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Etc/UTC
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+WORKDIR /home/
+RUN apt-get update && apt-get install -y git openjdk-17-jdk
 
 {code}
+
+{copy_commands}
 
 {self.clear_env}
 
 """
 
 
-class thunderbirdandroidImageBaseJDK17(Image):
+class micronautcoreImageBaseJDK16(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -70,13 +79,13 @@ class thunderbirdandroidImageBaseJDK17(Image):
         return self._config
 
     def dependency(self) -> Union[str, "Image"]:
-        return "saschpe/android-sdk:32-jdk17.0.8_7"
+        return "ubuntu:22.04"
 
     def image_tag(self) -> str:
-        return "base-JDK-17"
+        return "base-jdk-16"
 
     def workdir(self) -> str:
-        return "base-JDK-17"
+        return "base-jdk-16"
 
     def files(self) -> list[File]:
         return []
@@ -92,12 +101,14 @@ class thunderbirdandroidImageBaseJDK17(Image):
             code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
 
         return f"""FROM {image_name}
-USER root
+
 {self.global_env}
 
-WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Etc/UTC
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+WORKDIR /home/
+RUN apt-get update && apt-get install -y git openjdk-15-jdk
 
 {code}
 
@@ -106,7 +117,7 @@ ENV TZ=Etc/UTC
 """
 
 
-class thunderbirdandroidImageDefault(Image):
+class micronautcoreImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -120,9 +131,12 @@ class thunderbirdandroidImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        if self.pr.number <= 7403:
-            return thunderbirdandroidImageBaseJDK17(self.pr, self._config)
-        return thunderbirdandroidImageBase(self.pr, self._config)
+        # if 1734 < self.pr.number <= 2679:
+        #     return micronautcoreImageBaseJDK17(self.pr, self._config)
+        # elif self.pr.number <= 1734:
+        #     return micronautcoreImageBaseJDK16(self.pr, self._config)
+
+        return micronautcoreImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
@@ -131,6 +145,113 @@ class thunderbirdandroidImageDefault(Image):
         return f"pr-{self.pr.number}"
 
     def files(self) -> list[File]:
+        if self.pr.number <= 2679:
+            return [
+                File(
+                    ".",
+                    "fix.patch",
+                    f"{self.pr.fix_patch}",
+                ),
+                File(
+                    ".",
+                    "test.patch",
+                    f"{self.pr.test_patch}",
+                ),
+                File(
+                    ".",
+                    "check_git_changes.sh",
+                    """#!/bin/bash
+set -e
+
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  echo "check_git_changes: Not inside a git repository"
+  exit 1
+fi
+
+if [[ -n $(git status --porcelain) ]]; then
+  echo "check_git_changes: Uncommitted changes"
+  exit 1
+fi
+
+echo "check_git_changes: No uncommitted changes"
+exit 0
+
+""".format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "prepare.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git reset --hard
+bash /home/check_git_changes.sh
+git checkout {pr.base.sha}
+bash /home/check_git_changes.sh
+mkdir -p ~/.gradle && cat <<EOF > ~/.gradle/init.gradle
+allprojects {{
+    buildscript {{
+        repositories {{
+            maven {{ url 'https://maven.aliyun.com/repository/public/' }}
+            maven {{ url 'https://maven.aliyun.com/repository/google/' }}
+        }}
+    }}
+
+    repositories {{
+        maven {{ url 'https://maven.aliyun.com/repository/public/' }}
+        maven {{ url 'https://maven.aliyun.com/repository/google/' }}
+    }}
+}}
+EOF
+./gradlew clean test --init-script ~/.gradle/init.gradle --max-workers 8 --continue || true
+""".format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+./gradlew clean test --init-script ~/.gradle/init.gradle --max-workers 8 --continue
+""".format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "test-run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply --whitespace=nowarn /home/test.patch
+./gradlew clean test --init-script ~/.gradle/init.gradle --max-workers 8 --continue
+
+""".format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "fix-run.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply --whitespace=nowarn /home/test.patch /home/fix.patch
+./gradlew clean test --init-script ~/.gradle/init.gradle --max-workers 8 --continue
+
+""".format(
+                        pr=self.pr
+                    ),
+                ),
+            ]
         return [
             File(
                 ".",
@@ -176,7 +297,7 @@ git reset --hard
 bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
-./gradlew clean test --max-workers 8 --continue || true
+./gradlew clean test --continue --console=plain || true
 """.format(
                     pr=self.pr
                 ),
@@ -188,8 +309,7 @@ bash /home/check_git_changes.sh
 set -e
 
 cd /home/{pr.repo}
-./gradlew clean test --max-workers 8 --continue
-
+./gradlew clean test --continue --console=plain
 """.format(
                     pr=self.pr
                 ),
@@ -202,7 +322,7 @@ set -e
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
-./gradlew clean test --max-workers 8 --continue
+./gradlew clean test --continue --console=plain
 
 """.format(
                     pr=self.pr
@@ -216,7 +336,7 @@ set -e
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-./gradlew clean test --max-workers 8 --continue
+./gradlew clean test --continue --console=plain
 
 """.format(
                     pr=self.pr
@@ -289,8 +409,8 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 """
 
 
-@Instance.register("thunderbird", "thunderbird-android")
-class thunderbirdandroid(Instance):
+@Instance.register("micronaut-projects", "micronaut-core")
+class micronautcore(Instance):
     def __init__(self, pr: PullRequest, config: Config, *args, **kwargs):
         super().__init__()
         self._pr = pr
@@ -301,7 +421,7 @@ class thunderbirdandroid(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-        return thunderbirdandroidImageDefault(self.pr, self._config)
+        return micronautcoreImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:
         if run_cmd:
