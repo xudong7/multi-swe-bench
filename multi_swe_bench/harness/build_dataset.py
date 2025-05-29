@@ -201,6 +201,13 @@ def get_parser() -> ArgumentParser:
         default=True,
         help="Whether to parse the log in run_instance mode",
     )
+    parser.add_argument(
+        "--run_log",
+        type=parser.bool,
+        required=False,
+        default=True,
+        help="Whether to run logs or read from file in run_instance mode",
+    )
 
     return parser
 
@@ -236,6 +243,7 @@ class CliArgs:
     log_level: str
     log_to_console: bool
     parse_log: bool = True
+    run_log: bool = True
 
     def __post_init__(self):
         self._check_mode()
@@ -652,19 +660,28 @@ class CliArgs:
 
             return output
 
-        output_run = run_and_save_output(
-            instance.name(), instance.run(self.run_cmd), instance_dir / RUN_LOG_FILE
-        )
-        output_test = run_and_save_output(
-            instance.name(),
-            instance.test_patch_run(self.test_patch_run_cmd),
-            instance_dir / TEST_PATCH_RUN_LOG_FILE,
-        )
-        output_fix = run_and_save_output(
-            instance.name(),
-            instance.fix_patch_run(self.fix_patch_run_cmd),
-            instance_dir / FIX_PATCH_RUN_LOG_FILE,
-        )
+        if self.run_log:
+            output_run = run_and_save_output(
+                instance.name(), instance.run(self.run_cmd), instance_dir / RUN_LOG_FILE
+            )
+            output_test = run_and_save_output(
+                instance.name(),
+                instance.test_patch_run(self.test_patch_run_cmd),
+                instance_dir / TEST_PATCH_RUN_LOG_FILE,
+            )
+            output_fix = run_and_save_output(
+                instance.name(),
+                instance.fix_patch_run(self.fix_patch_run_cmd),
+                instance_dir / FIX_PATCH_RUN_LOG_FILE,
+            )
+        else:
+            with open(instance_dir / RUN_LOG_FILE, "r", encoding="utf-8") as f:
+                output_run = f.read()
+            with open(instance_dir / TEST_PATCH_RUN_LOG_FILE, "r", encoding="utf-8") as f:
+                output_test = f.read()
+            with open(instance_dir / FIX_PATCH_RUN_LOG_FILE, "r", encoding="utf-8") as f:
+                output_fix = f.read()
+
         if self.parse_log:
             self.logger.debug(f"Generating report for {instance.name()}...")
             report = generate_report(instance, output_run, output_test, output_fix)
