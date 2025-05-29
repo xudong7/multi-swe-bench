@@ -194,6 +194,14 @@ def get_parser() -> ArgumentParser:
         help="Whether to log to the console.",
     )
 
+    parser.add_argument(
+        "--parse_log",
+        type=parser.bool,
+        required=False,
+        default=True,
+        help="Whether to parse the log in run_instance mode",
+    )
+
     return parser
 
 
