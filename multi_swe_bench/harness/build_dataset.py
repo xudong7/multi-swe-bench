@@ -227,6 +227,7 @@ class CliArgs:
     log_dir: Path
     log_level: str
     log_to_console: bool
+    parse_log: bool = True
 
     def __post_init__(self):
         self._check_mode()
@@ -656,15 +657,15 @@ class CliArgs:
             instance.fix_patch_run(self.fix_patch_run_cmd),
             instance_dir / FIX_PATCH_RUN_LOG_FILE,
         )
+        if self.parse_log:
+            self.logger.debug(f"Generating report for {instance.name()}...")
+            report = generate_report(instance, output_run, output_test, output_fix)
+            self.logger.debug(f"Report for {instance.name()} generated successfully.")
 
-        self.logger.debug(f"Generating report for {instance.name()}...")
-        report = generate_report(instance, output_run, output_test, output_fix)
-        self.logger.debug(f"Report for {instance.name()} generated successfully.")
-
-        self.logger.debug(f"Saving report for {instance.name()}...")
-        with open(report_path, "w", encoding="utf-8") as f:
-            f.write(report.json())
-        self.logger.debug(f"Report for {instance.name()} saved successfully.")
+            self.logger.debug(f"Saving report for {instance.name()}...")
+            with open(report_path, "w", encoding="utf-8") as f:
+                f.write(report.json())
+            self.logger.debug(f"Report for {instance.name()} saved successfully.")
 
     def run_mode_instance_only(self):
         self.logger.info("Running instances...")
