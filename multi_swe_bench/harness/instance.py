@@ -39,7 +39,10 @@ class Instance:
 
     @classmethod
     def create(cls, pr: PullRequest, config: Config, *args, **kwargs):
-        name = f"{pr.org}/{pr.repo}"
+        if pr.tag=="":
+            name = f"{pr.org}/{pr.repo}"
+        else:
+            name = f"{pr.org}/{pr.repo}_{pr.tag}"
         if name in cls._registry:
             return cls._registry[name](pr, config, *args, **kwargs)
         raise ValueError(f"Instance '{name}' is not registered.")
