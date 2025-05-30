@@ -152,7 +152,7 @@ composer install  --prefer-dist --no-progress --no-suggest --ansi || true
 set -e
 
 cd /home/{pr.repo}
-php -d memory_limit=512M  vendor/bin/phpunit --testdox --verbose
+php -d memory_limit=1024M  vendor/bin/phpunit --testdox --verbose
 
 """.format(
                     pr=self.pr
@@ -166,7 +166,7 @@ set -e
 
 cd /home/{pr.repo}
 git apply /home/test.patch
-php -d memory_limit=512M  vendor/bin/phpunit --testdox --verbose
+php -d memory_limit=1024M  vendor/bin/phpunit --testdox --verbose
 
 """.format(
                     pr=self.pr
@@ -180,7 +180,7 @@ set -e
 
 cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
-php -d memory_limit=512M  vendor/bin/phpunit --testdox --verbose
+php -d memory_limit=1024M  vendor/bin/phpunit --testdox --verbose
 
 """.format(
                     pr=self.pr
