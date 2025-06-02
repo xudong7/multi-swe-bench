@@ -75,28 +75,34 @@ def run(
     global_env: Optional[list[str]] = None,
     volumes: Optional[Union[dict[str, str], list[str]]] = None,
 ) -> str:
-    container = docker_client.containers.run(
-        image=image_full_name,
-        command=run_command,
-        remove=False,
-        detach=True,
-        stdout=True,
-        stderr=True,
-        environment=global_env,
-        volumes=volumes,
-    )
+    container = None
+    try:
+        container = docker_client.containers.run(
+            image=image_full_name,
+            command=run_command,
+            remove=False,
+            detach=True,
+            stdout=True,
+            stderr=True,
+            environment=global_env,
+            volumes=volumes,
+        )
 
-    output = ""
-    if output_path:
-        with open(output_path, "w", encoding="utf-8") as f:
-            for line in container.logs(stream=True, follow=True):
-                line_decoded = line.decode("utf-8")
-                f.write(line_decoded)
-                output += line_decoded
-    else:
-        container.wait()
-        output = container.logs().decode("utf-8")
+        output = ""
+        if output_path:
+            with open(output_path, "w", encoding="utf-8") as f:
+                for line in container.logs(stream=True, follow=True):
+                    line_decoded = line.decode("utf-8")
+                    f.write(line_decoded)
+                    output += line_decoded
+        else:
+            container.wait()
+            output = container.logs().decode("utf-8")
 
-    container.remove()
-
-    return output
+        return output
+    finally:
+        if container:
+            try:
+                container.remove(force=True)
+            except Exception as e:
+                print(f"Warning: Failed to remove container: {e}")
