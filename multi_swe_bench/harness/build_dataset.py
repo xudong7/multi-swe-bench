@@ -413,11 +413,11 @@ class CliArgs:
 
             for pr in self.raw_dataset.values():
                 try:
+                    if not self.check_specific(pr.id):
+                        continue
+                    if self.check_skip(pr.id):
+                        continue
                     instance: Instance = Instance.create(pr, config)
-                    if not self.check_specific(instance.pr.id):
-                        continue
-                    if self.check_skip(instance.pr.id):
-                        continue
                     self._instances.append(instance)
                 except Exception as e:
                     self.logger.error(f"Error creating instance for {pr.id}: {e}")
