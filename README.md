@@ -127,6 +127,14 @@ The evaluation process will generate a `final_report.json` file in your specifie
 }
 ```
 
+Note, if there are issues when applying the above config file with git apply, you can add the following item. This will replace `git apply` with `patch --batch`, which can increase the success rate of applying patches:
+```json
+{
+    ...
+    "fix_patch_run_cmd": "bash -c \"apt update && apt install -y patch && sed -i 's@git apply /home/test.patch /home/fix.patch@patch --batch --fuzz=5 -p1 -i /home/test.patch;patch --batch --fuzz=5 -p1 -i /home/fix.patch@g' /home/fix-run.sh && bash /home/fix-run.sh\""
+}
+```
+
 #### Configuration Parameters
 
 | Parameter | Description |
