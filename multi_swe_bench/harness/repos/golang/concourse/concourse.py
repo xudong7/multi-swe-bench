@@ -54,6 +54,55 @@ WORKDIR /home/
 """
 
 
+class concourseImageBaseGo12(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
+
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Union[str, "Image"]:
+        return "golang:1.12"
+
+    def image_tag(self) -> str:
+        return "base-go-1.12"
+
+    def workdir(self) -> str:
+        return "base-go-1.12"
+
+    def files(self) -> list[File]:
+        return []
+
+    def dockerfile(self) -> str:
+        image_name = self.dependency()
+        if isinstance(image_name, Image):
+            image_name = image_name.image_full_name()
+
+        if self.config.need_clone:
+            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
+        else:
+            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
+
+        return f"""FROM {image_name}
+
+{self.global_env}
+
+WORKDIR /home/
+
+{code}
+
+{self.clear_env}
+
+"""
+
+
+
 class concourseImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -68,6 +117,8 @@ class concourseImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
+        if self.pr.number <= 4206:
+            return concourseImageBaseGo12(self.pr, self.config)
         return concourseImageBase(self.pr, self.config)
 
     def image_tag(self) -> str:

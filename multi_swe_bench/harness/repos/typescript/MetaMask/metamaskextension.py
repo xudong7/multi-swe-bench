@@ -360,12 +360,12 @@ class metamaskextension(Instance):
         skipped_tests = set()
 
         passed_res = [
-            re.compile(r"PASS:?\s?(.+?)\s"),
+            re.compile(r"^PASS:?\s+(.+?)(?:\s+\(\d+(\.\d+)?s\))?$"),
             re.compile(r"✓\s+(\d+.*?)\s+\(\d+ms\)")
         ]
 
         failed_res = [
-            re.compile(r"FAIL:?\s?(.+?)\s"),
+            re.compile(r"^FAIL:?\s+(.+?)(?:\s+\(\d+(\.\d+)?s\))?$"),
             re.compile(r"✕\s+(\d+.*?)\s+\(\d+ms\)")
         ]
 

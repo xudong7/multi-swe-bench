@@ -69,6 +69,67 @@ RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && 
 
 
 
+class graylog2serverImageBaseJDK17(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
+
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Union[str, "Image"]:
+        return "ubuntu:22.04"
+
+    def image_tag(self) -> str:
+        return "base-JDK-17"
+
+    def workdir(self) -> str:
+        return "base-JDK-17"
+
+    def files(self) -> list[File]:
+        return []
+
+    def dockerfile(self) -> str:
+        image_name = self.dependency()
+        if isinstance(image_name, Image):
+            image_name = image_name.image_full_name()
+
+        if self.config.need_clone:
+            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
+        else:
+            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
+
+        copy_commands = ""
+        for file in self.files():
+            copy_commands += f"COPY {file.name} /home/\n"
+
+        return f"""FROM {image_name}
+
+{self.global_env}
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+WORKDIR /home/
+RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    sed -i 's/security.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y git openjdk-17-jdk maven
+
+{code}
+
+{copy_commands}
+
+{self.clear_env}
+
+"""
+
+
 class graylog2serverImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -83,8 +144,8 @@ class graylog2serverImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        # if 2721 < self.pr.number <= 3423:
-        #     return graylog2serverImageBaseJDK17(self.pr, self._config)
+        if 2721 < self.pr.number <= 16333:
+            return graylog2serverImageBaseJDK17(self.pr, self._config)
         return graylog2serverImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:
@@ -94,6 +155,123 @@ class graylog2serverImageDefault(Image):
         return f"pr-{self.pr.number}"
 
     def files(self) -> list[File]:
+        if self.pr.number <= 16333:
+            return [
+                File(
+                    ".",
+                    "fix.patch",
+                    f"{self.pr.fix_patch}",
+                ),
+                File(
+                    ".",
+                    "test.patch",
+                    f"{self.pr.test_patch}",
+                ),
+                File(
+                    ".",
+                    "check_git_changes.sh",
+                    """#!/bin/bash
+set -e
+
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+echo "check_git_changes: Not inside a git repository"
+exit 1
+fi
+
+if [[ -n $(git status --porcelain) ]]; then
+echo "check_git_changes: Uncommitted changes"
+exit 1
+fi
+
+echo "check_git_changes: No uncommitted changes"
+exit 0
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "prepare.sh",
+                    """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git reset --hard
+bash /home/check_git_changes.sh
+git checkout {pr.base.sha}
+bash /home/check_git_changes.sh
+if [ ! -f ~/.m2/settings.xml ]; then
+mkdir -p ~/.m2 && cat <<EOF > ~/.m2/settings.xml
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+<mirrors>
+    <mirror>
+        <id>aliyunmaven</id>
+        <mirrorOf>central</mirrorOf>
+        <name>Aliyun Maven Mirror</name>
+        <url>https://maven.aliyun.com/repository/public</url>
+    </mirror>
+</mirrors>
+
+</settings>
+EOF
+else
+grep -q "<mirror>" ~/.m2/settings.xml || sed -i '/<\/settings>/i \\
+<mirrors> \\
+  <mirror> \\
+      <id>aliyunmaven</id> \\
+      <mirrorOf>central</mirrorOf> \\
+      <name>Aliyun Maven Mirror</name> \\
+      <url>https://maven.aliyun.com/repository/public</url> \\
+  </mirror> \\
+</mirrors>' ~/.m2/settings.xml
+fi
+mvn clean test -fn || true
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "run.sh",
+                    """#!/bin/bash
+set -e
+cd /home/{pr.repo}
+mvn clean test -fn || true
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "test-run.sh",
+                    """#!/bin/bash
+set -e
+cd /home/{pr.repo}
+git apply --whitespace=nowarn /home/test.patch
+mvn clean test -fn || true
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+                File(
+                    ".",
+                    "fix-run.sh",
+                    """#!/bin/bash
+set -e
+cd /home/{pr.repo}
+git apply --whitespace=nowarn /home/test.patch /home/fix.patch
+mvn clean test -fn || true
+
+    """.format(
+                        pr=self.pr
+                    ),
+                ),
+            ]
         return [
             File(
                 ".",

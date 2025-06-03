@@ -302,14 +302,14 @@ class TypeScript(Instance):
         skipped_tests = set()
 
         re_pass_tests = [
-            re.compile(r"\x1b\[32m\s*\x1b\[32m✔\x1b\[39m\x1b\[0m\x1b\[90m\s+(.+?)\:\s*\x1b\[0m")
+            re.compile(r"^\s*[✔✓]\s+(.*?)(?::\s*\d+ms)?$")
         ]
         re_fail_tests = [
-            re.compile(r"\x1b\[31m\s*\d+\) (.+?)(?::)?\x1b\[0m")
+            re.compile(r"^\s*[✘×𐄂]\s+(.*?)(?::\s*\d+ms)?$")
         ]
-
+        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
         for line in test_log.splitlines():
-            line = line.strip()
+            line = ansi_escape.sub('', line)
             if not line:
                 continue
 

@@ -105,6 +105,58 @@ ENV TZ=Etc/UTC
 
 """
 
+
+
+class SwiftLintImageBaseSwift5_2(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
+
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Union[str, "Image"]:
+        return "swiftfiddle/swift:5.2"
+
+    def image_tag(self) -> str:
+        return "base-swift-5.2"
+
+    def workdir(self) -> str:
+        return "base-swift-5.2"
+
+    def files(self) -> list[File]:
+        return []
+
+    def dockerfile(self) -> str:
+        image_name = self.dependency()
+        if isinstance(image_name, Image):
+            image_name = image_name.image_full_name()
+
+        if self.config.need_clone:
+            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
+        else:
+            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
+
+        return f"""FROM {image_name}
+
+{self.global_env}
+
+WORKDIR /home/
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Etc/UTC
+
+{code}
+
+{self.clear_env}
+
+"""
+
+
 class SwiftLintImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -119,8 +171,11 @@ class SwiftLintImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        if self.pr.number <= 4206:
+        if 3656< self.pr.number <= 4206:
             return SwiftLintImageBaseSwift5_6(self.pr, self._config)
+        elif self.pr.number <= 3656:
+            return SwiftLintImageBaseSwift5_2(self.pr, self._config)
+
         return SwiftLintImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:

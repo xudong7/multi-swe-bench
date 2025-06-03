@@ -261,7 +261,18 @@ class playframework(Instance):
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
+        #[info] Test run xxx finished
+        summary_res = re.compile(r"^\[info\] Test run (\S+) finished: (\d+) failed")
 
+        for line in test_log.splitlines():
+            summary_match = summary_res.match(line)
+            if summary_match:
+                test_name = summary_match.group(1)
+                failed_count = int(summary_match.group(2))
+                if failed_count == 0:
+                    passed_tests.add(test_name)
+                else:
+                    failed_tests.add(test_name)
 
         return TestResult(
             passed_count=len(passed_tests),

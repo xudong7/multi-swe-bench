@@ -258,10 +258,36 @@ class sbt(Instance):
         return "bash /home/fix-run.sh"
 
     def parse_log(self, test_log: str) -> TestResult:
+        import re
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
+        passed_res = [
+            re.compile(r"^\[info\] [+-] (?!.*\*\*\* FAILED \*\*\*)(.*)$")
+        ]
 
+        failed_res = [
+            re.compile(r"^\[info\] - (.*) \*\*\* FAILED \*\*\*$")
+        ]
+
+        skipped_res = []  # 留空，可扩展
+
+        for line in test_log.splitlines():
+            for passed_re in passed_res:
+                m = passed_re.match(line)
+                if m:
+                    passed_tests.add(m.group(1).strip())
+
+            for failed_re in failed_res:
+                m = failed_re.match(line)
+                if m:
+                    failed_tests.add(m.group(1).strip())
+                    passed_tests.discard(m.group(1).strip())  # 从 passed 去除
+
+            for skipped_re in skipped_res:
+                m = skipped_re.match(line)
+                if m:
+                    skipped_tests.add(m.group(1).strip())
 
         return TestResult(
             passed_count=len(passed_tests),
