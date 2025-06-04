@@ -43,13 +43,12 @@ class ImageBase(Image):
 
         return f"""FROM {image_name}
 
-
-
 WORKDIR /home/
+
+{self.global_env}
 
 {code}
 
-{self.global_env}
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -62,9 +61,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-
 {self.clear_env}
-
 """
 
 

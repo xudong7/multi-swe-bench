@@ -43,13 +43,12 @@ class ImageBase(Image):
 
         return f"""FROM {image_name}
 
-
-
 WORKDIR /home/
+
+{self.global_env}
 
 {code}
 
-{self.global_env}
 RUN apt-get update && apt-get install -y \
     git unzip libicu-dev libxml2-dev libzip-dev libonig-dev libpq-dev libjpeg-dev libpng-dev libcurl4-openssl-dev \
     libfreetype6-dev libssl-dev libxslt1-dev zlib1g-dev libpq-dev redis-server libtidy-dev \
@@ -62,7 +61,6 @@ RUN apt-get update && \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 {self.clear_env}
-
 """
 
 
