@@ -43,10 +43,13 @@ class ImageBase(Image):
 
         return f"""FROM {image_name}
 
+
+
 WORKDIR /home/
 
-{self.global_env}
+{code}
 
+{self.global_env}
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -59,9 +62,9 @@ RUN apt-get update && apt-get install -y \
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-{code}
 
 {self.clear_env}
+
 """
 
 
@@ -241,52 +244,97 @@ class rector(Instance):
         return "bash /home/fix-run.sh"
 
     def parse_log(self, test_log: str) -> TestResult:
-            passed_tests = set()
-            failed_tests = set()
-            skipped_tests = set()
-
-            current_suite = None
-
+        passed_tests = set()
+        failed_tests = set()
+        skipped_tests = set()
+        if self.pr.number <= 2497:
+            current_class = None
             for line in test_log.splitlines():
-                stripped_line = line.strip()
-
-                # 跳过进度行
-                if re.match(r"^[.s]+\s+\d+\s*/\s*\d+\s*\(\s*\d+%\)$", stripped_line):
+                class_match_ansi = re.search(r'\x1b\[4m(.+?)\x1b\[0m', line)
+                if class_match_ansi:
+                    current_class = class_match_ansi.group(1).strip()
                     continue
 
-                # 匹配测试套件路径，如 Zu Za (Tests\Localization\ZuZa)
-                suite_match = re.match(r"^(.*?) \((.*?)\)$", stripped_line)
-                if suite_match:
-                    current_suite = f"{suite_match.group(2)}::{suite_match.group(1).strip()}"
+                class_match_plain = re.match(r'^[A-Z][\w\\]+$', line.strip())
+                if class_match_plain:
+                    current_class = line.strip()
                     continue
 
-                # 匹配成功测试
-                passed_match = re.match(r"^\u2714\s+(.*)$", stripped_line)
-                if passed_match and current_suite:
+                if not current_class:
+                    continue
+
+                match_ansi = re.search(r'\x1b\[\d{2}m([✔✘↩])\x1b\[0m\s+(.*)', line)
+                if match_ansi:
+                    symbol, name = match_ansi.groups()
+                    name = re.sub(r'\x1b\[[0-9;]*m', '', name).strip()
+                    full_name = f"{current_class}::{name}"
+                    if symbol == '✔':
+                        passed_tests.add(full_name)
+                    elif symbol == '✘':
+                        failed_tests.add(full_name)
+                    elif symbol == '↩':
+                        skipped_tests.add(full_name)
+                    continue
+
+                match_plain = re.match(r'^\s*\[(.)\]\s+(.*)', line)
+                if match_plain:
+                    symbol, name = match_plain.groups()
+                    name = name.strip()
+                    full_name = f"{current_class}::{name}"
+                    if symbol.lower() == 'x':
+                        passed_tests.add(full_name)
+                    elif symbol == ' ':
+                        failed_tests.add(full_name)
+                    continue
+        else:
+            lines = test_log.split('\n')
+            passed_pattern = re.compile(r'^\s*✔\s*(.+)$')
+            failed_pattern = re.compile(r'^\s*✘\s*(.+)$')
+            skipped_pattern = re.compile(r'^\s*↩\s*(.+)$')  
+            
+            current_test_class = None
+            
+            for line in lines:
+                line = line.strip()
+                
+                if line and not line.startswith(('✔', '✘', '↩', '∅', '│')) and '(' in line and ')' in line:
+                    if line.endswith(')'):
+                        current_test_class = line
+                        continue
+            
+                full_test_name = None
+                
+                passed_match = passed_pattern.match(line)
+                if passed_match:
                     test_name = passed_match.group(1).strip()
-                    passed_tests.add(f"{current_suite}::{test_name}")
+                    if test_name and current_test_class:
+                        full_test_name = f"{current_test_class} : {test_name}"
+                        passed_tests.add(full_test_name)
                     continue
 
-                # 匹配失败测试
-                failed_match = re.match(r"^\u2718\s+(.*)$", stripped_line)
-                if failed_match and current_suite:
+                failed_match = failed_pattern.match(line)
+                if failed_match:
                     test_name = failed_match.group(1).strip()
-                    failed_tests.add(f"{current_suite}::{test_name}")
+                    if test_name and current_test_class:
+                        full_test_name = f"{current_test_class} : {test_name}"
+                        failed_tests.add(full_test_name)
                     continue
-
-                # 匹配跳过测试（↩ 符号）
-                skipped_match = re.match(r"^\u21A9\s+(.*)$", stripped_line)
-                if skipped_match and current_suite:
+                
+                # Match skipped tests (↩ symbol)
+                skipped_match = skipped_pattern.match(line)
+                if skipped_match:
                     test_name = skipped_match.group(1).strip()
-                    skipped_tests.add(f"{current_suite}::{test_name}")
-                    continue
+                    if test_name and current_test_class:
+                        full_test_name = f"{current_test_class} : {test_name}"
+                        skipped_tests.add(full_test_name)
+                    continue   
 
-            return TestResult(
-                passed_count=len(passed_tests),
-                failed_count=len(failed_tests),
-                skipped_count=len(skipped_tests),
-                passed_tests=passed_tests,
-                failed_tests=failed_tests,
-                skipped_tests=skipped_tests,
-            )
 
+        return TestResult(
+            passed_count=len(passed_tests),
+            failed_count=len(failed_tests),
+            skipped_count=len(skipped_tests),
+            passed_tests=passed_tests,
+            failed_tests=failed_tests,
+            skipped_tests=skipped_tests,
+        )
