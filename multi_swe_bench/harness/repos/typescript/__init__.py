@@ -15,3 +15,4 @@ from multi_swe_bench.harness.repos.typescript.withastro import *
 from multi_swe_bench.harness.repos.typescript.Automattic import *
 from multi_swe_bench.harness.repos.typescript.microsoft import *
 from multi_swe_bench.harness.repos.typescript.MetaMask import *
+from multi_swe_bench.harness.repos.typescript.palantir import *

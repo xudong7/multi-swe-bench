@@ -500,6 +500,7 @@ class graylog2server(Instance):
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
+        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
         re_pass_tests = [
             re.compile(r"\[INFO\]\s+Tests run:.*?in\s+([^\s]+)"),
             re.compile(r"\[INFO\]\s+([a-zA-Z0-9\-_.]+(?:\s+[0-9]+\.[0-9]+\.[^\s]+)?)\s+\.{3,}\s+SUCCESS")
@@ -509,7 +510,7 @@ class graylog2server(Instance):
             re.compile(r"\[INFO\]\s+([a-zA-Z0-9\-_.]+(?:\s+[0-9]+\.[0-9]+\.[^\s]+)?)\s+\.{3,}\s+FAILURE")
         ]
         for line in test_log.splitlines():
-            line = line.strip()
+            line = ansi_escape.sub('', line)
             if not line:
                 continue
 
