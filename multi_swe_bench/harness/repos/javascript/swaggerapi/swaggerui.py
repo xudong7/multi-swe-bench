@@ -1,12 +1,12 @@
 import re
 from typing import Optional, Union
-
+import textwrap
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
 from multi_swe_bench.harness.pull_request import PullRequest
 
 
-class SwiftLintImageBase(Image):
+class swaggeruiImageBase(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -20,7 +20,7 @@ class SwiftLintImageBase(Image):
         return self._config
 
     def dependency(self) -> Union[str, "Image"]:
-        return "swift:6.0"
+        return "node:18"
 
     def image_tag(self) -> str:
         return "base"
@@ -49,6 +49,10 @@ WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
+RUN npm install yarn
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash && \
+    export NVM_DIR="$HOME/.nvm" && \
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 {code}
 
 {self.clear_env}
@@ -56,7 +60,7 @@ ENV TZ=Etc/UTC
 """
 
 
-class SwiftLintImageBaseSwift5_6(Image):
+class swaggeruiImageBaseCpp7(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -70,13 +74,13 @@ class SwiftLintImageBaseSwift5_6(Image):
         return self._config
 
     def dependency(self) -> Union[str, "Image"]:
-        return "swiftfiddle/swift:5.6"
+        return "gcc:7"
 
     def image_tag(self) -> str:
-        return "base-swift-5.6"
+        return "base-cpp-7"
 
     def workdir(self) -> str:
-        return "base-swift-5.6"
+        return "base-cpp-7"
 
     def files(self) -> list[File]:
         return []
@@ -90,123 +94,33 @@ class SwiftLintImageBaseSwift5_6(Image):
             code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
         else:
             code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
-
         return f"""FROM {image_name}
 
 {self.global_env}
 
 WORKDIR /home/
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Etc/UTC
 
 {code}
+
+RUN apt-get update && \
+    apt-get install -y \
+    build-essential \
+    pkg-config \
+    wget \
+    tar && \
+    wget https://cmake.org/files/v3.14/cmake-3.14.0-Linux-x86_64.tar.gz && \
+    tar -zxvf cmake-3.14.0-Linux-x86_64.tar.gz && \
+    mv cmake-3.14.0-Linux-x86_64 /opt/cmake && \
+    ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake && \
+    rm cmake-3.14.0-Linux-x86_64.tar.gz
+RUN apt-get install -y cmake
 
 {self.clear_env}
 
 """
 
 
-
-class SwiftLintImageBaseSwift5_2(Image):
-    def __init__(self, pr: PullRequest, config: Config):
-        self._pr = pr
-        self._config = config
-
-    @property
-    def pr(self) -> PullRequest:
-        return self._pr
-
-    @property
-    def config(self) -> Config:
-        return self._config
-
-    def dependency(self) -> Union[str, "Image"]:
-        return "swiftfiddle/swift:5.2"
-
-    def image_tag(self) -> str:
-        return "base-swift-5.2"
-
-    def workdir(self) -> str:
-        return "base-swift-5.2"
-
-    def files(self) -> list[File]:
-        return []
-
-    def dockerfile(self) -> str:
-        image_name = self.dependency()
-        if isinstance(image_name, Image):
-            image_name = image_name.image_full_name()
-
-        if self.config.need_clone:
-            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
-        else:
-            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
-
-        return f"""FROM {image_name}
-
-{self.global_env}
-
-WORKDIR /home/
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Etc/UTC
-
-{code}
-
-{self.clear_env}
-
-"""
-
-class SwiftLintImageBaseSwift5_0(Image):
-    def __init__(self, pr: PullRequest, config: Config):
-        self._pr = pr
-        self._config = config
-
-    @property
-    def pr(self) -> PullRequest:
-        return self._pr
-
-    @property
-    def config(self) -> Config:
-        return self._config
-
-    def dependency(self) -> Union[str, "Image"]:
-        return "swiftfiddle/swift:5.0"
-
-    def image_tag(self) -> str:
-        return "base-swift-5.0"
-
-    def workdir(self) -> str:
-        return "base-swift-5.0"
-
-    def files(self) -> list[File]:
-        return []
-
-    def dockerfile(self) -> str:
-        image_name = self.dependency()
-        if isinstance(image_name, Image):
-            image_name = image_name.image_full_name()
-
-        if self.config.need_clone:
-            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
-        else:
-            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
-
-        return f"""FROM {image_name}
-
-{self.global_env}
-
-WORKDIR /home/
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Etc/UTC
-
-{code}
-
-{self.clear_env}
-
-"""
-
-
-class SwiftLintImageDefault(Image):
+class swaggeruiImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -220,14 +134,10 @@ class SwiftLintImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        if 3656< self.pr.number <= 4206:
-            return SwiftLintImageBaseSwift5_6(self.pr, self._config)
-        elif 2885 < self.pr.number <= 3656:
-            return SwiftLintImageBaseSwift5_2(self.pr, self._config)
-        elif self.pr.number <= 2885:
-            return SwiftLintImageBaseSwift5_0(self.pr, self._config)
+        # if self.pr.number <= 958:
+        #     return swaggeruiImageBaseCpp7(self.pr, self._config)
 
-        return SwiftLintImageBase(self.pr, self._config)
+        return swaggeruiImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
@@ -236,102 +146,6 @@ class SwiftLintImageDefault(Image):
         return f"pr-{self.pr.number}"
 
     def files(self) -> list[File]:
-        if self.pr.number <= 2885:
-            return [
-                File(
-                    ".",
-                    "fix.patch",
-                    f"{self.pr.fix_patch}",
-                ),
-                File(
-                    ".",
-                    "test.patch",
-                    f"{self.pr.test_patch}",
-                ),
-                File(
-                    ".",
-                    "check_git_changes.sh",
-                    """#!/bin/bash
-set -e
-
-if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
-  echo "check_git_changes: Not inside a git repository"
-  exit 1
-fi
-
-if [[ -n $(git status --porcelain) ]]; then
-  echo "check_git_changes: Uncommitted changes"
-  exit 1
-fi
-
-echo "check_git_changes: No uncommitted changes"
-exit 0
-
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "prepare.sh",
-                    """#!/bin/bash
-set -e
-
-cd /home/{pr.repo}
-git reset --hard
-bash /home/check_git_changes.sh
-git checkout {pr.base.sha}
-bash /home/check_git_changes.sh
-
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "run.sh",
-                    """#!/bin/bash
-set -e
-
-cd /home/{pr.repo}
-git submodule update --init --recursive
-swift test
-
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "test-run.sh",
-                    """#!/bin/bash
-set -e
-
-cd /home/{pr.repo}
-git apply --whitespace=nowarn /home/test.patch
-git submodule update --init --recursive
-swift test
-
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "fix-run.sh",
-                    """#!/bin/bash
-set -e
-
-cd /home/{pr.repo}
-git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-git submodule update --init --recursive
-swift test
-
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-            ]
         return [
             File(
                 ".",
@@ -371,12 +185,18 @@ exit 0
                 "prepare.sh",
                 """#!/bin/bash
 set -e
-
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 cd /home/{pr.repo}
 git reset --hard
 bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
+
+nvm install || true
+nvm use || true
+npm ci || npm install || true
+npm run test:unit || true
 
 """.format(
                     pr=self.pr
@@ -387,10 +207,13 @@ bash /home/check_git_changes.sh
                 "run.sh",
                 """#!/bin/bash
 set -e
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
 cd /home/{pr.repo}
-swift test
-
+nvm use || true
+npm ci || npm install || true
+npm run test:unit
 """.format(
                     pr=self.pr
                 ),
@@ -400,10 +223,14 @@ swift test
                 "test-run.sh",
                 """#!/bin/bash
 set -e
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
-swift test
+nvm use || true
+npm ci || npm install || true
+npm run test:unit
 
 """.format(
                     pr=self.pr
@@ -414,10 +241,14 @@ swift test
                 "fix-run.sh",
                 """#!/bin/bash
 set -e
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-swift test
+nvm use || true
+npm ci || npm install || true
+npm run test:unit
 
 """.format(
                     pr=self.pr
@@ -435,22 +266,57 @@ swift test
             copy_commands += f"COPY {file.name} /home/\n"
 
         prepare_commands = "RUN bash /home/prepare.sh"
+        proxy_setup = ""
+        proxy_cleanup = ""
 
+        if self.global_env:
+            proxy_host = None
+            proxy_port = None
+
+            for line in self.global_env.splitlines():
+                match = re.match(
+                    r"^ENV\s*(http[s]?_proxy)=http[s]?://([^:]+):(\d+)", line
+                )
+                if match:
+                    proxy_host = match.group(2)
+                    proxy_port = match.group(3)
+                    break
+
+            if proxy_host and proxy_port:
+                proxy_setup = textwrap.dedent(
+                    f"""
+                    RUN mkdir -p $HOME && \\
+                        touch $HOME/.npmrc && \\
+                        echo "proxy=http://{proxy_host}:{proxy_port}" >> $HOME/.npmrc && \\
+                        echo "https-proxy=http://{proxy_host}:{proxy_port}" >> $HOME/.npmrc && \\
+                        echo "strict-ssl=false" >> $HOME/.npmrc
+                """
+                )
+
+                proxy_cleanup = textwrap.dedent(
+                    """
+                    RUN rm -f $HOME/.npmrc
+                """
+                )
         return f"""FROM {name}:{tag}
 
 {self.global_env}
 
+{proxy_setup}
+
 {copy_commands}
 
 {prepare_commands}
+
+{proxy_cleanup}
 
 {self.clear_env}
 
 """
 
 
-@Instance.register("realm", "SwiftLint")
-class SwiftLint(Instance):
+@Instance.register("swagger-api", "swagger-ui")
+class swaggerui(Instance):
     def __init__(self, pr: PullRequest, config: Config, *args, **kwargs):
         super().__init__()
         self._pr = pr
@@ -461,7 +327,7 @@ class SwiftLint(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-        return SwiftLintImageDefault(self.pr, self._config)
+        return swaggeruiImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:
         if run_cmd:
@@ -486,29 +352,39 @@ class SwiftLint(Instance):
         failed_tests = set()
         skipped_tests = set()
 
-        re_pass_tests = [
-            re.compile(r"^(?:Test Case|Test Suite) '(.+?)' passed")
+        passed_res = [
+            re.compile(r"^PASS:?\s+(.+?)(?:\s+\(\d+(\.\d+)?s\))?$"),
+            re.compile(r"✓\s+(\d+.*?)\s+\(\d+ms\)"),
+            re.compile(r"^\s*[✓✔]\s+(.+)$")
         ]
-        re_fail_tests = [
-            re.compile(r"^(?:Test Case|Test Suite) '(.+?)' failed")
+
+        failed_res = [
+            re.compile(r"^FAIL:?\s+(.+?)(?:\s+\(\d+(\.\d+)?s\))?$"),
+            re.compile(r"✕\s+(\d+.*?)\s+\(\d+ms\)"),
+            re.compile(r"^\s*[×✗]\s+(.+)$")
+        ]
+
+        skipped_res = [
+            re.compile(r"SKIP:?\s?(.+?)\s")
         ]
 
         for line in test_log.splitlines():
-            line = line.strip()
-            if not line:
-                continue
+            for passed_re in passed_res:
+                m = passed_re.match(line)
+                if m and m.group(1) not in failed_tests:
+                    passed_tests.add(m.group(1))
 
-            for pattern in re_pass_tests:
-                pass_match = pattern.match(line)
-                if pass_match:
-                    passed_tests.add(pass_match.group(1))
-                    break
+            for failed_re in failed_res:
+                m = failed_re.match(line)
+                if m:
+                    failed_tests.add(m.group(1))
+                    if m.group(1) in passed_tests:
+                        passed_tests.remove(m.group(1))
 
-            for pattern in re_fail_tests:
-                fail_match = pattern.match(line)
-                if fail_match:
-                    failed_tests.add(fail_match.group(1))
-                    break
+            for skipped_re in skipped_res:
+                m = skipped_re.match(line)
+                if m:
+                    skipped_tests.add(m.group(1))
 
         return TestResult(
             passed_count=len(passed_tests),
