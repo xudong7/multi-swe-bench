@@ -124,7 +124,7 @@ async def download_log(deployment: MultiSweBenchDockerDeployment, output_file: P
     return res.content
 
 
-async def run_and_save_logs(name:str, image_name: str, test_cmd: str, logger: logging.Logger, prepare_script_path: Path, save_file: Path, inD_save_file: Path):
+async def run_and_save_logs(name:str, image_name: str, test_cmd: str, logger: logging.Logger, save_file: Path, inD_save_file: Path,  prepare_script_path: Path):
     """
     name: run or test or fix
     run contrainer start swe-rex 服务 
@@ -150,12 +150,13 @@ async def run_and_save_logs(name:str, image_name: str, test_cmd: str, logger: lo
         await deployment.start()
         logger.info(f"{name}: create sessions")
         await deployment.runtime.create_session(CreateBashSessionRequest(session="eval", startup_source=["/root/.bashrc"]))
-        logger.info(f"{name}: download prepare.sh")
-        with open(prepare_script_path, 'r') as f:
-            content = f.read()
-            install_cmds = [cmd.strip() for cmd in content.split("###ACTION_DELIMITER###") if cmd.strip()]
-        logger.info(f"{name}: replay prepare.sh")
-        await run_prepare_cmds(deployment, install_cmds, session_name="eval")
+        if prepare_script_path is not None:
+            logger.info(f"{name}: download prepare.sh")
+            with open(prepare_script_path, 'r') as f:
+                content = f.read()
+                install_cmds = [cmd.strip() for cmd in content.split("###ACTION_DELIMITER###") if cmd.strip()]
+            logger.info(f"{name}: replay prepare.sh")
+            await run_prepare_cmds(deployment, install_cmds, session_name="eval")
         logger.info(f"{name}: run logs")
         await communicate_async(deployment, test_cmd, session_name="eval", timeout=7200)
         output = await download_log(deployment, inD_save_file, save_file)
