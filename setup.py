@@ -13,6 +13,7 @@ setup(
         "pyyaml",
         "PyGithub",
         "unidiff",
+        "swe-rex"
     ],
     author="Daoguang Zan",
     author_email="zandaoguang@bytedance.com",
