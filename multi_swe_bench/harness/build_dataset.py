@@ -20,6 +20,7 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Dict, Literal, Optional
 import asyncio
+import docker
 
 from dataclasses_json import dataclass_json
 from tqdm import tqdm
@@ -751,6 +752,17 @@ class CliArgs:
 
 
 if __name__ == "__main__":
+    # Ensure nix_swe container is running
+    try:
+        client = docker.from_env()
+        try:
+            container = client.containers.get("nix_swe")
+        except docker.errors.NotFound:
+            client.containers.run("mswebench/nix_swe:v1.0", "true", name="nix_swe")
+    except Exception as e:
+        print(f"Error starting nix_swe container: {e}")
+        sys.exit(1)
+    
     parser = get_parser()
     args = parser.parse_args()
     cli = CliArgs.from_dict(vars(args))
