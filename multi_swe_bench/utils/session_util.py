@@ -139,7 +139,7 @@ async def run_and_save_logs(name:str, image_name: str, test_cmd: str, logger: lo
         docker_args=[],
         startup_timeout=180.0,
         pull='never', # never pull image
-        remove_images=True, # stop container and remove image
+        remove_images=False, # stop container and remove image
         python_standalone_dir=None,
         platform=None,
         type='docker'
