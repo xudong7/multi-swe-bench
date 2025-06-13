@@ -194,7 +194,8 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
 pnpm install || true
-
+pnpm exec playwright install-deps || true
+pnpm playwright install chromium || true
 """.format(
                     pr=self.pr
                 ),
@@ -209,7 +210,12 @@ export NVM_DIR="$HOME/.nvm"
 
 cd /home/{pr.repo}
 pnpm install || true
-pnpm test -- --reporter verbose
+pnpm exec playwright install-deps || true
+pnpm playwright install chromium || true
+pnpm run sync-all || true
+pnpm test:kit || true
+pnpm test:vite-ecosystem-ci || true
+pnpm test:others || true
 """.format(
                     pr=self.pr
                 ),
@@ -225,7 +231,12 @@ export NVM_DIR="$HOME/.nvm"
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 pnpm install || true
-pnpm test -- --reporter verbose
+pnpm exec playwright install-deps || true
+pnpm playwright install chromium || true
+pnpm run sync-all || true
+pnpm test:kit || true
+pnpm test:vite-ecosystem-ci || true
+pnpm test:others || true
 
 """.format(
                     pr=self.pr
@@ -242,8 +253,12 @@ export NVM_DIR="$HOME/.nvm"
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 pnpm install || true
-pnpm test -- --reporter verbose
-
+pnpm exec playwright install-deps || true
+pnpm playwright install chromium || true
+pnpm run sync-all || true
+pnpm test:kit || true
+pnpm test:vite-ecosystem-ci || true
+pnpm test:others || true
 """.format(
                     pr=self.pr
                 ),
@@ -309,7 +324,7 @@ pnpm test -- --reporter verbose
 """
 
 
-@Instance.register("kit", "kit")
+@Instance.register("sveltejs", "kit")
 class kit(Instance):
     def __init__(self, pr: PullRequest, config: Config, *args, **kwargs):
         super().__init__()
@@ -347,15 +362,14 @@ class kit(Instance):
         skipped_tests = set()
 
         passed_res = [
-            re.compile(r"^PASS:?\s+(.+?)(?:\s+\(\d+(\.\d+)?s\))?$"),
-            re.compile(r"✓\s+(\d+.*?)\s+\(\d+ms\)"),
-            re.compile(r"^\s*[✓✔]\s+(.+)$")
+            re.compile(r"^PASS:?\s+([^\(]+)"),
+            re.compile(r"^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$"),
         ]
 
         failed_res = [
-            re.compile(r"^FAIL:?\s+(.+?)(?:\s+\(\d+(\.\d+)?s\))?$"),
-            re.compile(r"✕\s+(\d+.*?)\s+\(\d+ms\)"),
-            re.compile(r"^\s*[×✗]\s+(.+)$")
+            re.compile(r"^FAIL:?\s+([^\(]+)"),
+            re.compile(r"^\s*[×✗✘]\s+\d+\s+\[.*?\]\s+›\s+(.+?)\s+\(\d+ms\)$"),
+            re.compile(r"^\s*[×✗]\s+(.+?)(?:\s+\d+ms)?$")
         ]
 
         skipped_res = [

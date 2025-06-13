@@ -49,8 +49,14 @@ WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
-RUN npm install yarn
 RUN apt update && apt install -y libxkbfile-dev pkg-config build-essential python3 libkrb5-dev libxss1 xvfb libgtk-3-0 libgbm1
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg \
+        fonts-khmeros fonts-kacst fonts-freefont-ttf libxss1 dbus dbus-x11 \
+        --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash && \
     export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
@@ -216,7 +222,11 @@ nvm use || true
 npm ci || npm install || true
 npm exec -- npm-run-all -lp compile "electron x64" playwright-install download-builtin-extensions || true
 npm run compile || true
-npm run test-node
+npm run test-node || true
+xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" npm run test-browser-no-install -- --browser chromium --no-sandbox || true
+xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test.sh --no-sandbox --disable-dev-shm-usage || true
+xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test-web-integration.sh --browser chromium --no-sandbox || true
+xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test-integration.sh --no-sandbox --disable-dev-shm-usage || true
 """.format(
                     pr=self.pr
                 ),
@@ -235,8 +245,11 @@ nvm use || true
 npm ci || npm install || true
 npm exec -- npm-run-all -lp compile "electron x64" playwright-install download-builtin-extensions || true
 npm run compile || true
-npm run test-node
-
+npm run test-node || true
+xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" npm run test-browser-no-install -- --browser chromium --no-sandbox || true
+xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test.sh --no-sandbox --disable-dev-shm-usage || true
+xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test-web-integration.sh --browser chromium --no-sandbox || true
+xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test-integration.sh --no-sandbox --disable-dev-shm-usage || true
 """.format(
                     pr=self.pr
                 ),
@@ -255,8 +268,11 @@ nvm use || true
 npm ci || npm install || true
 npm exec -- npm-run-all -lp compile "electron x64" playwright-install download-builtin-extensions || true
 npm run compile || true
-npm run test-node
-
+npm run test-node || true
+xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" npm run test-browser-no-install -- --browser chromium --no-sandbox || true
+xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test.sh --no-sandbox --disable-dev-shm-usage || true
+xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test-web-integration.sh --browser chromium --no-sandbox || true
+xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test-integration.sh --no-sandbox --disable-dev-shm-usage || true
 """.format(
                     pr=self.pr
                 ),
@@ -368,6 +384,7 @@ class vscode(Instance):
         fail_patterns = [
             re.compile(r'^[\s]*✖\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$'),
             re.compile(r'^\s*\d+\)\s*\".*? hook for \"(.*?)\"$'),  # mocha: 1) "after each" hook for "test name"
+            re.compile(r'^\s*\d+\)\s*(.+)$')
         ]
 
         skip_patterns = [
