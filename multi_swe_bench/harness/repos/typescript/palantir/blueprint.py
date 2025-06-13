@@ -48,8 +48,13 @@ class blueprintImageBase(Image):
 WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
-
-RUN npm install yarn
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg \
+        fonts-khmeros fonts-kacst fonts-freefont-ttf libxss1 dbus dbus-x11 \
+        --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash && \
     export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
@@ -158,7 +163,7 @@ nvm use || true
 corepack enable || true
 yarn || true
 yarn compile || true
-FORCE_COLOR=0 yarn test --silent=true
+CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN yarn test
 """.format(
                     pr=self.pr
                 ),
@@ -177,7 +182,7 @@ nvm use || true
 corepack enable || true
 yarn || true
 yarn compile || true
-FORCE_COLOR=0 yarn test --silent=true
+CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN yarn test
 
 """.format(
                     pr=self.pr
@@ -197,7 +202,7 @@ nvm use || true
 corepack enable || true
 yarn || true
 yarn compile || true
-FORCE_COLOR=0 yarn test --silent=true
+CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN yarn test
 
 """.format(
                     pr=self.pr
@@ -302,12 +307,12 @@ class blueprint(Instance):
         skipped_tests = set()
 
         passed_res = [
-            re.compile(r"PASS:?\s?(.+?)\s"),
+            re.compile(r"^PASS:?\s+([^\(]+)"),
             re.compile(r"^\s*[✔✓]\s+(.*?)(?:\s*\(\d+ms\))?$")
         ]
 
         failed_res = [
-            re.compile(r"FAIL:?\s?(.+?)\s"),
+            re.compile(r"^FAIL:?\s+([^\(]+)"),
             re.compile(r"^\s*[×✗]\s+(.*?)(?:\s*\(\d+ms\))?$")
         ]
 
