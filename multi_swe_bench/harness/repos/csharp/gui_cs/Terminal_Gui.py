@@ -152,8 +152,7 @@ dotnet test Tests/UnitTestsParallelizable --no-build --verbosity normal
 set -e
 
 cd /home/{pr.repo}
-git apply /home/test.patch
-dotnet build --configuration Debug --no-restore
+git apply --whitespace=nowarn --exclude='*.swp' --exclude='*.png'  --exclude='*.nupkg' --exclude='*.snupkg' /home/test.patch 
 dotnet test Tests/UnitTests --no-build --verbosity normal
 dotnet test Tests/UnitTestsParallelizable --no-build --verbosity normal
 
@@ -169,7 +168,7 @@ dotnet test Tests/UnitTestsParallelizable --no-build --verbosity normal
 set -e
 
 cd /home/{pr.repo}
-git apply /home/test.patch /home/fix.patch
+git apply --whitespace=nowarn --exclude='*.swp' --exclude='*.png'  --exclude='*.nupkg' --exclude='*.snupkg' /home/test.patch /home/fix.patch
 dotnet build --configuration Debug --no-restore
 dotnet test Tests/UnitTests --no-build --verbosity normal
 dotnet test Tests/UnitTestsParallelizable --no-build --verbosity normal
@@ -203,7 +202,149 @@ dotnet test Tests/UnitTestsParallelizable --no-build --verbosity normal
 {self.clear_env}
 
 """
+class ImageDefault3954(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
 
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Image | None:
+        return ImageBase(self.pr, self.config)
+
+    def image_tag(self) -> str:
+        return f"pr-{self.pr.number}"
+
+    def workdir(self) -> str:
+        return f"pr-{self.pr.number}"
+
+    def files(self) -> list[File]:
+        return [
+            File(
+                ".",
+                "fix.patch",
+                f"{self.pr.fix_patch}",
+            ),
+            File(
+                ".",
+                "test.patch",
+                f"{self.pr.test_patch}",
+            ),
+            File(
+                ".",
+                "check_git_changes.sh",
+                """#!/bin/bash
+set -e
+
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  echo "check_git_changes: Not inside a git repository"
+  exit 1
+fi
+
+if [[ -n $(git status --porcelain) ]]; then
+  echo "check_git_changes: Uncommitted changes"
+  exit 1
+fi
+
+echo "check_git_changes: No uncommitted changes"
+exit 0
+
+""".format(
+                    pr=self.pr
+                ),
+            ),
+            File(
+                ".",
+                "prepare.sh",
+                """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git reset --hard
+bash /home/check_git_changes.sh
+git checkout {pr.base.sha}
+bash /home/check_git_changes.sh
+dotnet restore
+""".format(
+                    pr=self.pr
+                ),
+            ),
+            File(
+                ".",
+                "run.sh",
+                """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+dotnet build --configuration Debug --no-restore
+dotnet test UnitTests --no-build --verbosity normal
+
+""".format(
+                    pr=self.pr
+                ),
+            ),
+            File(
+                ".",
+                "test-run.sh",
+                """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply --whitespace=nowarn --exclude='*.swp' --exclude='*.png'  --exclude='*.nupkg' --exclude='*.snupkg' /home/test.patch
+dotnet build --configuration Debug --no-restore
+dotnet test UnitTests --no-build --verbosity normal
+
+
+""".format(
+                    pr=self.pr
+                ),
+            ),
+            File(
+                ".",
+                "fix-run.sh",
+                """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply --whitespace=nowarn --exclude='*.swp' --exclude='*.png'  --exclude='*.nupkg' --exclude='*.snupkg' /home/test.patch /home/fix.patch
+dotnet build --configuration Debug --no-restore
+dotnet test UnitTests --no-build --verbosity normal
+
+
+""".format(
+                    pr=self.pr
+                ),
+            ),
+        ]
+
+    def dockerfile(self) -> str:
+        image = self.dependency()
+        name = image.image_name()
+        tag = image.image_tag()
+
+        copy_commands = ""
+        for file in self.files():
+            copy_commands += f"COPY {file.name} /home/\n"
+
+        prepare_commands = "RUN bash /home/prepare.sh"
+
+        return f"""FROM {name}:{tag}
+
+{self.global_env}
+
+{copy_commands}
+
+{prepare_commands}
+
+{self.clear_env}
+
+"""
 
 @Instance.register("gui-cs", "Terminal.Gui")
 class rector(Instance):
@@ -217,6 +358,8 @@ class rector(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
+        if self.pr.number <= 3954:
+            return ImageDefault3954(self.pr, self._config)
         return ImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:
