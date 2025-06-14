@@ -6,3 +6,4 @@ toml
 pyyaml
 PyGithub
 unidiff
+swe-rex

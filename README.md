@@ -53,6 +53,18 @@ We aim to accelerate progress in automated issue resolution and RL, bridging the
 - **Multi-SWE-RL Community**: Open-source initiative for large-scale RL datasets. Initial release includes **4723 instances** to advance RL research.  
 - **Fully Open Source Data, Code, and Environment**: All data, code, and container images are publicly released, along with detailed tutorials, to foster community contributions and enable scalable extension.
 
+## 🚀 Set Up
+Multi-SWE-bench uses Docker for reproducible evaluations.
+Follow the instructions in the [Docker setup guide](https://docs.docker.com/engine/install/) to install Docker on your machine.
+If you're setting up on Linux, we recommend seeing the [post-installation steps](https://docs.docker.com/engine/install/linux-postinstall/) as well.
+
+Finally, to build Multi-SWE-bench from source, follow these steps:
+```bash
+git clone git@github.com:multi-swe-bench/multi-swe-bench.git
+cd multi-swe-bench
+pip install -e .
+```
+
 ## 📊 Evaluation
 
 ### Run Evaluation
