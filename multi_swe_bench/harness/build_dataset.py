@@ -659,9 +659,36 @@ class CliArgs:
         async def run_three_logs():
             from multi_swe_bench.utils.session_util import run_and_save_logs
             return await asyncio.gather(
-                run_and_save_logs("run", instance.name(), f"{instance.run(self.run_cmd)} >> /home/run_msb.log", self.logger, instance_dir / RUN_LOG_FILE, "/home/run_msb.log", prepare_script_path=prepare_script_path),
-                run_and_save_logs("test", instance.name(), f"{instance.test_patch_run(self.test_patch_run_cmd)} >> /home/test_msb.log", self.logger, instance_dir / TEST_PATCH_RUN_LOG_FILE, "/home/test_msb.log", prepare_script_path=prepare_script_path),
-                run_and_save_logs("fix", instance.name(), f"{instance.fix_patch_run(self.fix_patch_run_cmd)} >> /home/fix_msb.log", self.logger, instance_dir / FIX_PATCH_RUN_LOG_FILE, "/home/fix_msb.log", prepare_script_path=prepare_script_path)
+                run_and_save_logs(
+                    "run", 
+                    instance.name(), 
+                    f"{instance.run(self.run_cmd)} >> /home/run_msb.log", 
+                    self.logger, 
+                    instance_dir / RUN_LOG_FILE, 
+                    "/home/run_msb.log", 
+                    prepare_script_path=prepare_script_path,
+                    global_env=self.global_env
+                ),
+                run_and_save_logs(
+                    "test", 
+                    instance.name(), 
+                    f"{instance.test_patch_run(self.test_patch_run_cmd)} >> /home/test_msb.log", 
+                    self.logger, 
+                    instance_dir / TEST_PATCH_RUN_LOG_FILE, 
+                    "/home/test_msb.log", 
+                    prepare_script_path=prepare_script_path,
+                    global_env=self.global_env
+                ),
+                run_and_save_logs(
+                    "fix", 
+                    instance.name(), 
+                    f"{instance.fix_patch_run(self.fix_patch_run_cmd)} >> /home/fix_msb.log", 
+                    self.logger, 
+                    instance_dir / FIX_PATCH_RUN_LOG_FILE, 
+                    "/home/fix_msb.log", 
+                    prepare_script_path=prepare_script_path,
+                    global_env=self.global_env
+                )
             )
 
         if self.run_log: 

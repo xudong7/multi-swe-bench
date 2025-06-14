@@ -14,6 +14,7 @@ from swerex.runtime.remote import RemoteRuntime
 from swerex.utils.free_port import find_free_port
 from typing import Literal
 
+logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
 class MultiSweBenchDockerDeployment(DockerDeployment):
     def __init__(self, *, logger: logging.Logger | None = None, **kwargs):
@@ -73,11 +74,6 @@ class MultiSweBenchDockerDeployment(DockerDeployment):
             self._container_name,
             "--memory=4g",  # Limit memory to 4GB
             "--cpus=1",     # Limit to 1 CPU core
-            "--health-cmd='curl -f http://localhost:8000/health || exit 1'",  # Add health check
-            "--health-interval=30s",
-            "--health-timeout=10s",
-            "--health-retries=5",
-            "--health-start-period=60s",
             image_id,
             *self._get_swerex_start_cmd(prefix_cmd= "/nix/swalm/nix-env/bin/python -m venv /root/venv && /root/venv/bin/pip install --no-cache-dir swe-rex && ln -s /root/venv/bin/swerex-remote /usr/local/bin/swerex-remote",
                                          token=token)
@@ -135,18 +131,32 @@ async def download_log(deployment: MultiSweBenchDockerDeployment, output_file: P
     return res.content
 
 
-async def run_and_save_logs(name:str, image_name: str, test_cmd: str, logger: logging.Logger, save_file: Path, inD_save_file: Path,  prepare_script_path: Path):
+async def run_and_save_logs(
+        name:str, 
+        image_name: str, 
+        test_cmd: str, 
+        logger: logging.Logger, 
+        save_file: Path, 
+        inD_save_file: Path,  
+        prepare_script_path: Path,
+        global_env: list[str] = None):
     """name: Type of operation (run/test/fix)
     - Start container and initialize swe-rex service
     - Install dependencies from prepare.sh
     - Execute run.sh
     - Save execution logs to specified location
     """
+    # Convert global_env to docker_args
+    docker_args = []
+    if global_env:
+        for env in global_env:
+            docker_args.extend(["-e", env])
+
     dockerdeploymentconfig = DockerDeploymentConfig(
         image=image_name,
         port=None,
-        docker_args=[],
-        startup_timeout=600.0,  # 10 minutes
+        docker_args=docker_args,
+        startup_timeout=1800.0,  # 30 minutes
         pull="never", # never pull image
         remove_images=False, # stop container and remove image
         python_standalone_dir=None,
@@ -155,25 +165,26 @@ async def run_and_save_logs(name:str, image_name: str, test_cmd: str, logger: lo
     )
     deployment = MultiSweBenchDockerDeployment.from_config(logger=logger, config=dockerdeploymentconfig)
     try:
-        logger.info(f"{name}: start container and swe-rex service")
+        logger.info(f"{image_name}/{name}: start container and swe-rex service")
         await deployment.start()
-        logger.info(f"{name}: create sessions")
+        logger.info(f"{image_name}/{name}: create sessions")
         await deployment.runtime.create_session(CreateBashSessionRequest(session="eval", startup_source=["/root/.bashrc"]))
         if prepare_script_path is not None:
-            logger.info(f"{name}: download prepare.sh")
+            logger.info(f"{image_name}/{name}: download prepare.sh")
             with open(prepare_script_path) as f:
                 content = f.read()
                 install_cmds = [cmd.strip() for cmd in content.split("###ACTION_DELIMITER###") if cmd.strip()]
-            logger.info(f"{name}: replay prepare.sh")
+            logger.info(f"{image_name}/{name}: replay prepare.sh")
             await run_prepare_cmds(deployment, install_cmds, session_name="eval")
-        logger.info(f"{name}: run logs")
+        logger.info(f"{image_name}/{name}: run logs")
         await communicate_async(deployment, test_cmd, session_name="eval", timeout=14400)  # 4h
+        logger.info(f"{image_name}/{name}: download logs")
         output = await download_log(deployment, inD_save_file, save_file)
     except Exception as e:
         logger.error(f"error in run_and_save_logs: {e}")
         raise RuntimeError(f"error in run_and_save_logs: {e}")
     finally:
-        logger.info("stop container")
+        logger.info(f"{image_name}/{name}: stop container")
         await deployment.stop()
 
     return output
