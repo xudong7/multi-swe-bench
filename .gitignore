@@ -180,3 +180,10 @@ token
 tokens
 token.txt
 tokens.txt
+
+# Custom ignore rules
+build*.sh
+*debug*
+exp_v1/
+eval_rl_go.sh
+gen_report_rl_go.sh
