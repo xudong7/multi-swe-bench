@@ -6,7 +6,7 @@ from multi_swe_bench.harness.instance import Instance, TestResult
 from multi_swe_bench.harness.pull_request import PullRequest
 
 
-class swaggeruiImageBase(Image):
+class lexicalImageBase(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -48,11 +48,18 @@ class swaggeruiImageBase(Image):
 WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
-
-RUN npm install yarn
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg \
+        fonts-khmeros fonts-kacst fonts-freefont-ttf libxss1 dbus dbus-x11 \
+        --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash && \
     export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+    
 {code}
 
 {self.clear_env}
@@ -60,67 +67,7 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | b
 """
 
 
-class swaggeruiImageBaseCpp7(Image):
-    def __init__(self, pr: PullRequest, config: Config):
-        self._pr = pr
-        self._config = config
-
-    @property
-    def pr(self) -> PullRequest:
-        return self._pr
-
-    @property
-    def config(self) -> Config:
-        return self._config
-
-    def dependency(self) -> Union[str, "Image"]:
-        return "gcc:7"
-
-    def image_tag(self) -> str:
-        return "base-cpp-7"
-
-    def workdir(self) -> str:
-        return "base-cpp-7"
-
-    def files(self) -> list[File]:
-        return []
-
-    def dockerfile(self) -> str:
-        image_name = self.dependency()
-        if isinstance(image_name, Image):
-            image_name = image_name.image_full_name()
-
-        if self.config.need_clone:
-            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
-        else:
-            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
-        return f"""FROM {image_name}
-
-{self.global_env}
-
-WORKDIR /home/
-
-{code}
-
-RUN apt-get update && \
-    apt-get install -y \
-    build-essential \
-    pkg-config \
-    wget \
-    tar && \
-    wget https://cmake.org/files/v3.14/cmake-3.14.0-Linux-x86_64.tar.gz && \
-    tar -zxvf cmake-3.14.0-Linux-x86_64.tar.gz && \
-    mv cmake-3.14.0-Linux-x86_64 /opt/cmake && \
-    ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake && \
-    rm cmake-3.14.0-Linux-x86_64.tar.gz
-RUN apt-get install -y cmake
-
-{self.clear_env}
-
-"""
-
-
-class swaggeruiImageDefault(Image):
+class lexicalImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -135,9 +82,9 @@ class swaggeruiImageDefault(Image):
 
     def dependency(self) -> Image | None:
         # if self.pr.number <= 958:
-        #     return swaggeruiImageBaseCpp7(self.pr, self._config)
+        #     return lexicalImageBaseCpp7(self.pr, self._config)
 
-        return swaggeruiImageBase(self.pr, self._config)
+        return lexicalImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
@@ -187,17 +134,15 @@ exit 0
 set -e
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
 cd /home/{pr.repo}
 git reset --hard
 bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
-nvm install || true
-nvm use || true
 npm ci || npm install || true
-npm run test || true
-
+npx playwright install || true
 """.format(
                     pr=self.pr
                 ),
@@ -209,11 +154,12 @@ npm run test || true
 set -e
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
 cd /home/{pr.repo}
-nvm use || true
+
 npm ci || npm install || true
-npm run test
+npx playwright install || true
+npm run test-unit || true
+npm run start & npm run test-e2e-chromium || true
 """.format(
                     pr=self.pr
                 ),
@@ -225,12 +171,13 @@ npm run test
 set -e
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
-nvm use || true
+
 npm ci || npm install || true
-npm run test
+npx playwright install || true
+npm run test-unit || true
+npm run start & npm run test-e2e-chromium || true
 
 """.format(
                     pr=self.pr
@@ -243,12 +190,13 @@ npm run test
 set -e
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-nvm use || true
+
 npm ci || npm install || true
-npm run test
+npx playwright install || true
+npm run test-unit || true
+npm run start & npm run test-e2e-chromium || true
 
 """.format(
                     pr=self.pr
@@ -315,8 +263,8 @@ npm run test
 """
 
 
-@Instance.register("swagger-api", "swagger-ui")
-class swaggerui(Instance):
+@Instance.register("facebook", "lexical")
+class lexical(Instance):
     def __init__(self, pr: PullRequest, config: Config, *args, **kwargs):
         super().__init__()
         self._pr = pr
@@ -327,7 +275,7 @@ class swaggerui(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-        return swaggeruiImageDefault(self.pr, self._config)
+        return lexicalImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:
         if run_cmd:
@@ -353,38 +301,38 @@ class swaggerui(Instance):
         skipped_tests = set()
 
         passed_res = [
-            re.compile(r"^PASS:?\s+(.+?)(?:\s+\(\d+(\.\d+)?s\))?$"),
-            re.compile(r"✓\s+(\d+.*?)\s+\(\d+ms\)"),
-            re.compile(r"^\s*[✓✔]\s+(.+)$")
+            re.compile(r"^PASS:?\s+([^\(]+)"),
+            re.compile(r"^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
         ]
 
         failed_res = [
-            re.compile(r"^FAIL:?\s+(.+?)(?:\s+\(\d+(\.\d+)?s\))?$"),
-            re.compile(r"✕\s+(\d+.*?)\s+\(\d+ms\)"),
-            re.compile(r"^\s*[×✗]\s+(.+)$")
+            re.compile(r"^FAIL:?\s+([^\(]+)"),
+            re.compile(r"^[\s]*[✖✘]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
         ]
 
         skipped_res = [
-            re.compile(r"SKIP:?\s?(.+?)\s")
+            re.compile(r"SKIP:?\s?(.+?)\s"),
+            re.compile(r"^[\s]*[-]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
         ]
-
+        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
         for line in test_log.splitlines():
+            line = ansi_escape.sub('', line).strip()
             for passed_re in passed_res:
                 m = passed_re.match(line)
-                if m and m.group(1) not in failed_tests:
-                    passed_tests.add(m.group(1))
+                if m and m.group(1).strip() not in failed_tests:
+                    passed_tests.add(m.group(1).strip())
 
             for failed_re in failed_res:
                 m = failed_re.match(line)
                 if m:
-                    failed_tests.add(m.group(1))
-                    if m.group(1) in passed_tests:
-                        passed_tests.remove(m.group(1))
+                    failed_tests.add(m.group(1).strip())
+                    if m.group(1).strip() in passed_tests:
+                        passed_tests.remove(m.group(1).strip())
 
             for skipped_re in skipped_res:
                 m = skipped_re.match(line)
                 if m:
-                    skipped_tests.add(m.group(1))
+                    skipped_tests.add(m.group(1).strip())
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -352,15 +352,15 @@ class react(Instance):
         skipped_tests = set()
 
         passed_res = [
-            re.compile(r"^PASS:?\s+(.+?)(?:\s+\(\d+(\.\d+)?s\))?$"),
-            re.compile(r"✓\s+(\d+.*?)\s+\(\d+ms\)"),
-            re.compile(r"^\s*[✓✔]\s+(.+)$")
+            re.compile(r"^PASS:?\s+([^\(]+)"),
+            re.compile(r"^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$"),
         ]
 
         failed_res = [
-            re.compile(r"^FAIL:?\s+(.+?)(?:\s+\(\d+(\.\d+)?s\))?$"),
+            re.compile(r"^FAIL:?\s+([^\(]+)"),
             re.compile(r"✕\s+(\d+.*?)\s+\(\d+ms\)"),
             re.compile(r"^\s*[×✗]\s+(.+)$")
+
         ]
 
         skipped_res = [
@@ -368,6 +368,7 @@ class react(Instance):
         ]
 
         for line in test_log.splitlines():
+            line = line.strip()
             for passed_re in passed_res:
                 m = passed_re.match(line)
                 if m and m.group(1) not in failed_tests:
