@@ -646,7 +646,7 @@ class CliArgs:
             / instance.pr.repo
             / INSTANCE_WORKDIR
             / instance.dependency().workdir()
-        )startup_timeout
+        )
         instance_dir.mkdir(parents=True, exist_ok=True)
 
         report_path = instance_dir / REPORT_FILE
