@@ -168,7 +168,7 @@ async def run_and_save_logs(
         logger.info(f"{image_name}/{name}: start container and swe-rex service")
         await deployment.start()
         logger.info(f"{image_name}/{name}: create sessions")
-        await deployment.runtime.create_session(CreateBashSessionRequest(session="eval", startup_source=["/root/.bashrc"]))
+        await deployment.runtime.create_session(CreateBashSessionRequest(session="eval", startup_source=["/root/.bashrc"], startup_timeout=1200))
         if prepare_script_path is not None:
             logger.info(f"{image_name}/{name}: download prepare.sh")
             with open(prepare_script_path) as f:

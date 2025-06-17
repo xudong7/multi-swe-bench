@@ -646,7 +646,7 @@ class CliArgs:
             / instance.pr.repo
             / INSTANCE_WORKDIR
             / instance.dependency().workdir()
-        )
+        )startup_timeout
         instance_dir.mkdir(parents=True, exist_ok=True)
 
         report_path = instance_dir / REPORT_FILE
@@ -662,7 +662,7 @@ class CliArgs:
                 run_and_save_logs(
                     "run", 
                     instance.name(), 
-                    f"{instance.run(self.run_cmd)} >> /home/run_msb.log", 
+                    f"{instance.run(self.run_cmd)} >> /home/run_msb.log 2>&1", 
                     self.logger, 
                     instance_dir / RUN_LOG_FILE, 
                     "/home/run_msb.log", 
@@ -672,7 +672,7 @@ class CliArgs:
                 run_and_save_logs(
                     "test", 
                     instance.name(), 
-                    f"{instance.test_patch_run(self.test_patch_run_cmd)} >> /home/test_msb.log", 
+                    f"{instance.test_patch_run(self.test_patch_run_cmd)} >> /home/test_msb.log 2>&1", 
                     self.logger, 
                     instance_dir / TEST_PATCH_RUN_LOG_FILE, 
                     "/home/test_msb.log", 
@@ -682,7 +682,7 @@ class CliArgs:
                 run_and_save_logs(
                     "fix", 
                     instance.name(), 
-                    f"{instance.fix_patch_run(self.fix_patch_run_cmd)} >> /home/fix_msb.log", 
+                    f"{instance.fix_patch_run(self.fix_patch_run_cmd)} >> /home/fix_msb.log 2>&1", 
                     self.logger, 
                     instance_dir / FIX_PATCH_RUN_LOG_FILE, 
                     "/home/fix_msb.log", 
