@@ -211,11 +211,11 @@ def get_parser() -> ArgumentParser:
         help="Whether to run logs or read from file in run_instance mode",
     )
     parser.add_argument(
-        "--replay_prepare",
+        "--human_mode",
         type=parser.bool,
         required=False,
-        default=False,
-        help="Whether to replay the prepare script and only set True for envagent",
+        default=True,
+        help="The dataset is constructed by human or not",
     )
 
     return parser
@@ -253,7 +253,7 @@ class CliArgs:
     log_to_console: bool
     parse_log: bool = True
     run_log: bool = True
-    replay_prepare: bool = False
+    human_mode: bool = True
 
 
     def __post_init__(self):
@@ -655,11 +655,27 @@ class CliArgs:
                 f"Report already exists for {instance.name()}, skipping..."
             )
             return
+        
+        def run_and_save_output(
+            image_full_name: str, run_command: str, output_path: Path
+        ):
+            self.logger.info(
+                f"Running {image_full_name} with command: {run_command}..."
+            )
+            output = docker_util.run(
+                image_full_name, run_command, output_path, self.global_env
+            )
+            self.logger.info(
+                f"Running {image_full_name} with command: {run_command}... done"
+            )
 
-        async def run_three_logs():
-            from multi_swe_bench.utils.session_util import run_and_save_logs
-            return await asyncio.gather(
-                run_and_save_logs(
+            return output
+
+        if self.run_log: 
+            if not self.human_mode: #envagent mode
+                from multi_swe_bench.utils.session_util import run_and_save_logs
+                prepare_script_path= self.workdir / instance.pr.org / instance.pr.repo / "images"  /f"pr-{instance.pr.number}"/ "prepare.sh" 
+                output_run = asyncio.run(run_and_save_logs(
                     "run", 
                     instance.name(), 
                     f"{instance.run(self.run_cmd)} >> /home/run_msb.log 2>&1", 
@@ -668,8 +684,8 @@ class CliArgs:
                     "/home/run_msb.log", 
                     prepare_script_path=prepare_script_path,
                     global_env=self.global_env
-                ),
-                run_and_save_logs(
+                ))
+                output_test = asyncio.run(run_and_save_logs(
                     "test", 
                     instance.name(), 
                     f"{instance.test_patch_run(self.test_patch_run_cmd)} >> /home/test_msb.log 2>&1", 
@@ -678,8 +694,8 @@ class CliArgs:
                     "/home/test_msb.log", 
                     prepare_script_path=prepare_script_path,
                     global_env=self.global_env
-                ),
-                run_and_save_logs(
+                ))
+                output_fix = asyncio.run(run_and_save_logs(
                     "fix", 
                     instance.name(), 
                     f"{instance.fix_patch_run(self.fix_patch_run_cmd)} >> /home/fix_msb.log 2>&1", 
@@ -688,16 +704,24 @@ class CliArgs:
                     "/home/fix_msb.log", 
                     prepare_script_path=prepare_script_path,
                     global_env=self.global_env
-                )
-            )
+                ))
 
-        if self.run_log: 
-            if self.replay_prepare:
-                prepare_script_path= self.workdir / instance.pr.org / instance.pr.repo / "images"  /f"pr-{instance.pr.number}"/ "prepare.sh" 
             else:
-                prepare_script_path= None
-            output_list = asyncio.run(run_three_logs())
-            output_run, output_test, output_fix = output_list
+                output_run = run_and_save_output(
+                    instance.name(), 
+                    instance.run(), 
+                    instance_dir / RUN_LOG_FILE
+                )
+                output_test = run_and_save_output(
+                    instance.name(),
+                    instance.test_patch_run(),
+                    instance_dir / TEST_PATCH_RUN_LOG_FILE,
+                )
+                output_fix = run_and_save_output(
+                    instance.name(),
+                    instance.fix_patch_run(),
+                    instance_dir / FIX_PATCH_RUN_LOG_FILE,
+                )
         else:
             with open(instance_dir / RUN_LOG_FILE, "r", encoding="utf-8") as f:
                 output_run = f.read()
