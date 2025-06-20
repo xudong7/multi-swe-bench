@@ -6,7 +6,7 @@ from multi_swe_bench.harness.instance import Instance, TestResult
 from multi_swe_bench.harness.pull_request import PullRequest
 
 
-class KaTeXImageBase(Image):
+class reactjsonschemaformImageBase(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -49,7 +49,6 @@ WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
-RUN npm install yarn
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash && \
     export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
@@ -60,7 +59,67 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | b
 """
 
 
-class KaTeXImageDefault(Image):
+class reactjsonschemaformImageBaseCpp7(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
+
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Union[str, "Image"]:
+        return "gcc:7"
+
+    def image_tag(self) -> str:
+        return "base-cpp-7"
+
+    def workdir(self) -> str:
+        return "base-cpp-7"
+
+    def files(self) -> list[File]:
+        return []
+
+    def dockerfile(self) -> str:
+        image_name = self.dependency()
+        if isinstance(image_name, Image):
+            image_name = image_name.image_full_name()
+
+        if self.config.need_clone:
+            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
+        else:
+            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
+        return f"""FROM {image_name}
+
+{self.global_env}
+
+WORKDIR /home/
+
+{code}
+
+RUN apt-get update && \
+    apt-get install -y \
+    build-essential \
+    pkg-config \
+    wget \
+    tar && \
+    wget https://cmake.org/files/v3.14/cmake-3.14.0-Linux-x86_64.tar.gz && \
+    tar -zxvf cmake-3.14.0-Linux-x86_64.tar.gz && \
+    mv cmake-3.14.0-Linux-x86_64 /opt/cmake && \
+    ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake && \
+    rm cmake-3.14.0-Linux-x86_64.tar.gz
+RUN apt-get install -y cmake
+
+{self.clear_env}
+
+"""
+
+
+class reactjsonschemaformImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -74,7 +133,10 @@ class KaTeXImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        return KaTeXImageBase(self.pr, self._config)
+        # if self.pr.number <= 958:
+        #     return reactjsonschemaformImageBaseCpp7(self.pr, self._config)
+
+        return reactjsonschemaformImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
@@ -83,118 +145,6 @@ class KaTeXImageDefault(Image):
         return f"pr-{self.pr.number}"
 
     def files(self) -> list[File]:
-        if self.pr.number <= 2698:
-            return [
-                File(
-                    ".",
-                    "fix.patch",
-                    f"{self.pr.fix_patch}",
-                ),
-                File(
-                    ".",
-                    "test.patch",
-                    f"{self.pr.test_patch}",
-                ),
-                File(
-                    ".",
-                    "check_git_changes.sh",
-                    """#!/bin/bash
-set -e
-
-if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
-  echo "check_git_changes: Not inside a git repository"
-  exit 1
-fi
-
-if [[ -n $(git status --porcelain) ]]; then
-  echo "check_git_changes: Uncommitted changes"
-  exit 1
-fi
-
-echo "check_git_changes: No uncommitted changes"
-exit 0
-
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "prepare.sh",
-                    """#!/bin/bash
-set -e
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-cd /home/{pr.repo}
-git reset --hard
-bash /home/check_git_changes.sh
-git checkout {pr.base.sha}
-bash /home/check_git_changes.sh
-
-git submodule update --init --recursive
-nvm install 12
-nvm use 12
-corepack enable || true
-yes | yarn -v || true
-yarn install || true
-
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "run.sh",
-                    """#!/bin/bash
-set -e
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-cd /home/{pr.repo}
-nvm use 12
-yarn install || true
-yarn test
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "test-run.sh",
-                    """#!/bin/bash
-set -e
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-cd /home/{pr.repo}
-git apply --whitespace=nowarn /home/test.patch
-nvm use 12
-yarn install || true
-yarn test
-
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "fix-run.sh",
-                    """#!/bin/bash
-set -e
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-cd /home/{pr.repo}
-git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-nvm use 12
-yarn install || true
-yarn test
-
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-            ]
         return [
             File(
                 ".",
@@ -236,15 +186,15 @@ exit 0
 set -e
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
 cd /home/{pr.repo}
 git reset --hard
 bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
-
-corepack enable || true
-yes | yarn -v || true
-yarn install || true
+nvm install || true
+nvm use || true
+npm ci || npm install || true
 
 """.format(
                     pr=self.pr
@@ -259,8 +209,10 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
 cd /home/{pr.repo}
-yarn install || true
-yarn test
+nvm use || true
+npm ci || npm install || true
+npm run build-serial || true
+npm run test
 """.format(
                     pr=self.pr
                 ),
@@ -275,9 +227,10 @@ export NVM_DIR="$HOME/.nvm"
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
-yarn install || true
-yarn test
-
+nvm use || true
+npm ci || npm install || true
+npm run build-serial || true
+npm run test
 """.format(
                     pr=self.pr
                 ),
@@ -292,9 +245,10 @@ export NVM_DIR="$HOME/.nvm"
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-yarn install || true
-yarn test
-
+nvm use || true
+npm ci || npm install || true
+npm run build-serial || true
+npm run test
 """.format(
                     pr=self.pr
                 ),
@@ -360,8 +314,8 @@ yarn test
 """
 
 
-@Instance.register("KaTeX", "KaTeX")
-class KaTeX(Instance):
+@Instance.register("rjsf-team", "react-jsonschema-form")
+class reactjsonschemaform(Instance):
     def __init__(self, pr: PullRequest, config: Config, *args, **kwargs):
         super().__init__()
         self._pr = pr
@@ -372,7 +326,7 @@ class KaTeX(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-        return KaTeXImageDefault(self.pr, self._config)
+        return reactjsonschemaformImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:
         if run_cmd:
@@ -398,38 +352,38 @@ class KaTeX(Instance):
         skipped_tests = set()
 
         passed_res = [
-            re.compile(r"^PASS:?\s+(.+?)(?:\s+\(\d+(\.\d+)?s\))?$"),
-            re.compile(r"✓\s+(\d+.*?)\s+\(\d+ms\)"),
-            re.compile(r"^\s*[✓✔]\s+(.+)$")
+            re.compile(r"^PASS:?\s+([^\(]+)"),
+            re.compile(r"^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
         ]
 
         failed_res = [
-            re.compile(r"^FAIL:?\s+(.+?)(?:\s+\(\d+(\.\d+)?s\))?$"),
-            re.compile(r"✕\s+(\d+.*?)\s+\(\d+ms\)"),
-            re.compile(r"^\s*[×✗]\s+(.+)$")
+            re.compile(r"^FAIL:?\s+([^\(]+)"),
+            re.compile(r"^[\s]*[✖✘]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
         ]
 
         skipped_res = [
-            re.compile(r"SKIP:?\s?(.+?)\s")
+            re.compile(r"SKIP:?\s?(.+?)\s"),
+            re.compile(r"^[\s]*[-]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
         ]
-
+        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
         for line in test_log.splitlines():
+            line = ansi_escape.sub('', line).strip()
             for passed_re in passed_res:
                 m = passed_re.match(line)
-                if m and m.group(1) not in failed_tests:
-                    passed_tests.add(m.group(1))
+                if m and m.group(1).strip() not in failed_tests:
+                    passed_tests.add(m.group(1).strip())
 
             for failed_re in failed_res:
                 m = failed_re.match(line)
                 if m:
-                    failed_tests.add(m.group(1))
-                    if m.group(1) in passed_tests:
-                        passed_tests.remove(m.group(1))
+                    failed_tests.add(m.group(1).strip())
+                    if m.group(1).strip() in passed_tests:
+                        passed_tests.remove(m.group(1).strip())
 
             for skipped_re in skipped_res:
                 m = skipped_re.match(line)
                 if m:
-                    skipped_tests.add(m.group(1))
+                    skipped_tests.add(m.group(1).strip())
 
         return TestResult(
             passed_count=len(passed_tests),

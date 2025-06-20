@@ -6,7 +6,7 @@ from multi_swe_bench.harness.instance import Instance, TestResult
 from multi_swe_bench.harness.pull_request import PullRequest
 
 
-class KaTeXImageBase(Image):
+class jestImageBase(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -48,8 +48,7 @@ class KaTeXImageBase(Image):
 WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
-
-RUN npm install yarn
+RUN apt update && apt install -y python3
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash && \
     export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
@@ -60,7 +59,7 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | b
 """
 
 
-class KaTeXImageDefault(Image):
+class jestImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -74,7 +73,10 @@ class KaTeXImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        return KaTeXImageBase(self.pr, self._config)
+        # if self.pr.number <= 958:
+        #     return jestImageBaseCpp7(self.pr, self._config)
+
+        return jestImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
@@ -83,118 +85,6 @@ class KaTeXImageDefault(Image):
         return f"pr-{self.pr.number}"
 
     def files(self) -> list[File]:
-        if self.pr.number <= 2698:
-            return [
-                File(
-                    ".",
-                    "fix.patch",
-                    f"{self.pr.fix_patch}",
-                ),
-                File(
-                    ".",
-                    "test.patch",
-                    f"{self.pr.test_patch}",
-                ),
-                File(
-                    ".",
-                    "check_git_changes.sh",
-                    """#!/bin/bash
-set -e
-
-if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
-  echo "check_git_changes: Not inside a git repository"
-  exit 1
-fi
-
-if [[ -n $(git status --porcelain) ]]; then
-  echo "check_git_changes: Uncommitted changes"
-  exit 1
-fi
-
-echo "check_git_changes: No uncommitted changes"
-exit 0
-
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "prepare.sh",
-                    """#!/bin/bash
-set -e
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-cd /home/{pr.repo}
-git reset --hard
-bash /home/check_git_changes.sh
-git checkout {pr.base.sha}
-bash /home/check_git_changes.sh
-
-git submodule update --init --recursive
-nvm install 12
-nvm use 12
-corepack enable || true
-yes | yarn -v || true
-yarn install || true
-
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "run.sh",
-                    """#!/bin/bash
-set -e
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-cd /home/{pr.repo}
-nvm use 12
-yarn install || true
-yarn test
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "test-run.sh",
-                    """#!/bin/bash
-set -e
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-cd /home/{pr.repo}
-git apply --whitespace=nowarn /home/test.patch
-nvm use 12
-yarn install || true
-yarn test
-
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "fix-run.sh",
-                    """#!/bin/bash
-set -e
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-cd /home/{pr.repo}
-git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-nvm use 12
-yarn install || true
-yarn test
-
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-            ]
         return [
             File(
                 ".",
@@ -242,9 +132,12 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
+nvm install || true
+nvm use || true
 corepack enable || true
 yes | yarn -v || true
-yarn install || true
+rm -f yarn.lock || true
+yarn --immutable || true
 
 """.format(
                     pr=self.pr
@@ -259,8 +152,10 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
 cd /home/{pr.repo}
-yarn install || true
-yarn test
+nvm use || true
+yarn --immutable|| true
+yarn build:js || true
+yarn test -- --verbose || true
 """.format(
                     pr=self.pr
                 ),
@@ -275,8 +170,10 @@ export NVM_DIR="$HOME/.nvm"
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
-yarn install || true
-yarn test
+nvm use || true
+yarn --immutable || true
+yarn build:js || true
+yarn test -- --verbose || true
 
 """.format(
                     pr=self.pr
@@ -292,8 +189,10 @@ export NVM_DIR="$HOME/.nvm"
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-yarn install || true
-yarn test
+nvm use || true
+yarn --immutable || true
+yarn build:js || true
+yarn test -- --verbose || true
 
 """.format(
                     pr=self.pr
@@ -360,8 +259,8 @@ yarn test
 """
 
 
-@Instance.register("KaTeX", "KaTeX")
-class KaTeX(Instance):
+@Instance.register("jestjs", "jest")
+class jest(Instance):
     def __init__(self, pr: PullRequest, config: Config, *args, **kwargs):
         super().__init__()
         self._pr = pr
@@ -372,7 +271,7 @@ class KaTeX(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-        return KaTeXImageDefault(self.pr, self._config)
+        return jestImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:
         if run_cmd:
