@@ -17,3 +17,9 @@ from multi_swe_bench.harness.repos.typescript.microsoft import *
 from multi_swe_bench.harness.repos.typescript.MetaMask import *
 from multi_swe_bench.harness.repos.typescript.palantir import *
 from multi_swe_bench.harness.repos.typescript.facebook import *
+from multi_swe_bench.harness.repos.typescript.payloadcms import *
+from multi_swe_bench.harness.repos.typescript.tradingview import *
+from multi_swe_bench.harness.repos.typescript.rjsfteam import *
+from multi_swe_bench.harness.repos.typescript.jestjs import *
+from multi_swe_bench.harness.repos.typescript.reacthookform import *
+from multi_swe_bench.harness.repos.typescript.vuetifyjs import *
