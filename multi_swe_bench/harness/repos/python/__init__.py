@@ -10,3 +10,6 @@ from multi_swe_bench.harness.repos.python.pytest_dev import *
 from multi_swe_bench.harness.repos.python.scikit_learn import *
 from multi_swe_bench.harness.repos.python.sphinx_doc import *
 from multi_swe_bench.harness.repos.python.sympy import *
+from multi_swe_bench.harness.repos.python.spyderide import *
+from multi_swe_bench.harness.repos.python.napari import *
+from multi_swe_bench.harness.repos.python.mnetools import *
