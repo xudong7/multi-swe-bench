@@ -363,13 +363,13 @@ class kit(Instance):
 
         passed_res = [
             re.compile(r"^PASS:?\s+([^\(]+)"),
-            re.compile(r"^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$"),
+            re.compile(r"^\s*[✔✓]\s+(?:\d+\s+)?(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
         ]
 
         failed_res = [
             re.compile(r"^FAIL:?\s+([^\(]+)"),
-            re.compile(r"^\s*[×✗✘]\s+\d+\s+\[.*?\]\s+›\s+(.+?)\s+\(\d+ms\)$"),
-            re.compile(r"^\s*[×✗]\s+(.+?)(?:\s+\d+ms)?$")
+            re.compile(r"\s*[×✗✘]\s+(?:\d+\s+)?(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
+
         ]
 
         skipped_res = [

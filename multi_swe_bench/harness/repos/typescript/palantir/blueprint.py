@@ -308,18 +308,17 @@ class blueprint(Instance):
 
         passed_res = [
             re.compile(r"PASS:?\s+([^\(]+)"),
-            re.compile(r"\s*[✔✓]\s+(.*?)(?:\s*\(\d+ms\))?$")
+            re.compile(r"\s*[✔✓]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
         ]
 
         failed_res = [
             re.compile(r"FAIL:?\s+([^\(]+)"),
-            re.compile(r"\s*[×✗]\s+(.*?)(?:\s*\(\d+ms\))?$"),
-            re.compile(r"\s*\d+\)\s+(.*)")
+            re.compile(r"\s*[×✗]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
+            re.compile(r"\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
         ]
 
         skipped_res = [
             re.compile(r"SKIP:?\s+([^\(]+)"),
-            re.compile(r"\s*[-]\s+(.*?)(?:\s*\(\d+ms\))?$")
         ]
         ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
         for line in test_log.splitlines():

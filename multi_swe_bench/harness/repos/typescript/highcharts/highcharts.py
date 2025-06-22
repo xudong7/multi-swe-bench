@@ -6,7 +6,7 @@ from multi_swe_bench.harness.instance import Instance, TestResult
 from multi_swe_bench.harness.pull_request import PullRequest
 
 
-class swaggeruiImageBase(Image):
+class highchartsImageBase(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -49,7 +49,14 @@ WORKDIR /home/
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
-RUN npm install yarn
+RUN apt update && apt install -y libxkbfile-dev pkg-config build-essential python3 libkrb5-dev libxss1 xvfb libgtk-3-0 libgbm1
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg \
+        fonts-khmeros fonts-kacst fonts-freefont-ttf libxss1 dbus dbus-x11 \
+        --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash && \
     export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
@@ -60,67 +67,8 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | b
 """
 
 
-class swaggeruiImageBaseCpp7(Image):
-    def __init__(self, pr: PullRequest, config: Config):
-        self._pr = pr
-        self._config = config
 
-    @property
-    def pr(self) -> PullRequest:
-        return self._pr
-
-    @property
-    def config(self) -> Config:
-        return self._config
-
-    def dependency(self) -> Union[str, "Image"]:
-        return "gcc:7"
-
-    def image_tag(self) -> str:
-        return "base-cpp-7"
-
-    def workdir(self) -> str:
-        return "base-cpp-7"
-
-    def files(self) -> list[File]:
-        return []
-
-    def dockerfile(self) -> str:
-        image_name = self.dependency()
-        if isinstance(image_name, Image):
-            image_name = image_name.image_full_name()
-
-        if self.config.need_clone:
-            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
-        else:
-            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
-        return f"""FROM {image_name}
-
-{self.global_env}
-
-WORKDIR /home/
-
-{code}
-
-RUN apt-get update && \
-    apt-get install -y \
-    build-essential \
-    pkg-config \
-    wget \
-    tar && \
-    wget https://cmake.org/files/v3.14/cmake-3.14.0-Linux-x86_64.tar.gz && \
-    tar -zxvf cmake-3.14.0-Linux-x86_64.tar.gz && \
-    mv cmake-3.14.0-Linux-x86_64 /opt/cmake && \
-    ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake && \
-    rm cmake-3.14.0-Linux-x86_64.tar.gz
-RUN apt-get install -y cmake
-
-{self.clear_env}
-
-"""
-
-
-class swaggeruiImageDefault(Image):
+class highchartsImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -135,9 +83,9 @@ class swaggeruiImageDefault(Image):
 
     def dependency(self) -> Image | None:
         # if self.pr.number <= 958:
-        #     return swaggeruiImageBaseCpp7(self.pr, self._config)
+        #     return highchartsImageBaseCpp7(self.pr, self._config)
 
-        return swaggeruiImageBase(self.pr, self._config)
+        return highchartsImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
@@ -187,16 +135,15 @@ exit 0
 set -e
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
 cd /home/{pr.repo}
 git reset --hard
 bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
-
-nvm install || true
-nvm use || true
-npm ci || npm install || true
-npm run test || true
+nvm install 22
+nvm use 22
+npm install || true
 
 """.format(
                     pr=self.pr
@@ -211,9 +158,14 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
 cd /home/{pr.repo}
-nvm use || true
-npm ci || npm install || true
-npm run test
+
+nvm use 22
+npm install || true
+Xvfb :99 -screen 0 1024x768x24 &
+export DISPLAY=:99
+CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test || true
+CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test-node || true
+
 """.format(
                     pr=self.pr
                 ),
@@ -228,10 +180,13 @@ export NVM_DIR="$HOME/.nvm"
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
-nvm use || true
-npm ci || npm install || true
-npm run test
 
+nvm use 22
+npm install || true
+Xvfb :99 -screen 0 1024x768x24 &
+export DISPLAY=:99
+CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test || true
+CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test-node || true
 """.format(
                     pr=self.pr
                 ),
@@ -246,10 +201,13 @@ export NVM_DIR="$HOME/.nvm"
 
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-nvm use || true
-npm ci || npm install || true
-npm run test
 
+nvm use 22
+npm install || true
+Xvfb :99 -screen 0 1024x768x24 &
+export DISPLAY=:99
+CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test || true
+CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test-node || true
 """.format(
                     pr=self.pr
                 ),
@@ -315,8 +273,8 @@ npm run test
 """
 
 
-@Instance.register("swagger-api", "swagger-ui")
-class swaggerui(Instance):
+@Instance.register("highcharts", "highcharts")
+class highcharts(Instance):
     def __init__(self, pr: PullRequest, config: Config, *args, **kwargs):
         super().__init__()
         self._pr = pr
@@ -327,7 +285,7 @@ class swaggerui(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-        return swaggeruiImageDefault(self.pr, self._config)
+        return highchartsImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:
         if run_cmd:
@@ -352,39 +310,59 @@ class swaggerui(Instance):
         failed_tests = set()
         skipped_tests = set()
 
-        passed_res = [
-            re.compile(r"^PASS:?\s+([^\(]+)"),
-            re.compile(r"\s*[✔✓]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
-        ]
-
-        failed_res = [
-            re.compile(r"^FAIL:?\s+([^\(]+)"),
-            re.compile(r"\s*[×✗]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
-            re.compile(r"\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
-        ]
-
-        skipped_res = [
-            re.compile(r"SKIP:?\s?(.+?)\s")
-        ]
         ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+
+        pass_patterns = [
+            re.compile(r'^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$'),
+        ]
+
+        fail_patterns = [
+            re.compile(r'^[\s]*✖\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$'),
+            re.compile(r'^\s*\d+\)\s*(.+)$')
+        ]
+
+        skip_patterns = [
+            re.compile(r'^\s*-\s+(.*)$'),  # - skipped
+        ]
+
         for line in test_log.splitlines():
             line = ansi_escape.sub('', line).strip()
-            for passed_re in passed_res:
-                m = passed_re.match(line)
-                if m and m.group(1).strip() not in failed_tests:
-                    passed_tests.add(m.group(1).strip())
+            if not line:
+                continue
 
-            for failed_re in failed_res:
-                m = failed_re.match(line)
-                if m:
-                    failed_tests.add(m.group(1).strip())
-                    if m.group(1).strip() in passed_tests:
-                        passed_tests.remove(m.group(1).strip())
+            matched = False
 
-            for skipped_re in skipped_res:
-                m = skipped_re.match(line)
+            for fail_re in fail_patterns:
+                m = fail_re.match(line)
                 if m:
-                    skipped_tests.add(m.group(1).strip())
+                    test_name = m.group(1).strip()
+                    failed_tests.add(test_name)
+                    passed_tests.discard(test_name)
+                    skipped_tests.discard(test_name)
+                    matched = True
+                    break
+            if matched:
+                continue
+
+            for skip_re in skip_patterns:
+                m = skip_re.match(line)
+                if m:
+                    test_name = m.group(1).strip()
+                    if test_name not in failed_tests:
+                        skipped_tests.add(test_name)
+                        passed_tests.discard(test_name)
+                    matched = True
+                    break
+            if matched:
+                continue
+
+            for pass_re in pass_patterns:
+                m = pass_re.match(line)
+                if m:
+                    test_name = m.group(1).strip()
+                    if test_name not in failed_tests and test_name not in skipped_tests:
+                        passed_tests.add(test_name)
+                    break
 
         return TestResult(
             passed_count=len(passed_tests),

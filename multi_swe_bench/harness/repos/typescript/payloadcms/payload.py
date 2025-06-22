@@ -360,18 +360,18 @@ class payload(Instance):
         skipped_tests = set()
 
         passed_res = [
-            re.compile(r"^PASS:?\s+([^\(]+)"),
-            re.compile(r"^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
+            re.compile(r"^\[PASS\]:?\s+(.+?)(?:\s+\(\d+(?:\.\d+)?\s*(?:ms|s)\))?$"),
+            re.compile(r"\s*[✔✓]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
         ]
 
         failed_res = [
-            re.compile(r"^FAIL:?\s+([^\(]+)"),
-            re.compile(r"^[\s]*[✖✘]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
+            re.compile(r"^\[FAIL\]:?\s+(.+?)(?:\s+\(\d+(?:\.\d+)?\s*(?:ms|s)\))?$"),
+            re.compile(r"\s*[×✗]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
+            re.compile(r"\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
         ]
 
         skipped_res = [
-            re.compile(r"SKIP:?\s?(.+?)\s"),
-            re.compile(r"^[\s]*[-]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
+            re.compile(r"SKIP:?\s?(.+?)\s")
         ]
         ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
         for line in test_log.splitlines():

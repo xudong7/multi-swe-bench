@@ -353,35 +353,34 @@ class reactjsonschemaform(Instance):
 
         passed_res = [
             re.compile(r"^PASS:?\s+([^\(]+)"),
-            re.compile(r"^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
+            re.compile(r"\s*[✓✔]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
         ]
 
         failed_res = [
             re.compile(r"^FAIL:?\s+([^\(]+)"),
-            re.compile(r"^[\s]*[✖✘]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
+            re.compile(r"\s*[×✗✖✘]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
+            re.compile(r"\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
         ]
 
         skipped_res = [
-            re.compile(r"SKIP:?\s?(.+?)\s"),
-            re.compile(r"^[\s]*[-]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
         ]
         ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
         for line in test_log.splitlines():
             line = ansi_escape.sub('', line).strip()
             for passed_re in passed_res:
-                m = passed_re.match(line)
-                if m and m.group(1).strip() not in failed_tests:
+                m = passed_re.search(line)
+                if m and m.group(1).strip() not in failed_tests and "built in" not in m.group(1).strip():
                     passed_tests.add(m.group(1).strip())
 
             for failed_re in failed_res:
-                m = failed_re.match(line)
+                m = failed_re.search(line)
                 if m:
                     failed_tests.add(m.group(1).strip())
                     if m.group(1).strip() in passed_tests:
                         passed_tests.remove(m.group(1).strip())
 
             for skipped_re in skipped_res:
-                m = skipped_re.match(line)
+                m = skipped_re.search(line)
                 if m:
                     skipped_tests.add(m.group(1).strip())
 
