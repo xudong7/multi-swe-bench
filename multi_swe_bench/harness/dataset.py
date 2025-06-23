@@ -59,6 +59,7 @@ class Dataset(PullRequest):
             org=pr.org,
             repo=pr.repo,
             number=pr.number,
+            tag=pr.tag,
             state=pr.state,
             title=pr.title,
             body=pr.body,
