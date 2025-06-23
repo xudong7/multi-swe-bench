@@ -787,6 +787,7 @@ class CliArgs:
             log_dir=self.log_dir,
             log_level=self.log_level,
             log_to_console=self.log_to_console,
+            regen=False
         ).run()
 
     def run(self):
