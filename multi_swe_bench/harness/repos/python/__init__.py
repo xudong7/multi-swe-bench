@@ -14,4 +14,3 @@ from multi_swe_bench.harness.repos.python.spyderide import *
 from multi_swe_bench.harness.repos.python.napari import *
 from multi_swe_bench.harness.repos.python.mnetools import *
 from multi_swe_bench.harness.repos.python.facebookresearch import *
-from multi_swe_bench.harness.repos.python.pydantic import *
