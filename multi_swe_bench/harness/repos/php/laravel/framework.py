@@ -47,9 +47,9 @@ class ImageBase(Image):
 
 WORKDIR /home/
 
+{self.global_env}
 {code}
 
-{self.global_env}
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -105,9 +105,9 @@ class ImageBase7(Image):
 
 WORKDIR /home/
 
-{code}
-
 {self.global_env}
+
+{code}
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
