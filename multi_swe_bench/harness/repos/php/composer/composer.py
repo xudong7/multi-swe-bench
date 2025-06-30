@@ -48,7 +48,7 @@ class ImageBase(Image):
 WORKDIR /home/
 
 {self.global_env}
-{code}
+
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -58,7 +58,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-
+{code}
 {self.clear_env}
 
 """
@@ -106,7 +106,6 @@ WORKDIR /home/
 
 {self.global_env}
 
-{code}
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -116,7 +115,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-
+{code}
 {self.clear_env}
 
 """

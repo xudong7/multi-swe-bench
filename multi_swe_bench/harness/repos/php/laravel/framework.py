@@ -59,7 +59,7 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-
+{code}
 {self.clear_env}
 
 """
@@ -107,7 +107,6 @@ WORKDIR /home/
 
 {self.global_env}
 
-{code}
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -118,7 +117,7 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-
+{code}
 {self.clear_env}
 
 """
