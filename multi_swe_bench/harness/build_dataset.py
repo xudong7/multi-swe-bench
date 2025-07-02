@@ -481,9 +481,7 @@ class CliArgs:
         return self.to_json(ensure_ascii=False)
 
     def check_specific(self, name: str) -> bool:
-        if self.specifics and not any(
-            name in specific or specific in name for specific in self.specifics
-        ):
+        if self.specifics and name not in self.specifics:
             return False
         return True
 
