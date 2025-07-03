@@ -217,6 +217,13 @@ def get_parser() -> ArgumentParser:
         default=True,
         help="The dataset is constructed by human or not",
     )
+    parser.add_argument(
+        "--agent_timeout",
+        type=int,
+        required=False,
+        default=1800,
+        help="The timeout for the agent to run",
+    )
 
     return parser
 
@@ -254,7 +261,7 @@ class CliArgs:
     parse_log: bool = True
     run_log: bool = True
     human_mode: bool = True
-
+    agent_timeout: int = 1800
 
     def __post_init__(self):
         self._check_mode()
@@ -681,7 +688,8 @@ class CliArgs:
                     instance_dir / RUN_LOG_FILE, 
                     "/home/run_msb.log", 
                     prepare_script_path=prepare_script_path,
-                    global_env=self.global_env
+                    global_env=self.global_env,
+                    timeout=self.agent_timeout
                 ))
                 output_test = asyncio.run(run_and_save_logs(
                     "test", 
@@ -691,7 +699,8 @@ class CliArgs:
                     instance_dir / TEST_PATCH_RUN_LOG_FILE, 
                     "/home/test_msb.log", 
                     prepare_script_path=prepare_script_path,
-                    global_env=self.global_env
+                    global_env=self.global_env,
+                    timeout=self.agent_timeout
                 ))
                 output_fix = asyncio.run(run_and_save_logs(
                     "fix", 
@@ -701,7 +710,8 @@ class CliArgs:
                     instance_dir / FIX_PATCH_RUN_LOG_FILE, 
                     "/home/fix_msb.log", 
                     prepare_script_path=prepare_script_path,
-                    global_env=self.global_env
+                    global_env=self.global_env,
+                    timeout=self.agent_timeout
                 ))
 
             else:
