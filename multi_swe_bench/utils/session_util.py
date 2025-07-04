@@ -235,7 +235,7 @@ async def run_and_build_dockerfile(
         await deployment.runtime.create_session(CreateBashSessionRequest(session="eval", startup_source=["/root/.bashrc"], startup_timeout=1200))
 
         look_env_cod = "env"
-        pre_env_output = await communicate_async(deployment, look_env_cod, session_name="eval", timeout=60)
+        pre_env_output = await communicate_async(deployment, look_env_cod, session_name="eval", timeout=600)
 
         # Execute prepare.sh
         logger.info(f"{image_name}/{name}: download prepare.sh")
@@ -244,7 +244,7 @@ async def run_and_build_dockerfile(
             install_cmds = [cmd.strip() for cmd in content.split("###ACTION_DELIMITER###") if cmd.strip()]
         logger.info(f"{image_name}/{name}: replay prepare.sh")
         await run_prepare_cmds(deployment, install_cmds, session_name="eval", timeout=1800)
-        post_env_output = await communicate_async(deployment, look_env_cod, session_name="eval", timeout=60)
+        post_env_output = await communicate_async(deployment, look_env_cod, session_name="eval", timeout=600)
 
         post_image_name = image_name.replace("_v1", "_v2")
         save_image_cmd = f"docker commit {deployment._container_name} {post_image_name}"
