@@ -27,3 +27,4 @@ from multi_swe_bench.harness.repos.python.geopandas import *
 from multi_swe_bench.harness.repos.python.omry import *
 from multi_swe_bench.harness.repos.python.feature_engine import *
 from multi_swe_bench.harness.repos.python.haddocking import *
+from multi_swe_bench.harness.repos.python.conan_io import *
