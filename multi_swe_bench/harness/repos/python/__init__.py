@@ -25,3 +25,4 @@ from multi_swe_bench.harness.repos.python.Pyomo import *
 from multi_swe_bench.harness.repos.python.CS_SI import *
 from multi_swe_bench.harness.repos.python.geopandas import *
 from multi_swe_bench.harness.repos.python.omry import *
+from multi_swe_bench.harness.repos.python.feature_engine import *
