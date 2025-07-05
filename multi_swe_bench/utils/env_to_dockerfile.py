@@ -29,6 +29,10 @@ def parse_env_output(env_output: str) -> List[Tuple[str, str]]:
         if '=' in line:
             # Split var name and value
             var_name, var_value = line.split('=', 1)
+            # Filter out empty env vars
+            if not var_name or not var_name.strip():
+                i += 1
+                continue
             
             # Check if value starts with quotes
             if var_value.startswith('"') or var_value.startswith("'"):
@@ -84,9 +88,11 @@ def generate_dockerfile(env_vars: List[Tuple[str, str]], base_image: str = "ubun
     ]
     
     for var_name, var_value in env_vars:
-        # Escape double quotes
-        escaped_value = var_value.replace('"', '\\"')
-        dockerfile_lines.append(f'ENV {var_name}="{escaped_value}"')
+        # Filter out empty env vars
+        if var_name and var_name.strip():
+            # Escape double quotes
+            escaped_value = var_value.replace('"', '\\"')
+            dockerfile_lines.append(f'ENV {var_name}="{escaped_value}"')
     
     return '\n'.join(dockerfile_lines)
 
@@ -102,16 +108,20 @@ def generate_dockerfile_from_env_vars(
     
     # Delete env vars
     for var_name, _ in delete_env_vars:
-        dockerfile_lines.append(f'ENV {var_name}=""')
+        # Filter out empty env vars
+        if var_name and var_name.strip():
+            dockerfile_lines.append(f'ENV {var_name}=""')
     
     if delete_env_vars:
         dockerfile_lines.append("")
     
     # Add and change env vars
     for var_name, var_value in add_and_change_env_vars:
-        # Escape double quotes
-        escaped_value = var_value.replace('"', '\\"')
-        dockerfile_lines.append(f'ENV {var_name}="{escaped_value}"')
+        # Filter out empty env vars
+        if var_name and var_name.strip():
+            # Escape double quotes
+            escaped_value = var_value.replace('"', '\\"')
+            dockerfile_lines.append(f'ENV {var_name}="{escaped_value}"')
     
     return '\n'.join(dockerfile_lines)
 
@@ -140,6 +150,25 @@ def diff_env_vars(pre_env_output: str, post_env_output: str, image_name: str):
     
     return generate_dockerfile_from_env_vars(
         delete_env_vars, add_and_change_env_vars, image_name)
+
+
+def validate_dockerfile(df_content: str) -> bool:
+    """
+    Validate Dockerfile content using dockerfile library
+    """
+    try:
+        import dockerfile
+        result = dockerfile.parse_string(df_content)
+        has_from = any(cmd.cmd.lower() == 'from' for cmd in result)
+        if not has_from:
+            raise ValueError("Dockerfile must contain at least one FROM instruction")
+        return True
+    except ImportError:
+        raise RuntimeError("dockerfile library is not installed. Please install it with: pip install dockerfile")
+    except dockerfile.GoParseError as e:
+        raise RuntimeError(f"Dockerfile syntax error: {e}")
+    except Exception as e:
+        raise RuntimeError(f"Invalid Dockerfile: {e}")
 
 
 if __name__ == "__main__":
@@ -172,4 +201,7 @@ PS1=
 PATH=/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 DEBIAN_FRONTEND=noninteractive
 _=/usr/bin/env"""
-    diff_env_vars(pre_env_output, post_env_output, "ubuntu:latest")
+    df_content = diff_env_vars(pre_env_output, post_env_output, "ubuntu:latest\nexport xxx")
+    print(df_content)
+    is_valid = validate_dockerfile(df_content)
+    print(is_valid)
