@@ -158,27 +158,58 @@ async def force_interrupt_session(deployment: "DockerDeployment", session_name: 
 
 
 async def fix_terminal_type_prompt(deployment: "DockerDeployment", session_name: str, logger: logging.Logger):
-    """Fix Terminal type prompt"""
+    """Fix Terminal type prompt and other shell state issues"""
     logger.info(f"Fix Terminal type prompt: {session_name}")
     
-    # Solution for "Terminal type?" prompt
-    quick_fixes = [
-        "xterm",           # Answer "Terminal type?"
-        "\x03",           # Ctrl+C interrupt
-        "echo 'FIXED'",   # Test
+    # Comprehensive solution for various shell state issues
+    recovery_sequences = [
+        # Sequence 1: Basic terminal type fix with stronger pip cleanup
+        [
+            "\x03",           # Ctrl+C interrupt first
+            "\x03",           # Double Ctrl+C for stubborn processes
+            "pkill -f pip || true",  # Kill any hanging pip processes
+            "pkill -f python || true",  # Kill any hanging python processes
+            "pkill -f npm || true",  # Kill any hanging npm processes
+            "killall -9 pip || true",  # Force kill pip processes
+            "killall -9 python || true",  # Force kill python processes
+            "killall -9 npm || true",  # Force kill npm processes
+            "xterm",           # Answer "Terminal type?"
+            "\x03",           # Ctrl+C interrupt
+            "echo 'FIXED'",   # Test
+        ]
     ]
     
-    for cmd in quick_fixes:
-        try:
-            r = await deployment.runtime.run_in_session(
-                BashAction(session=session_name, command=cmd, timeout=3, check="silent")
-            )
-            if "FIXED" in r.output:
-                logger.info("Terminal type prompt fixed")
-                return True
-        except Exception:
-            continue
+    for i, sequence in enumerate(recovery_sequences):
+        logger.info(f"Trying recovery sequence {i+1}/{len(recovery_sequences)}")
+        success = True
+        
+        for cmd in sequence:
+            try:
+                r = await deployment.runtime.run_in_session(
+                    BashAction(session=session_name, command=cmd, timeout=5, check="silent")
+                )
+                if "FIXED" in r.output:
+                    logger.info(f"Terminal type prompt fixed with sequence {i+1}")
+                    return True
+                await asyncio.sleep(0.5)  # Small delay between commands
+            except Exception as e:
+                logger.debug(f"Recovery command failed: {repr(cmd)}, error: {e}")
+                success = False
+                break
+        
+        if success:
+            # If we got here without exception, try one more test
+            try:
+                r = await deployment.runtime.run_in_session(
+                    BashAction(session=session_name, command="echo 'FINAL_TEST'", timeout=3, check="silent")
+                )
+                if "FINAL_TEST" in r.output:
+                    logger.info(f"Session fully recovered with sequence {i+1}")
+                    return True
+            except Exception:
+                continue
     
+    logger.warning("All recovery sequences failed")
     return False
 
 
@@ -186,7 +217,7 @@ async def safe_session_check(deployment: "DockerDeployment", session_name: str, 
     """Safe session check with automatic cleanup"""
     try:
         r = await deployment.runtime.run_in_session(
-            BashAction(session=session_name, command="echo 'session_check'", timeout=5, check="silent")
+            BashAction(session=session_name, command="echo 'session_check'", timeout=3, check="silent")
         )
         if "session_check" in r.output:
             logger.info("Session is healthy")
@@ -208,36 +239,11 @@ async def safe_session_check(deployment: "DockerDeployment", session_name: str, 
                 if "session_recovered" in r.output:
                     logger.info("✅ Session recovered successfully after Terminal type fix")
                     return True
+                else:
+                    logger.error(f"Session still cannot be recovered after Terminal type fix: {r.output}")
+                    return False
             except Exception as e:
                 logger.error(f"Session still cannot be recovered after Terminal type fix: {e}")
-        
-        # If Terminal type fix fails, try regular cleanup
-        logger.info("Attempting regular shell state cleanup...")
-        if await cleanup_shell_state(deployment, session_name, logger):
-            # Check again after cleanup
-            try:
-                r = await deployment.runtime.run_in_session(
-                    BashAction(session=session_name, command="echo 'session_recovered'", timeout=5, check="silent")
-                )
-                if "session_recovered" in r.output:
-                    logger.info("✅ Session recovered successfully after cleanup")
-                    return True
-            except Exception as e:
-                logger.error(f"Session still cannot be recovered after cleanup: {e}")
-        
-        # If regular cleanup fails, try force interrupt
-        logger.info("Attempting force interrupt...")
-        if await force_interrupt_session(deployment, session_name, logger):
-            # Check again after force interrupt
-            try:
-                r = await deployment.runtime.run_in_session(
-                    BashAction(session=session_name, command="echo 'session_force_recovered'", timeout=5, check="silent")
-                )
-                if "session_force_recovered" in r.output:
-                    logger.info("✅ Session recovered successfully after force interrupt")
-                    return True
-            except Exception as e:
-                logger.error(f"Session still cannot be recovered after force interrupt: {e}")
     
     return False
 
@@ -285,7 +291,10 @@ async def run_prepare_cmds(deployment: MultiSweBenchDockerDeployment, install_cm
             logger.error(f"Error: {e!s}")
             failed_commands.append((i, cmd, str(e)))
             logger.info("Try to recover session state after command failed...")
-            await safe_session_check(deployment, session_name, logger, cleanup_on_fail=True)
+            try:
+                await safe_session_check(deployment, session_name, logger, cleanup_on_fail=True)
+            except Exception as e:
+                logger.error(f"Failed to recover session state after command failed: {e}")
             continue
     
     # Report execution results
