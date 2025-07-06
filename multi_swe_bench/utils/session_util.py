@@ -102,83 +102,58 @@ class MultiSweBenchDockerDeployment(DockerDeployment):
         self.logger.info(f"Runtime started in {time.time() - t0:.2f}s")
 
 
-async def cleanup_shell_state(deployment: "DockerDeployment", session_name: str, logger: logging.Logger):
-    """Clean up shell state, use the simplest method to handle Terminal type prompt"""
-    logger.info(f"Cleaning up shell state: {session_name}")
-    
-    # Simple direct method: answer "Terminal type?" prompt, then interrupt
-    recovery_commands = [
-        "xterm-256color",  # Answer "Terminal type?" prompt
-        "\x03",           # Ctrl+C interrupt
-        "",               # Empty line
-        "echo 'RECOVERED'",  # Test if recovery is successful
-    ]
-    
-    for cmd in recovery_commands:
-        try:
-            r = await deployment.runtime.run_in_session(
-                BashAction(session=session_name, command=cmd, timeout=5, check="silent")
-            )
-            logger.debug(f"Recovery command: {repr(cmd)}")
-            if "RECOVERED" in r.output:
-                logger.info("Session recovered successfully")
-                return True
-            await asyncio.sleep(0.3)
-        except Exception as e:
-            logger.debug(f"Recovery command failed: {repr(cmd)}, error: {e}")
-            continue
-    
-    return False
-
-
-async def force_interrupt_session(deployment: "DockerDeployment", session_name: str, logger: logging.Logger):
-    """Force interrupt session - super simple version"""
-    logger.info(f"Force interrupt session: {session_name}")
-    
-    # Simplest interrupt method
-    simple_interrupts = [
-        "\x03",  # Ctrl+C
-        "\x04",  # Ctrl+D
-        "",      # Enter
-        "echo 'TEST'",  # Test
-    ]
-    
-    for cmd in simple_interrupts:
-        try:
-            r = await deployment.runtime.run_in_session(
-                BashAction(session=session_name, command=cmd, timeout=3, check="silent")
-            )
-            if "TEST" in r.output:
-                logger.info("Force interrupt session successfully")
-                return True
-        except Exception:
-            continue
-    
-    return False
-
-
 async def fix_terminal_type_prompt(deployment: "DockerDeployment", session_name: str, logger: logging.Logger):
-    """Fix Terminal type prompt"""
+    """Fix Terminal type prompt and other shell state issues"""
     logger.info(f"Fix Terminal type prompt: {session_name}")
     
-    # Solution for "Terminal type?" prompt
-    quick_fixes = [
-        "xterm",           # Answer "Terminal type?"
-        "\x03",           # Ctrl+C interrupt
-        "echo 'FIXED'",   # Test
+    # Comprehensive solution for various shell state issues
+    recovery_sequences = [
+        [
+            "\x03",           # Ctrl+C interrupt first
+            "\x03",           # Double Ctrl+C for stubborn processes
+            "pkill -f pip || true",  # Kill any hanging pip processes
+            "killall -9 pip || true",  # Force kill pip processes
+            "pkill -f python || true",  # Kill any hanging python processes
+            "killall -9 python || true",  # Force kill python processes
+            "pkill -f npm || true",  # Kill any hanging npm processes
+            "killall -9 npm || true",  # Force kill npm processes
+            "xterm",           # Answer "Terminal type?"
+            "\x03",           # Ctrl+C interrupt
+            "echo 'FIXED'",   # Test
+        ]
     ]
     
-    for cmd in quick_fixes:
-        try:
-            r = await deployment.runtime.run_in_session(
-                BashAction(session=session_name, command=cmd, timeout=3, check="silent")
-            )
-            if "FIXED" in r.output:
-                logger.info("Terminal type prompt fixed")
-                return True
-        except Exception:
-            continue
+    for i, sequence in enumerate(recovery_sequences):
+        logger.info(f"Trying recovery sequence {i+1}/{len(recovery_sequences)}")
+        success = True
+        
+        for cmd in sequence:
+            try:
+                r = await deployment.runtime.run_in_session(
+                    BashAction(session=session_name, command=cmd, timeout=5, check="silent")
+                )
+                if "FIXED" in r.output:
+                    logger.info(f"Terminal type prompt fixed with sequence {i+1}")
+                    return True
+                await asyncio.sleep(0.5)  # Small delay between commands
+            except Exception as e:
+                logger.debug(f"Recovery command failed: {repr(cmd)}, error: {e}")
+                success = False
+                break
+        
+        if success:
+            # If we got here without exception, try one more test
+            try:
+                r = await deployment.runtime.run_in_session(
+                    BashAction(session=session_name, command="echo 'FINAL_TEST'", timeout=3, check="silent")
+                )
+                if "FINAL_TEST" in r.output:
+                    logger.info(f"Session fully recovered with sequence {i+1}")
+                    return True
+            except Exception:
+                continue
     
+    logger.warning("All recovery sequences failed")
     return False
 
 
@@ -186,7 +161,7 @@ async def safe_session_check(deployment: "DockerDeployment", session_name: str, 
     """Safe session check with automatic cleanup"""
     try:
         r = await deployment.runtime.run_in_session(
-            BashAction(session=session_name, command="echo 'session_check'", timeout=5, check="silent")
+            BashAction(session=session_name, command="echo 'session_check'", timeout=3, check="silent")
         )
         if "session_check" in r.output:
             logger.info("Session is healthy")
@@ -196,7 +171,7 @@ async def safe_session_check(deployment: "DockerDeployment", session_name: str, 
     except Exception as e:
         logger.warning(f"Session check failed: {e}")
     
-    # If check fails and cleanup is allowed, try the simplest Terminal type fix first
+    # If check fails and cleanup is allowed, try the simplest Terminal type fix
     if cleanup_on_fail:
         logger.info("Attempting to fix Terminal type prompt...")
         if await fix_terminal_type_prompt(deployment, session_name, logger):
@@ -208,36 +183,11 @@ async def safe_session_check(deployment: "DockerDeployment", session_name: str, 
                 if "session_recovered" in r.output:
                     logger.info("✅ Session recovered successfully after Terminal type fix")
                     return True
+                else:
+                    logger.error(f"❌ Session still cannot be recovered after Terminal type fix: {r.output}")
+                    return False
             except Exception as e:
-                logger.error(f"Session still cannot be recovered after Terminal type fix: {e}")
-        
-        # If Terminal type fix fails, try regular cleanup
-        logger.info("Attempting regular shell state cleanup...")
-        if await cleanup_shell_state(deployment, session_name, logger):
-            # Check again after cleanup
-            try:
-                r = await deployment.runtime.run_in_session(
-                    BashAction(session=session_name, command="echo 'session_recovered'", timeout=5, check="silent")
-                )
-                if "session_recovered" in r.output:
-                    logger.info("✅ Session recovered successfully after cleanup")
-                    return True
-            except Exception as e:
-                logger.error(f"Session still cannot be recovered after cleanup: {e}")
-        
-        # If regular cleanup fails, try force interrupt
-        logger.info("Attempting force interrupt...")
-        if await force_interrupt_session(deployment, session_name, logger):
-            # Check again after force interrupt
-            try:
-                r = await deployment.runtime.run_in_session(
-                    BashAction(session=session_name, command="echo 'session_force_recovered'", timeout=5, check="silent")
-                )
-                if "session_force_recovered" in r.output:
-                    logger.info("✅ Session recovered successfully after force interrupt")
-                    return True
-            except Exception as e:
-                logger.error(f"Session still cannot be recovered after force interrupt: {e}")
+                logger.error(f"❌ Session still cannot be recovered after Terminal type fix: {e}")
     
     return False
 
@@ -265,7 +215,7 @@ async def communicate_async(
         except Exception as e:
             if attempt < max_retries:
                 import asyncio
-                await asyncio.sleep(5)  # Wait 5 seconds before retry
+                await asyncio.sleep(5)
                 continue
             else:
                 raise e
@@ -285,10 +235,12 @@ async def run_prepare_cmds(deployment: MultiSweBenchDockerDeployment, install_cm
             logger.error(f"Error: {e!s}")
             failed_commands.append((i, cmd, str(e)))
             logger.info("Try to recover session state after command failed...")
-            await safe_session_check(deployment, session_name, logger, cleanup_on_fail=True)
+            try:
+                await safe_session_check(deployment, session_name, logger, cleanup_on_fail=True)
+            except Exception as e:
+                logger.error(f"Failed to recover session state after command failed: {e}")
             continue
     
-    # Report execution results
     if failed_commands:
         logger.warning(f"Total {len(failed_commands)} commands failed:")
         for i, cmd, error in failed_commands:
@@ -364,6 +316,49 @@ async def run_and_save_logs(
     return output
 
 
+async def push_icm_image(envagent_image_name: str, name: str, logger: logging.Logger):
+    """Push image to ICM with retry mechanism"""
+    push_image_cmd = f"docker push {envagent_image_name}"
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            result = subprocess.run(push_image_cmd, shell=True, capture_output=True, text=True, timeout=600)
+            if result.returncode == 0:
+                logger.info(f"✅ {envagent_image_name}/{name}: image push success")
+                break
+            else:
+                logger.warning(f"❌ {envagent_image_name}/{name}: push attempt {attempt + 1} failed: {result.stderr}")
+                if attempt < max_retries - 1:
+                    logger.info(f"🏃🏻‍♀️ {envagent_image_name}/{name}: retrying push in 30 seconds...")
+                    await asyncio.sleep(30)
+                else:
+                    logger.error(f"❌ {envagent_image_name}/{name}: all push attempts failed")
+                    raise RuntimeError(f"Failed to push image after {max_retries} attempts")
+        except subprocess.TimeoutExpired:
+            logger.warning(f"❌ {envagent_image_name}/{name}: push attempt {attempt + 1} timed out")
+            if attempt < max_retries - 1:
+                logger.info(f"{envagent_image_name}/{name}: retrying push in 30 seconds...")
+                await asyncio.sleep(30)
+            else:
+                logger.error(f"{envagent_image_name}/{name}: all push attempts timed out")
+                raise RuntimeError(f"Push timed out after {max_retries} attempts")
+        except Exception as e:
+            logger.warning(f"❌ {envagent_image_name}/{name}: push attempt {attempt + 1} failed with exception: {e}")
+            if attempt < max_retries - 1:
+                logger.info(f"{envagent_image_name}/{name}: retrying push in 30 seconds...")
+                await asyncio.sleep(30)
+            else:
+                logger.error(f"{envagent_image_name}/{name}: all push attempts failed with exceptions")
+                raise
+
+def run_cmd_(cmd:str, logger: logging.Logger):
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=600)
+    if result.returncode != 0:
+        logger.error(f"❌ Failed to run cmd: {cmd}, error: {result.stderr}")
+        raise RuntimeError(f"❌ Failed to run cmd: {cmd}, error: {result.stderr}")
+    logger.info(f"✅ run cmd: {cmd} success")
+
+
 async def run_and_build_dockerfile(
         name:str, 
         image_name: str, 
@@ -397,11 +392,13 @@ async def run_and_build_dockerfile(
     temp_dir = None
     
     try:
+        # Start container and initialize swe-rex service
         logger.info(f"{image_name}/{name}: start container and swe-rex service")
         await deployment.start()
         logger.info(f"{image_name}/{name}: create sessions")
         await deployment.runtime.create_session(CreateBashSessionRequest(session="eval", startup_source=["/root/.bashrc"], startup_timeout=1200))
 
+        # Get environment variables before installation
         look_env_cod = "env"
         logger.info(f"{image_name}/{name}: executing env command")
         pre_env_output = await communicate_async(deployment, look_env_cod, session_name="eval", timeout=60)
@@ -417,18 +414,24 @@ async def run_and_build_dockerfile(
 
         # Get environment variables after installation with clean output
         logger.info(f"{image_name}/{name}: executing env command after prepare")
-        post_env_output = await communicate_async(deployment, look_env_cod, session_name="eval", timeout=60)
+        try:
+            post_env_output = await communicate_async(deployment, look_env_cod, session_name="eval", timeout=60)
+        except Exception as e:
+            logger.error(f"execute env command after prepare failed: {e}, use `post_env_output = pre_env_output`")
+            post_env_output = pre_env_output
         logger.info(f"{image_name}/{name}: env command after prepare completed successfully")
         
-
+        # Save commit image
         post_image_name = image_name.replace("_v1", "_v2")
         save_image_cmd = f"docker commit {deployment._container_name} {post_image_name}"
-        result = subprocess.run(save_image_cmd, shell=True, capture_output=True, text=True, timeout=600)
-        if result.returncode != 0:
-            logger.error(f"Failed to commit container: {result.stderr}")
-            raise RuntimeError(f"Failed to commit container: {result.stderr}")
-        logger.info(f"{image_name}/{name}: container committed successfully")
-
+        is_alive = await safe_session_check(deployment, session_name="eval", logger=logger, cleanup_on_fail=False)
+        if is_alive:
+            run_cmd_(save_image_cmd, logger)
+        else:
+            logger.error(f"{image_name}/{name}: session is not alive, cannot save commit image")
+            return
+        logger.info(f"{image_name}/{name}: save commit image success")
+        
         # Generate Dockerfile
         dockerfile_content = diff_env_vars(pre_env_output, post_env_output, post_image_name)
         prefix_ = "hub.byted.org"
@@ -444,54 +447,34 @@ async def run_and_build_dockerfile(
         
         # Build new image using docker_util.build
         from multi_swe_bench.utils.docker_util import build
-        build(
-            workdir=Path(temp_dir),
-            dockerfile_name="Dockerfile",
-            image_full_name=envagent_image_name,
-            logger=logger
-        )
-        logger.info(f"{envagent_image_name}/{name}: image build success")
+        try:
+            build(
+                workdir=Path(temp_dir),
+                dockerfile_name="Dockerfile",
+                image_full_name=envagent_image_name,
+                logger=logger
+            )
+            logger.info(f"{envagent_image_name}/{name}: image build success")
+        except Exception as e:
+            logger.error(f"{envagent_image_name}/{name}: image build failed: {e}")
+            logger.info(f"{envagent_image_name}/{name}: try to build image with docker commit")
+            tag_image_cmd = f"docker tag {post_image_name} {envagent_image_name}"
+            run_cmd_(tag_image_cmd, logger)
 
         # Push image to ICM with retry mechanism
-        push_image_cmd = f"docker push {envagent_image_name}"
-        max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                result = subprocess.run(push_image_cmd, shell=True, capture_output=True, text=True, timeout=3600)
-                if result.returncode == 0:
-                    logger.info(f"{envagent_image_name}/{name}: image push success")
-                    break
-                else:
-                    logger.warning(f"{envagent_image_name}/{name}: push attempt {attempt + 1} failed: {result.stderr}")
-                    if attempt < max_retries - 1:
-                        logger.info(f"{envagent_image_name}/{name}: retrying push in 30 seconds...")
-                        await asyncio.sleep(30)
-                    else:
-                        logger.error(f"{envagent_image_name}/{name}: all push attempts failed")
-                        raise RuntimeError(f"Failed to push image after {max_retries} attempts")
-            except subprocess.TimeoutExpired:
-                logger.warning(f"{envagent_image_name}/{name}: push attempt {attempt + 1} timed out")
-                if attempt < max_retries - 1:
-                    logger.info(f"{envagent_image_name}/{name}: retrying push in 30 seconds...")
-                    await asyncio.sleep(30)
-                else:
-                    logger.error(f"{envagent_image_name}/{name}: all push attempts timed out")
-                    raise RuntimeError(f"Push timed out after {max_retries} attempts")
-            except Exception as e:
-                logger.warning(f"{envagent_image_name}/{name}: push attempt {attempt + 1} failed with exception: {e}")
-                if attempt < max_retries - 1:
-                    logger.info(f"{envagent_image_name}/{name}: retrying push in 30 seconds...")
-                    await asyncio.sleep(30)
-                else:
-                    logger.error(f"{envagent_image_name}/{name}: all push attempts failed with exceptions")
-                    raise
-        
+        logger.info(f"{envagent_image_name}/{name}: push image to ICM")
+        await push_icm_image(envagent_image_name, name, logger)
+        logger.info(f"{envagent_image_name}/{name}: push image to ICM success")
+
     except Exception as e:
         logger.error(f"error in run_and_build_dockerfile: {e}")
         raise RuntimeError(f"error in run_and_build_dockerfile: {e}")
     finally:
         logger.info(f"{image_name}/{name}: stop container")
-        await deployment.stop()
+        try:
+            await deployment.stop()
+        except Exception as e:
+            logger.warning(f"warning in stop container: {e}, maybe container has been stopped")
         
         # Clean temp dir
         if temp_dir and os.path.exists(temp_dir):
