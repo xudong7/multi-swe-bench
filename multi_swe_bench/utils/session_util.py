@@ -3,6 +3,8 @@ import shlex
 import subprocess
 import time
 import tempfile
+import asyncio
+from typing import Literal
 
 from pathlib import Path
 from swerex.deployment.docker import DockerDeployment
@@ -321,3 +323,38 @@ async def run_and_save_logs_and_generate_dockerfile(
 
     return output, envagent_image_name, temp_dir
  
+
+async def push_icm_image(envagent_image_name: str, name: str, logger: logging.Logger):
+    """Push image to ICM with retry mechanism"""
+    push_image_cmd = f"docker push {envagent_image_name}"
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            result = subprocess.run(push_image_cmd, shell=True, capture_output=True, text=True, timeout=600)
+            if result.returncode == 0:
+                logger.info(f"✅ {envagent_image_name}/{name}: image push success")
+                break
+            else:
+                logger.warning(f"❌ {envagent_image_name}/{name}: push attempt {attempt + 1} failed: {result.stderr}")
+                if attempt < max_retries - 1:
+                    logger.info(f"🏃🏻‍♀️ {envagent_image_name}/{name}: retrying push in 30 seconds...")
+                    await asyncio.sleep(30)
+                else:
+                    logger.error(f"❌ {envagent_image_name}/{name}: all push attempts failed")
+                    raise RuntimeError(f"Failed to push image after {max_retries} attempts")
+        except subprocess.TimeoutExpired:
+            logger.warning(f"❌ {envagent_image_name}/{name}: push attempt {attempt + 1} timed out")
+            if attempt < max_retries - 1:
+                logger.info(f"{envagent_image_name}/{name}: retrying push in 30 seconds...")
+                await asyncio.sleep(30)
+            else:
+                logger.error(f"{envagent_image_name}/{name}: all push attempts timed out")
+                raise RuntimeError(f"Push timed out after {max_retries} attempts")
+        except Exception as e:
+            logger.warning(f"❌ {envagent_image_name}/{name}: push attempt {attempt + 1} failed with exception: {e}")
+            if attempt < max_retries - 1:
+                logger.info(f"{envagent_image_name}/{name}: retrying push in 30 seconds...")
+                await asyncio.sleep(30)
+            else:
+                logger.error(f"{envagent_image_name}/{name}: all push attempts failed with exceptions")
+                raise
