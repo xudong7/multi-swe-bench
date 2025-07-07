@@ -126,7 +126,7 @@ async def communicate_async(
         )
     except CommandTimeoutError:
         try:
-            await deployment.runtime.run_in_session(BashInterruptAction())
+            await deployment.runtime.run_in_session(BashInterruptAction(session='eval'))
         except Exception as f:
             print(f"Failed to interrupt session after command timeout: {f}")
             raise
