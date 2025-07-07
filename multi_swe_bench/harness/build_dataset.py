@@ -217,6 +217,13 @@ def get_parser() -> ArgumentParser:
         default=True,
         help="The dataset is constructed by human or not",
     )
+    parser.add_argument(
+        "--agent_timeout",
+        type=int,
+        required=False,
+        default=1800,
+        help="The timeout for the agent to run",
+    )
 
     return parser
 
@@ -254,7 +261,7 @@ class CliArgs:
     parse_log: bool = True
     run_log: bool = True
     human_mode: bool = True
-
+    agent_timeout: int = 1800
 
     def __post_init__(self):
         self._check_mode()
@@ -481,9 +488,7 @@ class CliArgs:
         return self.to_json(ensure_ascii=False)
 
     def check_specific(self, name: str) -> bool:
-        if self.specifics and not any(
-            name in specific or specific in name for specific in self.specifics
-        ):
+        if self.specifics and name not in self.specifics:
             return False
         return True
 
@@ -528,12 +533,6 @@ class CliArgs:
             raise ValueError("Check commit hashes failed, please check the logs.")
 
     def build_image(self, image: Image):
-        if not self.force_build and docker_util.exists(image.image_full_name()):
-            self.logger.debug(
-                f"Image {image.image_full_name()} already exists, skipping..."
-            )
-            return
-
         workdir = self.workdir / image.pr.org / image.pr.repo / BUILD_IMAGE_WORKDIR
         image_dir = workdir / image.workdir()
         image_dir.mkdir(parents=True, exist_ok=True)
@@ -551,6 +550,12 @@ class CliArgs:
             file_path.parent.mkdir(parents=True, exist_ok=True)
             with open(file_path, "w", encoding="utf-8", newline="\n") as f:
                 f.write(file.content)
+        
+        if not self.force_build and docker_util.exists(image.image_full_name()):
+            self.logger.debug(
+                f"Image {image.image_full_name()} already exists, skipping..."
+            )
+            return
 
         self.logger.info(f"Building image {image.image_full_name()}...")
         docker_util.build(
@@ -683,7 +688,8 @@ class CliArgs:
                     instance_dir / RUN_LOG_FILE, 
                     "/home/run_msb.log", 
                     prepare_script_path=prepare_script_path,
-                    global_env=self.global_env
+                    global_env=self.global_env,
+                    timeout=self.agent_timeout
                 ))
                 output_test = asyncio.run(run_and_save_logs(
                     "test", 
@@ -693,7 +699,8 @@ class CliArgs:
                     instance_dir / TEST_PATCH_RUN_LOG_FILE, 
                     "/home/test_msb.log", 
                     prepare_script_path=prepare_script_path,
-                    global_env=self.global_env
+                    global_env=self.global_env,
+                    timeout=self.agent_timeout
                 ))
                 output_fix = asyncio.run(run_and_save_logs(
                     "fix", 
@@ -703,7 +710,8 @@ class CliArgs:
                     instance_dir / FIX_PATCH_RUN_LOG_FILE, 
                     "/home/fix_msb.log", 
                     prepare_script_path=prepare_script_path,
-                    global_env=self.global_env
+                    global_env=self.global_env,
+                    timeout=self.agent_timeout
                 ))
 
             else:

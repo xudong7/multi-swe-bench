@@ -61,9 +61,12 @@ class Image:
         if not self.config.global_env:
             return ""
 
-        return "\n".join(
-            [f"ENV {key}={value}" for key, value in self.config.global_env.items()]
-        )
+        valid_env_vars = []
+        for key, value in self.config.global_env.items():
+            if key and key.strip():
+                valid_env_vars.append(f"ENV {key}={value}")
+        
+        return "\n".join(valid_env_vars)
 
     @property
     def need_copy_code(self) -> bool:
@@ -76,7 +79,12 @@ class Image:
         if not self.config.clear_env or not self.config.global_env:
             return ""
 
-        return "\n".join([f'ENV {key}=""' for key in self.config.global_env.keys()])
+        valid_env_vars = []
+        for key in self.config.global_env.keys():
+            if key and key.strip():
+                valid_env_vars.append(f'ENV {key}=""')
+        
+        return "\n".join(valid_env_vars)
 
     def dependency(self) -> Union[str, "Image"]:
         return NotImplementedError

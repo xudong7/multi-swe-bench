@@ -19,6 +19,8 @@ import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Dict, Literal, Optional
+import asyncio
+import docker
 
 from dataclasses_json import dataclass_json
 from tqdm import tqdm
@@ -184,6 +186,13 @@ def get_parser() -> ArgumentParser:
         default=True,
         help="Whether to log to the console.",
     )
+    parser.add_argument(
+        "--human_mode",
+        type=parser.bool,
+        required=False,
+        default=True,
+        help="The dataset is constructed by human or not",
+    )
 
     return parser
 
@@ -227,6 +236,7 @@ class CliArgs:
     log_dir: Path
     log_level: str
     log_to_console: bool
+    human_mode: bool = True
 
     def __post_init__(self):
         self._check_mode()
@@ -713,11 +723,25 @@ class CliArgs:
             )
             return output
 
-        run_and_save_output(
-            instance.name(),
-            instance.fix_patch_run(self.fix_patch_run_cmd),
-            instance_dir / FIX_PATCH_RUN_LOG_FILE,
-        )
+        if not self.human_mode:
+            from multi_swe_bench.utils.session_util import run_and_save_logs
+            prepare_script_path= self.workdir / instance.pr.org / instance.pr.repo / "images"  /f"pr-{instance.pr.number}"/ "prepare.sh" 
+            output_fix = asyncio.run(run_and_save_logs(
+                "fix", 
+                instance.name(), 
+                f"{instance.fix_patch_run(self.fix_patch_run_cmd)} >> /home/fix_msb.log 2>&1", 
+                self.logger,
+                instance_dir / FIX_PATCH_RUN_LOG_FILE, 
+                "/home/fix_msb.log", 
+                prepare_script_path=prepare_script_path,
+                global_env=self.global_env
+            ))
+        else:
+            output_fix = run_and_save_output(
+                instance.name(),
+                instance.fix_patch_run(self.fix_patch_run_cmd),
+                instance_dir / FIX_PATCH_RUN_LOG_FILE,
+            )
 
     def run_mode_instance_only(self):
         self.logger.info("Running instances...")
@@ -782,6 +806,17 @@ class CliArgs:
 
 
 if __name__ == "__main__":
+    # Ensure nix_swe container is runningAdd commentMore actions
+    try:
+        client = docker.from_env()
+        try:
+            container = client.containers.get("nix_swe")
+        except docker.errors.NotFound:
+            client.containers.run("mswebench/nix_swe:v1.0", "true", name="nix_swe")
+    except Exception as e:
+        print(f"Error starting nix_swe container: {e}")
+        sys.exit(1)
+    
     parser = get_parser()
     args = parser.parse_args()
     cli = CliArgs.from_dict(vars(args))

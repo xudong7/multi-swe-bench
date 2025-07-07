@@ -165,7 +165,7 @@ Xvfb :99 -screen 0 1024x768x24 &
 export DISPLAY=:99
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test-node || true
-
+CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npx gulp test --single-run --ts --splitbrowsers ChromeHeadless || true
 """.format(
                     pr=self.pr
                 ),
@@ -187,6 +187,7 @@ Xvfb :99 -screen 0 1024x768x24 &
 export DISPLAY=:99
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test-node || true
+CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npx gulp test --single-run --ts --splitbrowsers ChromeHeadless || true
 """.format(
                     pr=self.pr
                 ),
@@ -208,6 +209,7 @@ Xvfb :99 -screen 0 1024x768x24 &
 export DISPLAY=:99
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test-node || true
+CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npx gulp test --single-run --ts --splitbrowsers ChromeHeadless || true
 """.format(
                     pr=self.pr
                 ),
