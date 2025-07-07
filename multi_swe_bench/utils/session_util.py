@@ -9,12 +9,13 @@ import os
 from pathlib import Path
 from swerex.deployment.docker import DockerDeployment
 from swerex.deployment.docker import DockerDeploymentConfig
-from swerex.runtime.abstract import BashAction
+from swerex.runtime.abstract import BashAction,BashInterruptAction
 from swerex.runtime.abstract import CreateBashSessionRequest
 from swerex.runtime.abstract import ReadFileRequest
 from swerex.runtime.config import RemoteRuntimeConfig
 from swerex.runtime.remote import RemoteRuntime
 from swerex.utils.free_port import find_free_port
+from swerex.exceptions import CommandTimeoutError
 from typing import Literal
 
 from multi_swe_bench.utils.env_to_dockerfile import diff_env_vars
@@ -202,23 +203,22 @@ async def communicate_async(
     max_retries: int = 1
 ) -> str:
     rex_check = "silent" if check == "ignore" else check
-    
-    for attempt in range(max_retries + 1):
+    try:
+        r = await deployment.runtime.run_in_session(
+            BashAction(session=session_name, 
+                      command=input, 
+                      timeout=timeout, 
+                      set_last_action=True,
+                      check=rex_check,
+                      )
+        )
+    except CommandTimeoutError:
         try:
-            r = await deployment.runtime.run_in_session(
-                BashAction(session=session_name, command=input, timeout=timeout, check=rex_check)
-            )
-            if check != "ignore" and r.exit_code != 0:
-                msg = f"Command {input!r} failed (exit_code={r.exit_code}): {error_msg}"
-                raise RuntimeError(msg)
-            return r.output
-        except Exception as e:
-            if attempt < max_retries:
-                import asyncio
-                await asyncio.sleep(5)
-                continue
-            else:
-                raise e
+            await deployment.runtime.run_in_session(BashInterruptAction())
+        except Exception as f:
+            print(f"Failed to interrupt session after command timeout: {f}")
+            raise
+    return r.output
 
 
 async def run_prepare_cmds(deployment: MultiSweBenchDockerDeployment, install_cmds: list[str], session_name: str, timeout: int, logger: logging.Logger):
