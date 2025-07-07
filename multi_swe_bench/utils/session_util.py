@@ -116,7 +116,7 @@ async def communicate_async(
 ) -> str:
     rex_check = "silent" if check == "ignore" else check
     try:
-        r = await deployment.runtime.run_in_session(
+        r= await deployment.runtime.run_in_session(
             BashAction(session=session_name, 
                       command=input, 
                       timeout=timeout, 
@@ -124,38 +124,24 @@ async def communicate_async(
                       check=rex_check,
                       )
         )
+        return r.output
     except CommandTimeoutError:
         try:
             await deployment.runtime.run_in_session(BashInterruptAction(session='eval'))
+            return None
         except Exception as f:
             print(f"Failed to interrupt session after command timeout: {f}")
             raise
-    return r.output
 
 
-async def run_prepare_cmds(deployment: MultiSweBenchDockerDeployment, install_cmds: list[str], session_name: str, timeout: int, logger: logging.Logger):
-    failed_commands = []
-    
-    for i, cmd in enumerate(install_cmds):
-        try:
-            logger.info(f"Command {i+1}/{len(install_cmds)}: {cmd[:50]}... started")
-            result = await communicate_async(deployment, cmd, session_name, timeout=timeout)
-            logger.info(f"Command {i+1}/{len(install_cmds)}: {cmd[:50]}... completed successfully")
-                
-        except Exception as e:
-            logger.error(f"Command {i+1}/{len(install_cmds)}: {cmd[:50]}... failed")
-            logger.error(f"Error: {e!s}")
-            failed_commands.append((i, cmd, str(e)))
-            logger.info("Try to recover session state after command failed...")
-            continue
-    
-    if failed_commands:
-        logger.warning(f"Total {len(failed_commands)} commands failed:")
-        for i, cmd, error in failed_commands:
-            logger.warning(f"  {i+1}. {cmd[:50]}... -> {error}")
-    
-    logger.info(f"prepare command completed, success: {len(install_cmds) - len(failed_commands)}, failed: {len(failed_commands)}")
-
+async def run_prepare_cmds(deployment: MultiSweBenchDockerDeployment, install_cmds: list[str], session_name: str, timeout: int, logger: logging.Logger, image_name:str):  
+    for i, cmd in enumerate(install_cmds): 
+        logger.info(f"{image_name}: Command {i+1}/{len(install_cmds)}: {cmd[:50]}... started")
+        result = await communicate_async(deployment, cmd, session_name, timeout=timeout)
+        if result is None:
+            logger.error(f"{image_name}: Command {i+1}/{len(install_cmds)}: {cmd[:50]}... timeout")
+        logger.info(f"{image_name}: Command {i+1}/{len(install_cmds)}: {cmd[:50]}... completed successfully")
+            
 
 async def download_log(deployment: MultiSweBenchDockerDeployment, output_file: Path, save_file: Path):
     res = await deployment.runtime.read_file(ReadFileRequest(path=output_file))
@@ -209,7 +195,7 @@ async def run_and_save_logs(
                 content = f.read()
                 install_cmds = [cmd.strip() for cmd in content.split("###ACTION_DELIMITER###") if cmd.strip()]
             logger.info(f"{image_name}/{name}: replay prepare.sh")
-            await run_prepare_cmds(deployment, install_cmds, session_name="eval", timeout=timeout, logger=logger)
+            await run_prepare_cmds(deployment, install_cmds, session_name="eval", timeout=timeout, logger=logger, image_name=image_name)
         logger.info(f"{image_name}/{name}: run logs")
         await communicate_async(deployment, test_cmd, session_name="eval", timeout=timeout)  
         logger.info(f"{image_name}/{name}: download logs")
