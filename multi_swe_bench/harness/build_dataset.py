@@ -21,6 +21,8 @@ from pathlib import Path
 from typing import Dict, Literal, Optional
 import asyncio
 import docker
+import os
+import shutil
 
 from dataclasses_json import dataclass_json
 from tqdm import tqdm
@@ -762,6 +764,9 @@ class CliArgs:
                 except Exception as e:
                     self.logger.error(f"{instance.name()}: image build failed: {e}")
                     raise e
+                finally:
+                    if temp_dir and os.path.exists(temp_dir):
+                        shutil.rmtree(temp_dir)           
                     
                 # Push image to ICM with retry mechanism
                 self.logger.info(f"{instance.name()}: push image to ICM")

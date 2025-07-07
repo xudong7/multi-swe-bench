@@ -20,6 +20,8 @@ from typing import Literal
 
 from multi_swe_bench.utils.env_to_dockerfile import diff_env_vars
 
+class BuildDockerfileError(Exception):
+    """Raised when the Dockerfile build failed"""
 
 logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
@@ -352,10 +354,12 @@ async def run_and_save_logs_and_generate_dockerfile(
         logger.info(f"{image_name}/{name}: create sessions")
         await deployment.runtime.create_session(CreateBashSessionRequest(session="eval", startup_source=["/root/.bashrc"], startup_timeout=timeout))
         # Get environment variables before installation
-        look_env_cod = "env"
-        logger.info(f"{image_name}/{name}: executing env command")
-        pre_env_output = await communicate_async(deployment, look_env_cod, session_name="eval", timeout=60)
-        logger.info(f"{image_name}/{name}: env command completed successfully")
+        try:
+            look_env_cod = "env"
+            pre_env_output = await communicate_async(deployment, look_env_cod, session_name="eval", timeout=60)
+        except Exception as e:
+            raise BuildDockerfileError(f"{image_name}/{name}: before execute prepare.sh, access env command failed: {e}")
+        
         # Execute prepare.sh
         if prepare_script_path is not None:
             logger.info(f"{image_name}/{name}: download prepare.sh")
@@ -366,37 +370,35 @@ async def run_and_save_logs_and_generate_dockerfile(
             await run_prepare_cmds(deployment, install_cmds, session_name="eval", timeout=timeout, logger=logger)
 
         # Get environment variables after installation with clean output
-        logger.info(f"{image_name}/{name}: executing env command after prepare")
         try:
             post_env_output = await communicate_async(deployment, look_env_cod, session_name="eval", timeout=60)
         except Exception as e:
-            logger.error(f"execute env command after prepare failed: {e}, use `post_env_output = pre_env_output`")
-            post_env_output = pre_env_output
-        logger.info(f"{image_name}/{name}: env command after prepare completed successfully")
+            raise BuildDockerfileError(f"{image_name}/{name}: after execute prepare.sh, access env command failed: {e}")
         
         # Save commit image
         post_image_name = image_name.replace("_v1", "_v2")
         save_image_cmd = f"docker commit {deployment._container_name} {post_image_name}"
-        is_alive = await safe_session_check(deployment, session_name="eval", logger=logger, cleanup_on_fail=False)
-        if is_alive:
-            run_cmd_(save_image_cmd, logger)
-        else:
-            logger.error(f"{image_name}/{name}: session is not alive, cannot save commit image")
-            return
+        try:
+            result = subprocess.run(save_image_cmd, shell=True, capture_output=True, text=True, timeout=600)
+            if result.returncode != 0:
+                raise BuildDockerfileError(f"{image_name}/{name}: save commit image failed: {result.stderr}")
+        except Exception as e:
+            raise BuildDockerfileError(f"{image_name}/{name}: save commit image failed: {e}")
         logger.info(f"{image_name}/{name}: save commit image success")
-        
+     
         # Generate Dockerfile
-        dockerfile_content = diff_env_vars(pre_env_output, post_env_output, post_image_name)
-        prefix_ = "hub.byted.org"
-        envagent_image_name = prefix_ + "/" + image_name.replace("_v1", "")
-
-        # Create temp dir to save Dockerfile
-        temp_dir = tempfile.mkdtemp(prefix=f"dockerfile_build_{image_name.replace('/', '_')}_")
-        dockerfile_path = Path(temp_dir) / "Dockerfile"
+        try:
+            dockerfile_content = diff_env_vars(pre_env_output, post_env_output, post_image_name)
+            prefix_ = "hub.byted.org"
+            envagent_image_name = prefix_ + "/" + image_name.replace("_v1", "")
+            temp_dir = tempfile.mkdtemp(prefix=f"dockerfile_build_{image_name.replace('/', '_')}_")
+            dockerfile_path = Path(temp_dir) / "Dockerfile"
        
-        # Save Dockerfile content to temp file
-        with open(dockerfile_path, "w", encoding="utf-8") as f:
-            f.write(dockerfile_content)
+            # Save Dockerfile content to temp file
+            with open(dockerfile_path, "w", encoding="utf-8") as f:
+                f.write(dockerfile_content)
+        except Exception as e:
+            raise BuildDockerfileError(f"{image_name}/{name}: generate Dockerfile failed: {e}")      
         logger.info(f"{envagent_image_name}/{name}: save Dockerfile to {temp_dir}")
 
         # run test_cmd
