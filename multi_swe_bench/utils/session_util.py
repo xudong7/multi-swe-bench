@@ -315,6 +315,106 @@ async def run_and_save_logs(
 
     return output
 
+async def run_and_save_logs_and_generate_dockerfile(
+        name:str, 
+        image_name: str, 
+        test_cmd: str, 
+        logger: logging.Logger, 
+        save_file: Path, 
+        inD_save_file: Path,  
+        prepare_script_path: Path,
+        global_env: list[str] = None,
+        timeout: int = 1800):
+    """add the generate_dockerfile feature based on the run_and_save_logs function
+    because the code is scattered in various places, so a new function is written to handle it
+    """
+    # Convert global_env to docker_args
+    docker_args = []
+    if global_env:
+        for env in global_env:
+            docker_args.extend(["-e", env])
+
+    dockerdeploymentconfig = DockerDeploymentConfig(
+        image=image_name,
+        port=None,
+        docker_args=docker_args,
+        startup_timeout=timeout,  
+        pull="never", # never pull image
+        remove_images=False, # stop container and remove image
+        python_standalone_dir=None,
+        platform=None,
+        type="docker"
+    )
+    deployment = MultiSweBenchDockerDeployment.from_config(logger=logger, config=dockerdeploymentconfig)
+    try:
+        logger.info(f"{image_name}/{name}: start container and swe-rex service")
+        await deployment.start()
+        logger.info(f"{image_name}/{name}: create sessions")
+        await deployment.runtime.create_session(CreateBashSessionRequest(session="eval", startup_source=["/root/.bashrc"], startup_timeout=timeout))
+        # Get environment variables before installation
+        look_env_cod = "env"
+        logger.info(f"{image_name}/{name}: executing env command")
+        pre_env_output = await communicate_async(deployment, look_env_cod, session_name="eval", timeout=60)
+        logger.info(f"{image_name}/{name}: env command completed successfully")
+        # Execute prepare.sh
+        if prepare_script_path is not None:
+            logger.info(f"{image_name}/{name}: download prepare.sh")
+            with open(prepare_script_path) as f:
+                content = f.read()
+                install_cmds = [cmd.strip() for cmd in content.split("###ACTION_DELIMITER###") if cmd.strip()]
+            logger.info(f"{image_name}/{name}: replay prepare.sh")
+            await run_prepare_cmds(deployment, install_cmds, session_name="eval", timeout=timeout, logger=logger)
+
+        # Get environment variables after installation with clean output
+        logger.info(f"{image_name}/{name}: executing env command after prepare")
+        try:
+            post_env_output = await communicate_async(deployment, look_env_cod, session_name="eval", timeout=60)
+        except Exception as e:
+            logger.error(f"execute env command after prepare failed: {e}, use `post_env_output = pre_env_output`")
+            post_env_output = pre_env_output
+        logger.info(f"{image_name}/{name}: env command after prepare completed successfully")
+        
+        # Save commit image
+        post_image_name = image_name.replace("_v1", "_v2")
+        save_image_cmd = f"docker commit {deployment._container_name} {post_image_name}"
+        is_alive = await safe_session_check(deployment, session_name="eval", logger=logger, cleanup_on_fail=False)
+        if is_alive:
+            run_cmd_(save_image_cmd, logger)
+        else:
+            logger.error(f"{image_name}/{name}: session is not alive, cannot save commit image")
+            return
+        logger.info(f"{image_name}/{name}: save commit image success")
+        
+        # Generate Dockerfile
+        dockerfile_content = diff_env_vars(pre_env_output, post_env_output, post_image_name)
+        prefix_ = "hub.byted.org"
+        envagent_image_name = prefix_ + "/" + image_name.replace("_v1", "")
+
+        # Create temp dir to save Dockerfile
+        temp_dir = tempfile.mkdtemp(prefix=f"dockerfile_build_{image_name.replace('/', '_')}_")
+        dockerfile_path = Path(temp_dir) / "Dockerfile"
+       
+        # Save Dockerfile content to temp file
+        with open(dockerfile_path, "w", encoding="utf-8") as f:
+            f.write(dockerfile_content)
+        logger.info(f"{envagent_image_name}/{name}: save Dockerfile to {temp_dir}")
+
+        # run test_cmd
+        logger.info(f"{image_name}/{name}: run logs")
+        await communicate_async(deployment, test_cmd, session_name="eval", timeout=timeout)  
+       
+        # download logs
+        logger.info(f"{image_name}/{name}: download logs")
+        output = await download_log(deployment, inD_save_file, save_file)
+    except Exception as e:
+        logger.error(f"error in run_and_save_logs: {e}")
+        raise RuntimeError(f"error in run_and_save_logs: {e}")
+    finally:
+        logger.info(f"{image_name}/{name}: stop container")
+        await deployment.stop()
+
+    return output, envagent_image_name, temp_dir
+ 
 
 async def push_icm_image(envagent_image_name: str, name: str, logger: logging.Logger):
     """Push image to ICM with retry mechanism"""

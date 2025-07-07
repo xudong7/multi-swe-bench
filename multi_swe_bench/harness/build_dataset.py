@@ -678,7 +678,7 @@ class CliArgs:
 
         if self.run_log: 
             if not self.human_mode: #envagent mode
-                from multi_swe_bench.utils.session_util import run_and_save_logs
+                from multi_swe_bench.utils.session_util import run_and_save_logs, run_and_save_logs_and_generate_dockerfile,push_icm_image
                 prepare_script_path= self.workdir / instance.pr.org / instance.pr.repo / "images"  /f"pr-{instance.pr.number}"/ "prepare.sh" 
                 output_run = asyncio.run(run_and_save_logs(
                     "run", 
@@ -702,7 +702,7 @@ class CliArgs:
                     global_env=self.global_env,
                     timeout=self.agent_timeout
                 ))
-                output_fix = asyncio.run(run_and_save_logs(
+                output_fix, envagent_image_name, temp_dir = asyncio.run(run_and_save_logs_and_generate_dockerfile(
                     "fix", 
                     instance.name(), 
                     f"{instance.fix_patch_run(self.fix_patch_run_cmd)} >> /home/fix_msb.log 2>&1", 
@@ -747,6 +747,27 @@ class CliArgs:
             with open(report_path, "w", encoding="utf-8") as f:
                 f.write(report.json())
             self.logger.debug(f"Report for {instance.name()} saved successfully.")
+
+            if not self.human_mode and report.valid: 
+                #envagent mode 而且需要parse log，就需要生成dockerfile
+                from multi_swe_bench.utils.docker_util import build
+                try:
+                    build(
+                        workdir=Path(temp_dir),
+                        dockerfile_name="Dockerfile",
+                        image_full_name=envagent_image_name,
+                        logger=self.logger
+                    )
+                    self.logger.info(f"{instance.name()}: image build success")
+                except Exception as e:
+                    self.logger.error(f"{instance.name()}: image build failed: {e}")
+                    raise e
+                    
+                # Push image to ICM with retry mechanism
+                self.logger.info(f"{instance.name()}: push image to ICM")
+                asyncio.run(push_icm_image(envagent_image_name,  instance.name(), self.logger))
+                self.logger.info(f"{envagent_image_name}/{instance.name()}: push image to ICM success")
+
 
     def run_mode_instance_only(self):
         self.logger.info("Running instances...")
