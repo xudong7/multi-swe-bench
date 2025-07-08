@@ -259,7 +259,7 @@ async def run_and_save_logs_and_generate_dockerfile(
                 content = f.read()
                 install_cmds = [cmd.strip() for cmd in content.split("###ACTION_DELIMITER###") if cmd.strip()]
             logger.info(f"{image_name}/{name}: replay prepare.sh")
-            await run_prepare_cmds(deployment, install_cmds, session_name="eval", timeout=timeout, logger=logger)
+            await run_prepare_cmds(deployment, install_cmds, session_name="eval", timeout=timeout, logger=logger, image_name=image_name)
 
         # Get environment variables after installation with clean output
         try:
