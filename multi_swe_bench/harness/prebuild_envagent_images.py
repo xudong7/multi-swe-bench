@@ -661,8 +661,9 @@ class CliArgs:
                             )
                             failed_images.add(image)
                             if self.stop_on_error:
+                                self.logger.error("Stopping due to error (stop_on_error=True)")
                                 executor.shutdown(wait=False)
-                                sys.exit(1)
+                                raise RuntimeError(f"Image {image.image_full_name()} failed: {e}")
                         finally:
                             building_bar.update(1)
 
@@ -703,16 +704,29 @@ class CliArgs:
 
         from multi_swe_bench.utils.session_util import run_and_build_dockerfile
         prepare_script_path= self.workdir / instance.pr.org / instance.pr.repo / "images"  /f"pr-{instance.pr.number}"/ "prepare.sh" 
-        asyncio.run(run_and_build_dockerfile(
-            "fix", 
-            instance.name() + "_v1", 
-            self.logger, 
-            prepare_script_path=prepare_script_path,
-            global_env=self.global_env
-        ))
+        
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(run_and_build_dockerfile(
+                "fix", 
+                instance.name() + "_v1", 
+                self.logger, 
+                prepare_script_path=prepare_script_path,
+                global_env=self.global_env
+            ))
+        except Exception as e:
+            self.logger.error(f"Error in run_instance for {instance.name()}: {e}")
+            raise
+        finally:
+            try:
+                loop.close()
+            except:
+                pass
 
     def run_mode_instance_only(self):
         self.logger.info("Running instances...")
+        failed_instances = []
 
         with tqdm(total=len(self.instances), desc="Running instances") as running_bar:
             with concurrent.futures.ThreadPoolExecutor(
@@ -731,20 +745,36 @@ class CliArgs:
                         self.logger.error(
                             f"Error running instance {instance.pr.id}: {e}"
                         )
+                        failed_instances.append((instance.pr.id, str(e)))
                         if self.stop_on_error:
+                            self.logger.error("Stopping due to error (stop_on_error=True)")
                             executor.shutdown(wait=False)
-                            sys.exit(1)
+                            raise RuntimeError(f"Instance {instance.pr.id} failed: {e}")
                     finally:
                         running_bar.update(1)
 
-        self.logger.info("Instances run successfully.")
+        if failed_instances:
+            self.logger.warning(f"Failed instances: {len(failed_instances)}")
+            for instance_id, error in failed_instances:
+                self.logger.warning(f"  - {instance_id}: {error}")
+        else:
+            self.logger.info("All instances run successfully.")
 
     def run_mode_instance(self):
         self.run_mode_image()
         self.run_mode_instance_only()
 
     def run(self):
-        self.run_mode_instance()
+        try:
+            self.run_mode_instance()
+        except Exception as e:
+            self.logger.error(f"Fatal error in run: {e}")
+            if self.stop_on_error:
+                self.logger.error("Exiting due to fatal error")
+                sys.exit(1)
+            else:
+                self.logger.warning("Continuing despite error (stop_on_error=False)")
+                raise
 
 
 if __name__ == "__main__":
