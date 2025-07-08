@@ -18,3 +18,4 @@ from multi_swe_bench.harness.repos.python.Pyomo import *
 from multi_swe_bench.harness.repos.python.pre_commit import *
 from multi_swe_bench.harness.repos.python.modin_project import *
 from multi_swe_bench.harness.repos.python.RadioAstronomySoftwareGroup import *
+from multi_swe_bench.harness.repos.python.stfc import *
