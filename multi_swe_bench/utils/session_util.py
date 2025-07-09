@@ -139,7 +139,7 @@ async def run_prepare_cmds(deployment: MultiSweBenchDockerDeployment, install_cm
         logger.info(f"{image_name}: Command {i+1}/{len(install_cmds)}: {cmd[:50]}... started")
         result = await communicate_async(deployment, cmd, session_name, timeout=timeout)
         if result is None:
-            logger.error(f"{image_name}: Command {i+1}/{len(install_cmds)}: {cmd[:50]}... timeout")
+            logger.info(f"{image_name}: Command {i+1}/{len(install_cmds)}: {cmd[:50]}... timeout")
         logger.info(f"{image_name}: Command {i+1}/{len(install_cmds)}: {cmd[:50]}... completed successfully")
             
 
