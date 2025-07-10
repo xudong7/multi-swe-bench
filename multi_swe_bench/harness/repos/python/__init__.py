@@ -30,7 +30,12 @@ from multi_swe_bench.harness.repos.python.haddocking import *
 from multi_swe_bench.harness.repos.python.conan_io import *
 from multi_swe_bench.harness.repos.python.Deltares import *
 from multi_swe_bench.harness.repos.python.stfc import *
-from multi_swe_bench.harness.repos.python.microsoft import *
-from multi_swe_bench.harness.repos.python.Project_MONAI import *
+from multi_swe_bench.harness.repos.python.isi_vista import *
+from multi_swe_bench.harness.repos.python.DeepRegNet import *
+from multi_swe_bench.harness.repos.python.Sceptre import *
+from multi_swe_bench.harness.repos.python.hgrecco import *
+from multi_swe_bench.harness.repos.python.PennyLaneAI import *
 from multi_swe_bench.harness.repos.python.NeurodataWithoutBorders import *
-from multi_swe_bench.harness.repos.python.tensorflow import *
+from multi_swe_bench.harness.repos.python.ubclaunchpad import *
+from multi_swe_bench.harness.repos.python.repobee import *
+from multi_swe_bench.harness.repos.python.microsoft import *
