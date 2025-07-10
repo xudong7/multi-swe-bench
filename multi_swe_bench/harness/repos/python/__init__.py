@@ -34,3 +34,4 @@ from multi_swe_bench.harness.repos.python.isi_vista import *
 from multi_swe_bench.harness.repos.python.DeepRegNet import *
 from multi_swe_bench.harness.repos.python.Sceptre import *
 from multi_swe_bench.harness.repos.python.hgrecco import *
+from multi_swe_bench.harness.repos.python.PennyLaneAI import *
