@@ -30,3 +30,5 @@ from multi_swe_bench.harness.repos.python.haddocking import *
 from multi_swe_bench.harness.repos.python.conan_io import *
 from multi_swe_bench.harness.repos.python.Deltares import *
 from multi_swe_bench.harness.repos.python.stfc import *
+from multi_swe_bench.harness.repos.python.OpenMDAO import *
+from multi_swe_bench.harness.repos.python.vprusso import *
