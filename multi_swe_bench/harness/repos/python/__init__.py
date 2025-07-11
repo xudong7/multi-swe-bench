@@ -40,3 +40,4 @@ from multi_swe_bench.harness.repos.python.ubclaunchpad import *
 from multi_swe_bench.harness.repos.python.repobee import *
 from multi_swe_bench.harness.repos.python.microsoft import *
 from multi_swe_bench.harness.repos.python.debrief import *
+from multi_swe_bench.harness.repos.python.vprusso import *
