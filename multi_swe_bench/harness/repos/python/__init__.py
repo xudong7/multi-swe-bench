@@ -42,3 +42,4 @@ from multi_swe_bench.harness.repos.python.microsoft import *
 from multi_swe_bench.harness.repos.python.debrief import *
 from multi_swe_bench.harness.repos.python.vprusso import *
 from multi_swe_bench.harness.repos.python.twisted import *
+from multi_swe_bench.harness.repos.python.pydicom import *
