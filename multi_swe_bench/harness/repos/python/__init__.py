@@ -35,3 +35,4 @@ from multi_swe_bench.harness.repos.python.twisted import *
 from multi_swe_bench.harness.repos.python.NeurodataWithoutBorders import *
 from multi_swe_bench.harness.repos.python.tensorflow import *
 from multi_swe_bench.harness.repos.python.microsoft import *
+from multi_swe_bench.harness.repos.python.pydicom import *
