@@ -44,3 +44,4 @@ from multi_swe_bench.harness.repos.python.vprusso import *
 from multi_swe_bench.harness.repos.python.twisted import *
 from multi_swe_bench.harness.repos.python.pydicom import *
 from multi_swe_bench.harness.repos.python.mne_tools import *
+from multi_swe_bench.harness.repos.python.RDFLib import *
