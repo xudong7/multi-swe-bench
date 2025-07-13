@@ -81,8 +81,6 @@ class MultiSweBenchDockerDeployment(DockerDeployment):
             *self._config.docker_args,
             "--name",
             self._container_name,
-            "--memory=4g",  # Limit memory to 4GB
-            "--cpus=1",     # Limit to 1 CPU core
             image_id,
             *self._get_swerex_start_cmd(prefix_cmd= "/nix/swalm/nix-env/bin/python -m venv /root/venv && /root/venv/bin/pip install --no-cache-dir swe-rex && ln -s /root/venv/bin/swerex-remote /usr/local/bin/swerex-remote",
                                          token=token)
