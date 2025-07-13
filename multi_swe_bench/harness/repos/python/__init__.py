@@ -44,5 +44,9 @@ from multi_swe_bench.harness.repos.python.vprusso import *
 from multi_swe_bench.harness.repos.python.twisted import *
 from multi_swe_bench.harness.repos.python.pydicom import *
 from multi_swe_bench.harness.repos.python.mne_tools import *
-from multi_swe_bench.harness.repos.python.OpenMDAO import *
+from multi_swe_bench.harness.repos.python.RDFLib import *
+from multi_swe_bench.harness.repos.python.wemake_services import *
+from multi_swe_bench.harness.repos.python.sdv_dev import *
+from multi_swe_bench.harness.repos.python.zulip import *
+from multi_swe_bench.harness.repos.python.hylang import *
 from multi_swe_bench.harness.repos.python.scverse import *
