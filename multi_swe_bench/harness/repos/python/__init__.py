@@ -48,3 +48,4 @@ from multi_swe_bench.harness.repos.python.RDFLib import *
 from multi_swe_bench.harness.repos.python.wemake_services import *
 from multi_swe_bench.harness.repos.python.sdv_dev import *
 from multi_swe_bench.harness.repos.python.zulip import *
+from multi_swe_bench.harness.repos.python.hylang import *
