@@ -34,3 +34,4 @@ from multi_swe_bench.harness.repos.python.cocotb import *
 from multi_swe_bench.harness.repos.python.pyro_ppl import *
 from multi_swe_bench.harness.repos.python.wemake_services import *
 from multi_swe_bench.harness.repos.python.Sceptre import *
+from multi_swe_bench.harness.repos.python.hylang import *
