@@ -35,3 +35,5 @@ from multi_swe_bench.harness.repos.python.modin_project import *
 from multi_swe_bench.harness.repos.python.PennyLaneAI import *
 from multi_swe_bench.harness.repos.python.RadioAstronomySoftwareGroup import *
 from multi_swe_bench.harness.repos.python.catalystneuro import *
+from multi_swe_bench.harness.repos.python.kornia import *
+from multi_swe_bench.harness.repos.python.unit8co import *
