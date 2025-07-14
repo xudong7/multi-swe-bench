@@ -51,3 +51,4 @@ from multi_swe_bench.harness.repos.python.zulip import *
 from multi_swe_bench.harness.repos.python.hylang import *
 from multi_swe_bench.harness.repos.python.scverse import *
 from multi_swe_bench.harness.repos.python.JrGoodle import *
+from multi_swe_bench.harness.repos.python.kornia import *
