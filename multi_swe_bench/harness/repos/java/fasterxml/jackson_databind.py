@@ -167,9 +167,9 @@ class JacksonDatabindImageDefault(Image):
             4468: "2.17.4-SNAPSHOT",
             4469: "2.17.4-SNAPSHOT",
             4486: "2.17.4-SNAPSHOT",
-            4487: "2.18.4-SNAPSHOT",
-            4615: "2.18.4-SNAPSHOT",
-            4641: "2.18.4-SNAPSHOT",
+            4487: "2.18.5-SNAPSHOT",
+            4615: "2.18.5-SNAPSHOT",
+            4641: "2.18.5-SNAPSHOT",
         }
 
         return new_versions.get(self.pr.number, "2.15.5-SNAPSHOT")

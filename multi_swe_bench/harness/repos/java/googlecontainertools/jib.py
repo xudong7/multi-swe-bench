@@ -481,6 +481,7 @@ class Jib(Instance):
         passed_res = [
             re.compile(r"^> Task :(\S+)$"),
             re.compile(r"^> Task :(\S+) UP-TO-DATE$"),
+            re.compile(r"^> Task :(\S+) FROM-CACHE$"),
             re.compile(r"^(.+ > .+) PASSED$"),
         ]
 

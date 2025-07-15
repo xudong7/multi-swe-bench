@@ -290,9 +290,10 @@ class Gson(Instance):
         skipped_tests = set()
 
         re_pass_tests = [
-            re.compile(
-                r"Running (.+?)\nTests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+), Time elapsed: [\d\.]+ sec"
-            )
+            # re.compile(
+            #     r"Running (.+?)\nTests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+), Time elapsed: [\d\.]+ sec",
+            # ),
+            re.compile(r"Running\s+(.+?)\s*\n(?:(?!Tests run:).*\n)*Tests run:\s*(\d+),\s*Failures:\s*(\d+),\s*Errors:\s*(\d+),\s*Skipped:\s*(\d+),\s*Time elapsed:\s*[\d.]+\s*sec")
         ]
         re_fail_tests = [
             re.compile(

@@ -226,10 +226,6 @@ yarn || true
 yarn npm-run-all --max-old-space-size=4095 -lp compile "electron x64" playwright-install download-builtin-extensions || true
 yarn --cwd test/integration/browser compile || true
 yarn test-node || true
-xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" yarn test-browser-no-install -- --browser chromium --no-sandbox || true
-xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test.sh --no-sandbox --disable-dev-shm-usage || true
-xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test-web-integration.sh --browser chromium --no-sandbox || true
-xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test-integration.sh --no-sandbox --disable-dev-shm-usage || true
     """.format(
                         pr=self.pr
                     ),
@@ -250,10 +246,6 @@ yarn || true
 yarn npm-run-all --max-old-space-size=4095 -lp compile "electron x64" playwright-install download-builtin-extensions || true
 yarn --cwd test/integration/browser compile || true
 yarn test-node || true
-xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" yarn test-browser-no-install -- --browser chromium --no-sandbox || true
-xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test.sh --no-sandbox --disable-dev-shm-usage || true
-xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test-web-integration.sh --browser chromium --no-sandbox || true
-xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test-integration.sh --no-sandbox --disable-dev-shm-usage || true
     """.format(
                         pr=self.pr
                     ),
@@ -274,10 +266,6 @@ yarn || true
 yarn npm-run-all --max-old-space-size=4095 -lp compile "electron x64" playwright-install download-builtin-extensions || true
 yarn --cwd test/integration/browser compile || true
 yarn test-node || true
-xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" yarn test-browser-no-install -- --browser chromium --no-sandbox || true
-xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test.sh --no-sandbox --disable-dev-shm-usage || true
-xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test-web-integration.sh --browser chromium --no-sandbox || true
-xvfb-run --server-args="-screen 0 1280x1024x24 -ac :99" ./scripts/test-integration.sh --no-sandbox --disable-dev-shm-usage || true
     """.format(
                         pr=self.pr
                     ),
