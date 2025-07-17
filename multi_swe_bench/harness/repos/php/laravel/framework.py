@@ -48,7 +48,6 @@ class ImageBase(Image):
 WORKDIR /home/
 
 {self.global_env}
-{code}
 
 RUN apt-get update && apt-get install -y \
     git \
