@@ -179,7 +179,7 @@ class PullRequest(PullRequestBase):
     fix_patch: str
     test_patch: str
     tag: str=""
-
+    number_interval: str=""
 
     def __post_init__(self):
         if not isinstance(self.state, str):
