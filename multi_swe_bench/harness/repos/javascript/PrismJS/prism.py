@@ -6,7 +6,7 @@ from multi_swe_bench.harness.instance import Instance, TestResult
 from multi_swe_bench.harness.pull_request import PullRequest
 
 
-class vscodeImageBase(Image):
+class prismImageBase(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -50,6 +50,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
 
 RUN apt update && apt install -y libxkbfile-dev pkg-config build-essential python3 libkrb5-dev libxss1 xvfb libgtk-3-0 libgbm1
+
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
     && apt-get update \
@@ -57,9 +58,11 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
         fonts-khmeros fonts-kacst fonts-freefont-ttf libxss1 dbus dbus-x11 \
         --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
+
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash && \
     export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
 {code}
 
 {self.clear_env}
@@ -67,67 +70,7 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | b
 """
 
 
-class vscodeImageBaseCpp7(Image):
-    def __init__(self, pr: PullRequest, config: Config):
-        self._pr = pr
-        self._config = config
-
-    @property
-    def pr(self) -> PullRequest:
-        return self._pr
-
-    @property
-    def config(self) -> Config:
-        return self._config
-
-    def dependency(self) -> Union[str, "Image"]:
-        return "gcc:7"
-
-    def image_tag(self) -> str:
-        return "base-cpp-7"
-
-    def workdir(self) -> str:
-        return "base-cpp-7"
-
-    def files(self) -> list[File]:
-        return []
-
-    def dockerfile(self) -> str:
-        image_name = self.dependency()
-        if isinstance(image_name, Image):
-            image_name = image_name.image_full_name()
-
-        if self.config.need_clone:
-            code = f"RUN git clone https://github.com/{self.pr.org}/{self.pr.repo}.git /home/{self.pr.repo}"
-        else:
-            code = f"COPY {self.pr.repo} /home/{self.pr.repo}"
-        return f"""FROM {image_name}
-
-{self.global_env}
-
-WORKDIR /home/
-
-{code}
-
-RUN apt-get update && \
-    apt-get install -y \
-    build-essential \
-    pkg-config \
-    wget \
-    tar && \
-    wget https://cmake.org/files/v3.14/cmake-3.14.0-Linux-x86_64.tar.gz && \
-    tar -zxvf cmake-3.14.0-Linux-x86_64.tar.gz && \
-    mv cmake-3.14.0-Linux-x86_64 /opt/cmake && \
-    ln -s /opt/cmake/bin/cmake /usr/local/bin/cmake && \
-    rm cmake-3.14.0-Linux-x86_64.tar.gz
-RUN apt-get install -y cmake
-
-{self.clear_env}
-
-"""
-
-
-class vscodeImageDefault(Image):
+class prismImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -141,10 +84,7 @@ class vscodeImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
-        # if self.pr.number <= 958:
-        #     return vscodeImageBaseCpp7(self.pr, self._config)
-
-        return vscodeImageBase(self.pr, self._config)
+        return prismImageBase(self.pr, self._config)
 
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
@@ -153,124 +93,6 @@ class vscodeImageDefault(Image):
         return f"pr-{self.pr.number}"
 
     def files(self) -> list[File]:
-        if self.pr.number <= 227379:
-            return [
-                File(
-                    ".",
-                    "fix.patch",
-                    f"{self.pr.fix_patch}",
-                ),
-                File(
-                    ".",
-                    "test.patch",
-                    f"{self.pr.test_patch}",
-                ),
-                File(
-                    ".",
-                    "check_git_changes.sh",
-                    """#!/bin/bash
-set -e
-
-if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
-  echo "check_git_changes: Not inside a git repository"
-  exit 1
-fi
-
-if [[ -n $(git status --porcelain) ]]; then
-  echo "check_git_changes: Uncommitted changes"
-  exit 1
-fi
-
-echo "check_git_changes: No uncommitted changes"
-exit 0
-
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "prepare.sh",
-                    """#!/bin/bash
-set -e
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-cd /home/{pr.repo}
-git reset --hard
-bash /home/check_git_changes.sh
-git checkout {pr.base.sha}
-bash /home/check_git_changes.sh
-
-nvm install || true
-nvm use || true
-corepack enable || true
-yes | yarn -v || true
-yarn || true
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "run.sh",
-                    """#!/bin/bash
-set -e
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-cd /home/{pr.repo}
-nvm use || true
-corepack enable || true
-yarn || true
-yarn npm-run-all --max-old-space-size=4095 -lp compile "electron x64" playwright-install download-builtin-extensions || true
-yarn --cwd test/integration/browser compile || true
-yarn test-node || true
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "test-run.sh",
-                    """#!/bin/bash
-set -e
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-cd /home/{pr.repo}
-git apply --whitespace=nowarn /home/test.patch
-nvm use || true
-corepack enable || true
-yarn || true
-yarn npm-run-all --max-old-space-size=4095 -lp compile "electron x64" playwright-install download-builtin-extensions || true
-yarn --cwd test/integration/browser compile || true
-yarn test-node || true
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-                File(
-                    ".",
-                    "fix-run.sh",
-                    """#!/bin/bash
-set -e
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
-cd /home/{pr.repo}
-git apply --whitespace=nowarn /home/test.patch /home/fix.patch
-nvm use || true
-corepack enable || true
-yarn || true
-yarn npm-run-all --max-old-space-size=4095 -lp compile "electron x64" playwright-install download-builtin-extensions || true
-yarn --cwd test/integration/browser compile || true
-yarn test-node || true
-    """.format(
-                        pr=self.pr
-                    ),
-                ),
-            ]
         return [
             File(
                 ".",
@@ -322,7 +144,6 @@ bash /home/check_git_changes.sh
 nvm install || true
 nvm use || true
 npm ci || npm install || true
-
 """.format(
                     pr=self.pr
                 ),
@@ -334,14 +155,11 @@ npm ci || npm install || true
 set -e
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
 cd /home/{pr.repo}
+
 nvm use || true
 npm ci || npm install || true
-npm exec -- npm-run-all -lp compile "electron x64" playwright-install download-builtin-extensions || true
-npm run compile || true
-npm run test-node || true
-
+npm test || true
 """.format(
                     pr=self.pr
                 ),
@@ -353,14 +171,12 @@ npm run test-node || true
 set -e
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
+
 nvm use || true
 npm ci || npm install || true
-npm exec -- npm-run-all -lp compile "electron x64" playwright-install download-builtin-extensions || true
-npm run compile || true
-npm run test-node || true
+npm test || true
 
 """.format(
                     pr=self.pr
@@ -373,14 +189,12 @@ npm run test-node || true
 set -e
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-
 cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
+
 nvm use || true
 npm ci || npm install || true
-npm exec -- npm-run-all -lp compile "electron x64" playwright-install download-builtin-extensions || true
-npm run compile || true
-npm run test-node || true
+npm test || true
 
 """.format(
                     pr=self.pr
@@ -447,8 +261,8 @@ npm run test-node || true
 """
 
 
-@Instance.register("microsoft", "vscode")
-class vscode(Instance):
+@Instance.register("PrismJS", "prism")
+class prism(Instance):
     def __init__(self, pr: PullRequest, config: Config, *args, **kwargs):
         super().__init__()
         self._pr = pr
@@ -459,7 +273,7 @@ class vscode(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-        return vscodeImageDefault(self.pr, self._config)
+        return prismImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:
         if run_cmd:
@@ -483,62 +297,50 @@ class vscode(Instance):
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
+        ignore_tests =["ast-utils", "bin/prism.js"]
+        passed_res = [
+            re.compile(r"PASS:?\s+([^\(]+)"),
+            re.compile(r"\s*[✔✓]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
+        ]
 
+        failed_res = [
+            re.compile(r"FAIL:?\s+([^\(]+)"),
+            re.compile(r"\s*[×✗]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
+            re.compile(r"^(?!\s*\(node:)\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
+        ]
+
+        skipped_res = [
+            re.compile(r"SKIP:?\s+([^\(]+)"),
+        ]
         ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
-
-        pass_patterns = [
-            re.compile(r'^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$'),
-        ]
-
-        fail_patterns = [
-            re.compile(r'^[\s]*✖\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$'),
-            re.compile(r'^\s*\d+\)\s*\".*? hook for \"(.*?)\"$'),  # mocha: 1) "after each" hook for "test name"
-            re.compile(r'^\s*\d+\)\s*(.+)$')
-        ]
-
-        skip_patterns = [
-            re.compile(r'^\s*-\s+(.*)$'),  # - skipped
-        ]
-
         for line in test_log.splitlines():
-            line = ansi_escape.sub('', line).strip()
-            if not line:
-                continue
+            line = ansi_escape.sub('', line)
+            line = line.strip()
+            for passed_re in passed_res:
+                m = passed_re.search(line)
+                if m and m.group(1) not in failed_tests:
+                    passed_tests.add(m.group(1))
 
-            matched = False
-
-            for fail_re in fail_patterns:
-                m = fail_re.match(line)
+            for failed_re in failed_res:
+                m = failed_re.search(line)
                 if m:
-                    test_name = m.group(1).strip()
-                    failed_tests.add(test_name)
-                    passed_tests.discard(test_name)
-                    skipped_tests.discard(test_name)
-                    matched = True
-                    break
-            if matched:
-                continue
+                    failed_tests.add(m.group(1))
+                    if m.group(1) in passed_tests:
+                        passed_tests.remove(m.group(1))
 
-            for skip_re in skip_patterns:
-                m = skip_re.match(line)
+            for skipped_re in skipped_res:
+                m = skipped_re.search(line)
                 if m:
-                    test_name = m.group(1).strip()
-                    if test_name not in failed_tests:
-                        skipped_tests.add(test_name)
-                        passed_tests.discard(test_name)
-                    matched = True
-                    break
-            if matched:
-                continue
+                    skipped_tests.add(m.group(1))
 
-            for pass_re in pass_patterns:
-                m = pass_re.match(line)
-                if m:
-                    test_name = m.group(1).strip()
-                    if test_name not in failed_tests and test_name not in skipped_tests:
-                        passed_tests.add(test_name)
-                    break
+        for test in failed_tests:
+            if test in ignore_tests:
+                failed_tests.remove(test)
 
+        if failed_tests:
+            failed_tests.add('ToTal_Test')
+        else:
+            passed_tests.add('ToTal_Test')
         return TestResult(
             passed_count=len(passed_tests),
             failed_count=len(failed_tests),

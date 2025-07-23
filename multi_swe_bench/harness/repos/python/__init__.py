@@ -52,3 +52,8 @@ from multi_swe_bench.harness.repos.python.hylang import *
 from multi_swe_bench.harness.repos.python.scverse import *
 from multi_swe_bench.harness.repos.python.JrGoodle import *
 from multi_swe_bench.harness.repos.python.kornia import *
+from multi_swe_bench.harness.repos.python.pythonpillow import *
+from multi_swe_bench.harness.repos.python.qiskit import *
+from multi_swe_bench.harness.repos.python.networkx import *
+from multi_swe_bench.harness.repos.python.plotly import *
+from multi_swe_bench.harness.repos.python.vega import *
