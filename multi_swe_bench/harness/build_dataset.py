@@ -677,45 +677,54 @@ class CliArgs:
             )
 
             return output
-
+        
+        async def run_and_save_output_envagent(prepare_script_path):
+            task_run  = run_and_save_logs(
+                "run",
+                instance.name(),
+                f"{instance.run(self.run_cmd)} >> /home/run_msb.log 2>&1",
+                self.logger,
+                instance_dir / RUN_LOG_FILE,
+                "/home/run_msb.log",
+                prepare_script_path=prepare_script_path,
+                global_env=self.global_env,
+                timeout=self.agent_timeout,
+            )
+            task_test = run_and_save_logs(
+                "test",
+                instance.name(),
+                f"{instance.test_patch_run(self.test_patch_run_cmd)} >> /home/test_msb.log 2>&1",
+                self.logger,
+                instance_dir / TEST_PATCH_RUN_LOG_FILE,
+                "/home/test_msb.log",
+                prepare_script_path=prepare_script_path,
+                global_env=self.global_env,
+                timeout=self.agent_timeout,
+            )
+            task_fix  = run_and_save_logs_and_generate_dockerfile(
+                "fix",
+                instance.name(),
+                f"{instance.fix_patch_run(self.fix_patch_run_cmd)} >> /home/fix_msb.log 2>&1",
+                self.logger,
+                instance_dir / FIX_PATCH_RUN_LOG_FILE,
+                "/home/fix_msb.log",
+                prepare_script_path=prepare_script_path,
+                global_env=self.global_env,
+                timeout=self.agent_timeout,
+            )
+            # 并发执行三个协程
+            out_run, out_test, (out_fix, image_name, temp_dir) = await asyncio.gather(
+                task_run,
+                task_test,
+                task_fix,
+            )
+            return out_run, out_test, out_fix, image_name, temp_dir
+            
         if self.run_log: 
             if not self.human_mode: #envagent mode
                 from multi_swe_bench.utils.session_util import run_and_save_logs, run_and_save_logs_and_generate_dockerfile,push_icm_image
                 prepare_script_path= self.workdir / instance.pr.org / instance.pr.repo / "images"  /f"pr-{instance.pr.number}"/ "prepare.sh" 
-                output_run = asyncio.run(run_and_save_logs(
-                    "run", 
-                    instance.name(), 
-                    f"{instance.run(self.run_cmd)} >> /home/run_msb.log 2>&1", 
-                    self.logger, 
-                    instance_dir / RUN_LOG_FILE, 
-                    "/home/run_msb.log", 
-                    prepare_script_path=prepare_script_path,
-                    global_env=self.global_env,
-                    timeout=self.agent_timeout
-                ))
-                output_test = asyncio.run(run_and_save_logs(
-                    "test", 
-                    instance.name(), 
-                    f"{instance.test_patch_run(self.test_patch_run_cmd)} >> /home/test_msb.log 2>&1", 
-                    self.logger, 
-                    instance_dir / TEST_PATCH_RUN_LOG_FILE, 
-                    "/home/test_msb.log", 
-                    prepare_script_path=prepare_script_path,
-                    global_env=self.global_env,
-                    timeout=self.agent_timeout
-                ))
-                output_fix, envagent_image_name, temp_dir = asyncio.run(run_and_save_logs_and_generate_dockerfile(
-                    "fix", 
-                    instance.name(), 
-                    f"{instance.fix_patch_run(self.fix_patch_run_cmd)} >> /home/fix_msb.log 2>&1", 
-                    self.logger, 
-                    instance_dir / FIX_PATCH_RUN_LOG_FILE, 
-                    "/home/fix_msb.log", 
-                    prepare_script_path=prepare_script_path,
-                    global_env=self.global_env,
-                    timeout=self.agent_timeout
-                ))
-
+                output_run, output_test, output_fix, envagent_image_name, temp_dir = asyncio.run(run_and_save_output_envagent(prepare_script_path))
             else:
                 output_run = run_and_save_output(
                     instance.name(), 
