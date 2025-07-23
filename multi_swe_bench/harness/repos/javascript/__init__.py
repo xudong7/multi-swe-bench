@@ -14,3 +14,15 @@ from multi_swe_bench.harness.repos.javascript.swaggerapi import *
 from multi_swe_bench.harness.repos.javascript.facebook import *
 from multi_swe_bench.harness.repos.javascript.KateX import *
 from multi_swe_bench.harness.repos.javascript.nasa import *
+from multi_swe_bench.harness.repos.javascript.grommet import *
+from multi_swe_bench.harness.repos.javascript.eslint import *
+from multi_swe_bench.harness.repos.javascript.scratchfoundation import *
+from multi_swe_bench.harness.repos.javascript.prettier import *
+from multi_swe_bench.harness.repos.javascript.openlayers import *
+from multi_swe_bench.harness.repos.javascript.PrismJS import *
+from multi_swe_bench.harness.repos.javascript.highlightjs import *
+from multi_swe_bench.harness.repos.javascript.GoogleChrome import *
+from multi_swe_bench.harness.repos.javascript.bpmnio import *
+from multi_swe_bench.harness.repos.javascript.alibabafusion import *
+from multi_swe_bench.harness.repos.javascript.carbondesignsystem import *
+from multi_swe_bench.harness.repos.javascript.quartodev import *

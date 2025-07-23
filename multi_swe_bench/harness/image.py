@@ -135,6 +135,19 @@ class SWEImageDefault(Image):
         return self._config
 
     def dependency(self) -> Image | None:
+        other_list = [
+            'matplotlib__matplotlib-27754',
+            'matplotlib__matplotlib-26926',
+            'matplotlib__matplotlib-26788',
+            'matplotlib__matplotlib-26586',
+            'sympy__sympy-26941',
+            'mwaskom__seaborn-3458',
+            'mwaskom__seaborn-3454',
+        ]
+        if self.pr.repo == "pillow" or self.pr.repo == "qiskit" or self.pr.repo == "plotly.py" or self.pr.repo == "networkx" or self.pr.repo == "altair":
+            return f"luolin101/sweb.eval.x86_64.{self.pr.org}_s_{self.pr.repo}-{self.pr.number}:latest"
+        if f"{self.pr.org}__{self.pr.repo}-{self.pr.number}" in other_list:
+            return f"luolin101/sweb.eval.x86_64.{self.pr.org}_s_{self.pr.repo}-{self.pr.number}:latest"
         return f"swebench/sweb.eval.x86_64.{self.pr.org}_1776_{self.pr.repo}-{self.pr.number}:latest"
 
     def workdir(self) -> str:
