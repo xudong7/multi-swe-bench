@@ -64,7 +64,7 @@ Finally, to build Multi-SWE-bench from source, follow these steps:
 ```bash
 git clone git@github.com:multi-swe-bench/multi-swe-bench.git
 cd multi-swe-bench
-pip install -e .
+make install
 ```
 
 ### Development Setup
@@ -72,8 +72,7 @@ pip install -e .
 For development, install with dev dependencies and set up pre-commit hooks:
 
 ```bash
-pip install -e ".[dev]"
-pre-commit install
+make install-dev
 ```
 
 ## 📊 Evaluation

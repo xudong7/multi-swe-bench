@@ -15,7 +15,7 @@ setup(
         "unidiff",
         "swe-rex",
     ],
-    extras_require={"dev": ["pre-commit", "ruff", "typos", "prettier"]},
+    extras_require={"dev": ["ruff", "typos", "prettier"]},
     author="Daoguang Zan",
     author_email="zandaoguang@bytedance.com",
     description="Multi-SWE-bench: A Multilingual Benchmark for Issue Resolving",
