@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -71,7 +70,7 @@ gem install bundler
 ###ACTION_DELIMITER###
 
 ###ACTION_DELIMITER###
-echo "pytest --no-header -rA --tb=no -p no:cacheprovider" > /home/pre-commit/test_commands.sh"""
+echo "pytest --no-header -rA --tb=no -p no:cacheprovider" > /home/pre-commit/test_commands.sh""",
             ),
             File(
                 ".",
@@ -80,9 +79,7 @@ echo "pytest --no-header -rA --tb=no -p no:cacheprovider" > /home/pre-commit/tes
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -95,9 +92,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -110,9 +105,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -174,7 +167,7 @@ class PRE_COMMIT_V1_13_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -188,28 +181,28 @@ class PRE_COMMIT_V1_13_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
-    # Implement the log parsing logic here
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
+        # Implement the log parsing logic here
         # This will parse verbose logs like fix-patch-run.log and test-patch-run.log
-        verbose_re = re.compile(r"^(tests/.*?::\S+)\s+(PASSED|FAILED|SKIPPED)", re.MULTILINE)
+        verbose_re = re.compile(
+            r"^(tests/.*?::\S+)\s+(PASSED|FAILED|SKIPPED)", re.MULTILINE
+        )
         for match in verbose_re.finditer(log):
             test_name, status = match.groups()
-            if status == 'PASSED':
+            if status == "PASSED":
                 passed_tests.add(test_name)
-            elif status == 'FAILED':
+            elif status == "FAILED":
                 failed_tests.add(test_name)
-            elif status == 'SKIPPED':
+            elif status == "SKIPPED":
                 skipped_tests.add(test_name)
         # This will parse the summary for failed and errored tests from any log file
-        summary_re = re.compile(r"^=+\s+short test summary info\s+=+((?:.|\n)*?)^=+.+=$", re.MULTILINE)
+        summary_re = re.compile(
+            r"^=+\s+short test summary info\s+=+((?:.|\n)*?)^=+.+=$", re.MULTILINE
+        )
         summary_match = summary_re.search(log)
         if summary_match:
             summary_content = summary_match.group(1)
@@ -217,7 +210,9 @@ class PRE_COMMIT_V1_13_0(Instance):
             for match in failed_re.finditer(summary_content):
                 failed_tests.add(match.group(1).strip())
         # This will find non-verbose passed tests.
-        test_re = re.compile(r'^(tests/.*\.py) (?:\.+|s+|F+|E+)+\s+\[\s+\d+%\]', re.MULTILINE)
+        test_re = re.compile(
+            r"^(tests/.*\.py) (?:\.+|s+|F+|E+)+\s+\[\s+\d+%\]", re.MULTILINE
+        )
         for test_file_match in test_re.finditer(log):
             # extract the dots and the test file name
             test_file = test_file_match.group(1)
@@ -228,11 +223,6 @@ class PRE_COMMIT_V1_13_0(Instance):
         # Final cleanup. If a test is in failed_tests, it should not be in passed_tests or skipped_tests.
         passed_tests.difference_update(failed_tests)
         skipped_tests.difference_update(failed_tests)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

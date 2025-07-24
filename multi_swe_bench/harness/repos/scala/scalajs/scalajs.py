@@ -111,9 +111,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -128,9 +126,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 npm install || true
 sbt testSuite2_12/test || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -144,9 +140,7 @@ sbt testSuite2_12/test || true
 sbt partestSuite2_12/test || true
 sbt scalaTestSuite2_12/test || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -161,9 +155,7 @@ sbt testSuite2_12/test || true
 sbt partestSuite2_12/test || true
 sbt scalaTestSuite2_12/test || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -178,9 +170,7 @@ sbt testSuite2_12/test || true
 sbt partestSuite2_12/test || true
 sbt scalaTestSuite2_12/test || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -273,7 +263,6 @@ class scalajs(Instance):
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-
 
         return TestResult(
             passed_count=len(passed_tests),

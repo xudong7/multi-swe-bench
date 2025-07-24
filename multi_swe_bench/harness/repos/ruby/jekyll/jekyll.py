@@ -107,6 +107,7 @@ RUN apt-get update && apt-get install -y nodejs
 
 """
 
+
 class jekyllImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -163,9 +164,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(),
                 ),
                 File(
                     ".",
@@ -181,9 +180,7 @@ bash /home/check_git_changes.sh
 echo "gem 'test-unit'" >> Gemfile
 gem update --system 3.3.22
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -195,9 +192,7 @@ cd /home/{pr.repo}
 bundle install 
 bundle exec rake test TESTOPTS="-v"
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -210,9 +205,7 @@ git apply --whitespace=nowarn /home/test.patch
 bundle install 
 bundle exec rake test TESTOPTS="-v"
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -225,9 +218,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 bundle install 
 bundle exec rake test TESTOPTS="-v"
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
             ]
         return [
@@ -260,9 +251,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -276,9 +265,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -290,9 +277,7 @@ cd /home/{pr.repo}
 bundle install 
 bundle exec rake test TESTOPTS="-v"
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -305,9 +290,7 @@ git apply --whitespace=nowarn /home/test.patch
 bundle install 
 bundle exec rake test TESTOPTS="-v"
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -320,9 +303,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 bundle install 
 bundle exec rake test TESTOPTS="-v"
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -387,11 +368,13 @@ class jekyll(Instance):
         failed_tests = set()
         skipped_tests = set()
 
-        re_pass_tests = [re.compile(r'^(.+?)\s+=?\s*[\d.]+\s*(?:s\s*)?=\s*\.$'),
-                         re.compile(r'^\s*(.+?):\s+\.\: \([\d.]+\)$')]
+        re_pass_tests = [
+            re.compile(r"^(.+?)\s+=?\s*[\d.]+\s*(?:s\s*)?=\s*\.$"),
+            re.compile(r"^\s*(.+?):\s+\.\: \([\d.]+\)$"),
+        ]
         re_fail_tests = [
-            re.compile(r'^(.+?)\s+=?\s*[\d.]+\s*(?:s\s*)?=\s*[FE]$'),
-            re.compile(r'^\s*(.+?):\s+([.FE])$')
+            re.compile(r"^(.+?)\s+=?\s*[\d.]+\s*(?:s\s*)?=\s*[FE]$"),
+            re.compile(r"^\s*(.+?):\s+([.FE])$"),
         ]
 
         for line in test_log.splitlines():

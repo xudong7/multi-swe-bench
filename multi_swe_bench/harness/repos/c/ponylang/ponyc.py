@@ -282,9 +282,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(),
                 ),
                 File(
                     ".",
@@ -299,9 +297,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -312,9 +308,7 @@ set -e
 cd /home/{pr.repo}
 make -f Makefile-lib-llvm
 make -f Makefile-lib-llvm test
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -327,9 +321,7 @@ git apply --whitespace=nowarn /home/test.patch
 make -f Makefile-lib-llvm
 make -f Makefile-lib-llvm test
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -342,9 +334,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 make -f Makefile-lib-llvm
 make -f Makefile-lib-llvm test
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
             ]
         elif self.pr.number <= 3043:
@@ -378,9 +368,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(),
                 ),
                 File(
                     ".",
@@ -395,9 +383,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -408,9 +394,7 @@ set -e
 cd /home/{pr.repo}
 make
 make test
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -423,9 +407,7 @@ git apply --whitespace=nowarn /home/test.patch
 make
 make test
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -438,9 +420,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 make
 make test
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
             ]
         return [
@@ -473,9 +453,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -490,9 +468,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -505,9 +481,7 @@ make libs
 make configure config=debug
 make build config=debug
 make test config=debug
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -522,9 +496,7 @@ make configure config=debug
 make build config=debug
 make test config=debug
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -539,9 +511,7 @@ make configure config=debug
 make build config=debug
 make test config=debug
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

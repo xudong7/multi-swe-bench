@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -103,7 +102,7 @@ pip uninstall -y pytest-remotedata pytest-openfiles pytest-doctestplus pytest-co
 ###ACTION_DELIMITER###
 bash /home/ccdproc/test_commands.sh
 ###ACTION_DELIMITER###
-"""
+""",
             ),
             File(
                 ".",
@@ -112,9 +111,7 @@ bash /home/ccdproc/test_commands.sh
 cd /home/{pr.repo}
 python setup.py test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -127,9 +124,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python setup.py test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -142,9 +137,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python setup.py test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -206,7 +199,7 @@ class CCDPROC_V1_2_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -220,18 +213,14 @@ class CCDPROC_V1_2_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
-            # Implementation: parse pytest summary lines and failure sections
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
+        # Implementation: parse pytest summary lines and failure sections
         # 1. Parse summary lines for test files/modules and result chars
-        summary_re = re.compile(r'^(.*?\.py)\s+([.Fsf]+)')
+        summary_re = re.compile(r"^(.*?\.py)\s+([.Fsf]+)")
         test_map = {}  # file/module -> list of (index, status)
         lines = log.splitlines()
         for line in lines:
@@ -247,21 +236,23 @@ class CCDPROC_V1_2_0(Instance):
         #    - Doctest: [doctest] <module>.<function>
         #    - Regular: <test_name>
         fail_section = False
-        fail_name_re = re.compile(r'^_{5,}\s*(?:\[doctest\]\s*)?([\w./:<>\[\]\-]+)\s*_{5,}$')
+        fail_name_re = re.compile(
+            r"^_{5,}\s*(?:\[doctest\]\s*)?([\w./:<>\[\]\-]+)\s*_{5,}$"
+        )
         failed_test_names = set()
         for line in lines:
-            if 'FAILURES' in line:
+            if "FAILURES" in line:
                 fail_section = True
             elif fail_section:
                 m = fail_name_re.match(line)
                 if m:
                     name = m.group(1).strip()
                     # Clean up doctest names
-                    if name.startswith('[doctest]'):
-                        name = name.replace('[doctest]', '').strip()
+                    if name.startswith("[doctest]"):
+                        name = name.replace("[doctest]", "").strip()
                     failed_test_names.add(name)
                 # End of failure section if a line of '=' or empty
-                if line.strip().startswith('=') and 'FAILURES' not in line:
+                if line.strip().startswith("=") and "FAILURES" not in line:
                     fail_section = False
         # 3. Assign test names by file/module and index
         #    - For each file/module, try to enumerate test names as <file>::test_<idx>
@@ -269,10 +260,10 @@ class CCDPROC_V1_2_0(Instance):
         for filemod, results in test_map.items():
             for idx, status in results:
                 # Compose a synthetic test name: <file>::test_<idx>
-                test_name = f"{filemod}::test_{idx+1}"
-                if status == '.':
+                test_name = f"{filemod}::test_{idx + 1}"
+                if status == ".":
                     passed_tests.add(test_name)
-                elif status == 'F':
+                elif status == "F":
                     # Try to match with failed_test_names, else use synthetic
                     found = False
                     for fail in failed_test_names:
@@ -282,17 +273,12 @@ class CCDPROC_V1_2_0(Instance):
                             break
                     if not found:
                         failed_tests.add(test_name)
-                elif status == 's':
+                elif status == "s":
                     skipped_tests.add(test_name)
         # Add any failed test names not already included
         for fail in failed_test_names:
             if fail not in failed_tests:
                 failed_tests.add(fail)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

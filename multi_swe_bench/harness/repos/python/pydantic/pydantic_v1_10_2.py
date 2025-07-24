@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.10"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -55,7 +54,7 @@ make install
 ###ACTION_DELIMITER###
 echo 'coverage run -m pytest --durations=10' > /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -64,9 +63,7 @@ bash /home/pydantic/test_commands.sh"""
 cd /home/{pr.repo}
 coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -79,9 +76,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -94,9 +89,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -159,7 +152,7 @@ class PYDANTIC_V1_10_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -173,15 +166,11 @@ class PYDANTIC_V1_10_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Implementation: parse pytest log output for test results
         # Patterns:
         # - lines starting with 'tests/...' are new test files
@@ -190,40 +179,30 @@ class PYDANTIC_V1_10_2(Instance):
         # - test names are not given, so use filename::test_index
         current_file = None
         test_index = 0
-        result_char_map = {
-            '.': 'passed_tests',
-            'X': 'failed_tests',
-            's': 'skipped_tests',
-        }
         # x = xfailed, X = failed, s = skipped, . = passed
         # We'll treat 'x' (xfailed) as failed, and ignore spaces and brackets
         for line in log.splitlines():
-            m = re.match(r'^(tests/\S+\.py)\s+([.xXs]+)', line)
+            m = re.match(r"^(tests/\S+\.py)\s+([.xXs]+)", line)
             if m:
                 current_file = m.group(1)
                 results = m.group(2)
                 test_index = 0
-            elif current_file and re.match(r'^[.xXs]+', line):
+            elif current_file and re.match(r"^[.xXs]+", line):
                 results = line.strip()
             else:
                 continue
             for c in results:
-                if c == '.':
+                if c == ".":
                     passed_tests.add(f"{current_file}::{test_index}")
-                elif c == 'X':
+                elif c == "X":
                     failed_tests.add(f"{current_file}::{test_index}")
-                elif c == 's':
+                elif c == "s":
                     skipped_tests.add(f"{current_file}::{test_index}")
-                elif c == 'x':
+                elif c == "x":
                     failed_tests.add(f"{current_file}::{test_index}")
                 # ignore other chars (spaces, brackets, etc)
                 test_index += 1
         # If no results found, return empty sets (for error logs)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

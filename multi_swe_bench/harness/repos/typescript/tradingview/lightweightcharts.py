@@ -175,9 +175,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -195,9 +193,7 @@ bash /home/check_git_changes.sh
 
 PUPPETEER_SKIP_DOWNLOAD=True npm install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -211,9 +207,7 @@ cd /home/{pr.repo}
 PUPPETEER_SKIP_DOWNLOAD=True npm install || true
 shopt -s globstar || true
 npx esno --import ./tests/unittests/setup.units.mjs --test ./tests/unittests/**/*.spec.ts
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -228,9 +222,7 @@ git apply --whitespace=nowarn /home/test.patch
 PUPPETEER_SKIP_DOWNLOAD=True npm install || true
 shopt -s globstar || true
 npx esno --import ./tests/unittests/setup.units.mjs --test ./tests/unittests/**/*.spec.ts
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -245,9 +237,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 PUPPETEER_SKIP_DOWNLOAD=True npm install || true
 shopt -s globstar || true
 npx esno --import ./tests/unittests/setup.units.mjs --test ./tests/unittests/**/*.spec.ts
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -349,21 +339,21 @@ class lightweightcharts(Instance):
 
         passed_res = [
             re.compile(r"^PASS:?\s+([^\(]+)"),
-            re.compile(r"^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
+            re.compile(r"^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$"),
         ]
 
         failed_res = [
             re.compile(r"^FAIL:?\s+([^\(]+)"),
-            re.compile(r"^[\s]*[✖✘]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
+            re.compile(r"^[\s]*[✖✘]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$"),
         ]
 
         skipped_res = [
             re.compile(r"SKIP:?\s?(.+?)\s"),
-            re.compile(r"^[\s]*[-]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$")
+            re.compile(r"^[\s]*[-]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$"),
         ]
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
         for line in test_log.splitlines():
-            line = ansi_escape.sub('', line).strip()
+            line = ansi_escape.sub("", line).strip()
             for passed_re in passed_res:
                 m = passed_re.match(line)
                 if m and m.group(1).strip() not in failed_tests:

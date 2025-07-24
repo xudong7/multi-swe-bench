@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -55,7 +54,7 @@ pip install -r requirements.txt && pip install pytest dask[array] zappy zarr pyt
 ###ACTION_DELIMITER###
 echo 'pytest --ignore=scanpy/tests/_images' > test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/scanpy/test_commands.sh"""
+bash /home/scanpy/test_commands.sh""",
             ),
             File(
                 ".",
@@ -64,9 +63,7 @@ bash /home/scanpy/test_commands.sh"""
 cd /home/{pr.repo}
 pytest --ignore=scanpy/tests/_images
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -79,9 +76,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --ignore=scanpy/tests/_images
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -94,9 +89,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --ignore=scanpy/tests/_images
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -158,7 +151,7 @@ class SCANPY_1_4(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -172,32 +165,25 @@ class SCANPY_1_4(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Extract failed test names
-        failed_pattern = re.compile(r'^FAILED (\S+::\S+)', re.MULTILINE)
+        failed_pattern = re.compile(r"^FAILED (\S+::\S+)", re.MULTILINE)
         failed_tests = set(failed_pattern.findall(log))
         # Extract all test names (lines with <test_path>::<test_name> only)
-        all_tests_pattern = re.compile(r'^(?!FAILED )(scanpy/tests/\S+::\S+)', re.MULTILINE)
+        all_tests_pattern = re.compile(
+            r"^(?!FAILED )(scanpy/tests/\S+::\S+)", re.MULTILINE
+        )
         all_tests = set(all_tests_pattern.findall(log))
         # Try to extract skipped tests (if any lines indicate skipping)
-        skipped_pattern = re.compile(r'^SKIPPED (\S+::\S+)', re.MULTILINE)
+        skipped_pattern = re.compile(r"^SKIPPED (\S+::\S+)", re.MULTILINE)
         skipped_tests = set(skipped_pattern.findall(log))
         # If skipped tests are not explicitly listed, try to infer from summary (not implemented here)
         # Passed tests are those in all_tests not in failed or skipped
         passed_tests = all_tests - failed_tests - skipped_tests
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
-        
 
         return TestResult(
             passed_count=len(passed_tests),

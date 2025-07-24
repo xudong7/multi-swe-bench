@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -77,7 +76,7 @@ useradd -m testuser
 ###ACTION_DELIMITER###
 echo "pytest tests/ --no-header -rA --tb=no -p no:cacheprovider -m \"not postgres\"" > /home/pepys-import/test_commands.sh
 ###ACTION_DELIMITER###
-"""
+""",
             ),
             File(
                 ".",
@@ -86,9 +85,7 @@ echo "pytest tests/ --no-header -rA --tb=no -p no:cacheprovider -m \"not postgre
 cd /home/{pr.repo}
 pytest tests/ --no-header -rA --tb=no -p no:cacheprovider -m "not postgres"
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -101,9 +98,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest tests/ --no-header -rA --tb=no -p no:cacheprovider -m "not postgres"
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -116,9 +111,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest tests/ --no-header -rA --tb=no -p no:cacheprovider -m "not postgres"
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -180,7 +173,7 @@ class PEPYS_IMPORT_TRIAL_RELEASE(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -194,15 +187,11 @@ class PEPYS_IMPORT_TRIAL_RELEASE(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         passed_pattern = re.compile(r"^PASSED (.*)$")
         failed_pattern = re.compile(r"^FAILED (.*)$")
         skipped_pattern = re.compile(r"^SKIPPED \[.\] (.*):.*: .*$")
@@ -219,11 +208,6 @@ class PEPYS_IMPORT_TRIAL_RELEASE(Instance):
             skipped_match = skipped_pattern.match(line)
             if skipped_match:
                 skipped_tests.add(skipped_match.group(1).strip())
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -1,6 +1,4 @@
-import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +20,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.5-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -113,7 +111,7 @@ nosetests -A "not slow and not svn"
 ###ACTION_DELIMITER###
 nosetests
 ###ACTION_DELIMITER###
-echo 'nosetests -v' > /home/conan/test_commands.sh"""
+echo 'nosetests -v' > /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -122,9 +120,7 @@ echo 'nosetests -v' > /home/conan/test_commands.sh"""
 cd /home/{pr.repo}
 nosetests -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -137,9 +133,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -152,9 +146,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -217,7 +209,7 @@ class CONAN_1_17_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -231,15 +223,11 @@ class CONAN_1_17_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # TODO: Implement the parse_log function
         tests = {}  # test_name -> set of statuses
         # First pass: collect all statuses for each test
@@ -269,21 +257,16 @@ class CONAN_1_17_0(Instance):
                 tests[test_name].add(status)
         # Second pass: classify tests based on collected statuses
         for test_name, statuses in tests.items():
-            if 'FAIL' in statuses or 'ERROR' in statuses:
+            if "FAIL" in statuses or "ERROR" in statuses:
                 failed_tests.add(test_name)
-            elif 'skipped' in statuses:
+            elif "skipped" in statuses:
                 skipped_tests.add(test_name)
-            elif 'ok' in statuses:
+            elif "ok" in statuses:
                 passed_tests.add(test_name)
         # Just in case, ensure no overlap
         passed_tests -= failed_tests
         passed_tests -= skipped_tests
         failed_tests -= skipped_tests
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

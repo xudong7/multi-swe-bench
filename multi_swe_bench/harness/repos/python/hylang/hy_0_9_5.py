@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -101,7 +100,7 @@ echo '/usr/local/python2.7/bin/nosetests -sv' > /home/hy/test_commands.sh && chm
 ###ACTION_DELIMITER###
 cd /home/hy && bash test_commands.sh
 ###ACTION_DELIMITER###
-"""
+""",
             ),
             File(
                 ".",
@@ -110,9 +109,7 @@ cd /home/hy && bash test_commands.sh
 cd /home/{pr.repo}
 /usr/local/python2.7/bin/nosetests -sv
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -125,9 +122,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 /usr/local/python2.7/bin/nosetests -sv
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -140,9 +135,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 /usr/local/python2.7/bin/nosetests -sv
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -204,7 +197,7 @@ class HY_0_9_5(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -218,18 +211,15 @@ class HY_0_9_5(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regular expressions for test result lines
-        pass_re = re.compile(r'^(.*) \.\.\. ok$', re.MULTILINE)
-        fail_re = re.compile(r'^(.*) \.\.\. ERROR$', re.MULTILINE)
-        skip_re = re.compile(r'^(.*) \.\.\. (SKIP|skipped)$', re.MULTILINE)
+        pass_re = re.compile(r"^(.*) \.\.\. ok$", re.MULTILINE)
+        fail_re = re.compile(r"^(.*) \.\.\. ERROR$", re.MULTILINE)
+        skip_re = re.compile(r"^(.*) \.\.\. (SKIP|skipped)$", re.MULTILINE)
         for match in pass_re.finditer(log):
             test_name = match.group(1).strip()
             passed_tests.add(test_name)
@@ -239,12 +229,6 @@ class HY_0_9_5(Instance):
         for match in skip_re.finditer(log):
             test_name = match.group(1).strip()
             skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
-        
 
         return TestResult(
             passed_count=len(passed_tests),

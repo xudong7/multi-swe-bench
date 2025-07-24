@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-alpine"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -107,7 +106,7 @@ pytest
 ###ACTION_DELIMITER###
 
 ###ACTION_DELIMITER###
-echo 'pytest --no-header -rA --tb=no -p no:cacheprovider' > /home/sceptre/test_commands.sh"""
+echo 'pytest --no-header -rA --tb=no -p no:cacheprovider' > /home/sceptre/test_commands.sh""",
             ),
             File(
                 ".",
@@ -116,9 +115,7 @@ echo 'pytest --no-header -rA --tb=no -p no:cacheprovider' > /home/sceptre/test_c
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -131,9 +128,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -146,9 +141,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -210,7 +203,7 @@ class SCEPTRE_V2_7_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -224,36 +217,39 @@ class SCEPTRE_V2_7_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Implement the log parsing logic here
         # This pattern is to find all collected tests
         collected_tests_pattern = re.compile(r"collected (\d+) items")
         collected_tests_match = collected_tests_pattern.search(log)
         if collected_tests_match:
             # This is just for info, not used in the logic for now
-            num_collected_tests = int(collected_tests_match.group(1))
+            int(collected_tests_match.group(1))
         # This pattern identifies the final summary line
-        final_summary_pattern = re.compile(r"(=========== (\d+) failed, (\d+) passed, (\d+) skipped,?(.*) in (.*)s ===========)")
+        final_summary_pattern = re.compile(
+            r"(=========== (\d+) failed, (\d+) passed, (\d+) skipped,?(.*) in (.*)s ===========)"
+        )
         final_summary_match = final_summary_pattern.search(log)
         if final_summary_match:
-            failed_count = int(final_summary_match.group(2))
-            passed_count = int(final_summary_match.group(3))
+            int(final_summary_match.group(2))
+            int(final_summary_match.group(3))
             skipped_count = int(final_summary_match.group(4))
         # Lets get the failed tests from the FAILURES section
-        failures_section_pattern = re.compile(r"================================= FAILURES ==================================(.*?)=========================== short test summary info ============================", re.DOTALL)
+        failures_section_pattern = re.compile(
+            r"================================= FAILURES ==================================(.*?)=========================== short test summary info ============================",
+            re.DOTALL,
+        )
         failures_section_match = failures_section_pattern.search(log)
         if failures_section_match:
             failures_text = failures_section_match.group(1)
             # The test name is between ____ and ____
-            failed_test_pattern = re.compile(r"____________________ (.*?) ---------------------")
+            failed_test_pattern = re.compile(
+                r"____________________ (.*?) ---------------------"
+            )
             failed_test_matches = failed_test_pattern.findall(failures_text)
             for match in failed_test_matches:
                 # The name can have newline characters, so we need to clean it
@@ -261,11 +257,16 @@ class SCEPTRE_V2_7_1(Instance):
                 failed_tests.add(cleaned_name)
         # If the above fails, let's try another method for failed tests:
         if not failed_tests:
-            short_summary_failures_pattern = re.compile(r"=========================== short test summary info ============================(.*)", re.DOTALL)
+            short_summary_failures_pattern = re.compile(
+                r"=========================== short test summary info ============================(.*)",
+                re.DOTALL,
+            )
             short_summary_failures_match = short_summary_failures_pattern.search(log)
             if short_summary_failures_match:
                 summary_text = short_summary_failures_match.group(1)
-                failed_and_error_pattern = re.compile(r"^(?:FAILED|ERROR) (.*?)(?: - .*)?$", re.MULTILINE)
+                failed_and_error_pattern = re.compile(
+                    r"^(?:FAILED|ERROR) (.*?)(?: - .*)?$", re.MULTILINE
+                )
                 matches = failed_and_error_pattern.findall(summary_text)
                 for match in matches:
                     failed_tests.add(match.strip())
@@ -279,22 +280,29 @@ class SCEPTRE_V2_7_1(Instance):
             skipped_matches = skipped_pattern.findall(log)
             skipped_tests.update(skipped_matches)
         # For passed tests, we will get all collected tests and subtract the failed and skipped ones.
-        test_collection_pattern = re.compile(r"(tests/.*?\.py::.*?)(?:   |\s+\[ d+%\]\s+)(?:PASSED|FAILED|SKIPPED|ERROR)")
-        all_tests_found = set(test_collection_pattern.findall(log))
+        test_collection_pattern = re.compile(
+            r"(tests/.*?\.py::.*?)(?:   |\s+\[ d+%\]\s+)(?:PASSED|FAILED|SKIPPED|ERROR)"
+        )
+        set(test_collection_pattern.findall(log))
         # We should also get tests from the dots format
         test_dot_format_pattern = re.compile(r"(tests/.*\.py) (\.s*)+")
         test_dot_format_matches = test_dot_format_pattern.findall(log)
-        test_files_with_dots = {match[0] for match in test_dot_format_matches}
-        #This is too complex. I will go with a simpler approach.
+        {match[0] for match in test_dot_format_matches}
+        # This is too complex. I will go with a simpler approach.
         # Clear all sets and start fresh with a reliable method.
         passed_tests.clear()
         failed_tests.clear()
         skipped_tests.clear()
-        summary_block_pattern = re.compile(r"=========================== short test summary info ============================(.*?)=================================", re.DOTALL)
+        summary_block_pattern = re.compile(
+            r"=========================== short test summary info ============================(.*?)=================================",
+            re.DOTALL,
+        )
         summary_block_match = summary_block_pattern.search(log)
         if summary_block_match:
             summary_block = summary_block_match.group(1)
-            failed_pattern = re.compile(r"^(?:FAILED|ERROR) (.*?)(?: - .*)?$", re.MULTILINE)
+            failed_pattern = re.compile(
+                r"^(?:FAILED|ERROR) (.*?)(?: - .*)?$", re.MULTILINE
+            )
             failed_matches = failed_pattern.findall(summary_block)
             for match in failed_matches:
                 failed_tests.add(match.strip())
@@ -307,11 +315,13 @@ class SCEPTRE_V2_7_1(Instance):
         # For passed tests, let's look for PASSED lines or dots.
         # This is not reliable as passed tests are not listed.
         # Let's use the totals from the final summary.
-        summary_totals_pattern = re.compile(r"(\d+) failed, (\d+) passed, (\d+) skipped")
+        summary_totals_pattern = re.compile(
+            r"(\d+) failed, (\d+) passed, (\d+) skipped"
+        )
         summary_totals_match = summary_totals_pattern.search(log)
         if summary_totals_match:
-            failed_count = int(summary_totals_match.group(1))
-            passed_count = int(summary_totals_match.group(2))
+            int(summary_totals_match.group(1))
+            int(summary_totals_match.group(2))
             skipped_count = int(summary_totals_match.group(3))
         # Now, let's populate the sets based on the counts.
         # We can't get the names of passed tests if they aren't listed.
@@ -327,20 +337,20 @@ class SCEPTRE_V2_7_1(Instance):
                     if "PASSED" in line or "." in line.split(test)[-1]:
                         passed_tests.add(test)
                         break
-                    elif "FAILED" in line or "F" in line.split(test)[-1] or "ERROR" in line or "E" in line.split(test)[-1]:
+                    elif (
+                        "FAILED" in line
+                        or "F" in line.split(test)[-1]
+                        or "ERROR" in line
+                        or "E" in line.split(test)[-1]
+                    ):
                         failed_tests.add(test)
                         break
                     elif "SKIPPED" in line or "s" in line.split(test)[-1]:
                         skipped_tests.add(test)
                         break
             else:
-                 # if not status found assume it passed
-                 passed_tests.add(test)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
+                # if not status found assume it passed
+                passed_tests.add(test)
 
         return TestResult(
             passed_count=len(passed_tests),

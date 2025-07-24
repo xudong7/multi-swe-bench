@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -59,7 +58,7 @@ echo 'pytest --no-header -rA --tb=no -p no:cacheprovider' > /home/conan/test_com
 ###ACTION_DELIMITER###
 bash /home/conan/test_commands.sh
 ###ACTION_DELIMITER###
-"""
+""",
             ),
             File(
                 ".",
@@ -68,9 +67,7 @@ bash /home/conan/test_commands.sh
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -83,9 +80,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -98,9 +93,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -163,7 +156,7 @@ class CONAN_1_37_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -177,39 +170,30 @@ class CONAN_1_37_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Extract failed and error test names
-        failed_pattern = re.compile(r'^(FAILED|ERROR) (\S+)', re.MULTILINE)
+        failed_pattern = re.compile(r"^(FAILED|ERROR) (\S+)", re.MULTILINE)
         for match in failed_pattern.finditer(log):
             # Only take the test name part (after 'FAILED ' or 'ERROR ')
             test_name = match.group(2).strip()
             failed_tests.add(test_name)
         # Extract summary lines and count passed/skipped tests
-        summary_pattern = re.compile(r'^(\S+\.py) ([.sEFS]+)', re.MULTILINE)
+        summary_pattern = re.compile(r"^(\S+\.py) ([.sEFS]+)", re.MULTILINE)
         for match in summary_pattern.finditer(log):
             file_name = match.group(1)
             results = match.group(2)
             for idx, ch in enumerate(results):
-                if ch == '.':
+                if ch == ".":
                     # Passed test (name not available, use placeholder)
                     passed_tests.add(f"{file_name}::<passed_{idx}>")
-                elif ch == 's':
+                elif ch == "s":
                     skipped_tests.add(f"{file_name}::<skipped_{idx}>")
                 # E/F are errors/failures, already handled above
         # Note: Only failed/error test names are available in detail. Passed/skipped are placeholders.
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

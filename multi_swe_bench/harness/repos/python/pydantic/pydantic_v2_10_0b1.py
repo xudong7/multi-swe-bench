@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.12-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -57,7 +56,7 @@ pdm install --group :all
 ###ACTION_DELIMITER###
 echo 'pdm run coverage run -m pytest --durations=10' > /home/pydantic/test_commands.sh && chmod +x /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -66,9 +65,7 @@ bash /home/pydantic/test_commands.sh"""
 cd /home/{pr.repo}
 pdm run coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -81,9 +78,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pdm run coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -96,9 +91,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pdm run coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -161,7 +154,7 @@ class PYDANTIC_V2_10_0B1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -175,60 +168,51 @@ class PYDANTIC_V2_10_0B1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Extract failed test names from the 'FAILURES' section and lines like 'tests/xxx.py:NNN test_func_name'
         failure_section = False
         last_failed_func = None
         for line in log.splitlines():
             # Detect start of failures section
-            if re.match(r'=+ FAILURES =+', line):
+            if re.match(r"=+ FAILURES =+", line):
                 failure_section = True
                 continue
             # Detect end of failures section
-            if failure_section and line.strip() == '':
+            if failure_section and line.strip() == "":
                 failure_section = False
             # Capture function name from header line
             if failure_section:
-                m_func = re.match(r'^_{5,}\s*(\w+)\s*_{5,}$', line)
+                m_func = re.match(r"^_{5,}\s*(\w+)\s*_{5,}$", line)
                 if m_func:
                     last_failed_func = m_func.group(1)
             # Catch summary lines like 'tests/xxx.py:NNN: Failed'
-            m2 = re.match(r'^(tests/\S+):(\d+): Failed', line)
+            m2 = re.match(r"^(tests/\S+):(\d+): Failed", line)
             if m2 and last_failed_func:
                 failed_tests.add(f"{m2.group(1)}::{last_failed_func}")
                 last_failed_func = None
             # Extract passed and skipped test names from summary lines like 'tests/xxx.py ...s..'
-        test_line_re = re.compile(r'^(tests/\S+\.py) ([.sx]+)')
+        test_line_re = re.compile(r"^(tests/\S+\.py) ([.sx]+)")
         for line in log.splitlines():
             m = test_line_re.match(line)
             if m:
                 test_file = m.group(1)
                 symbols = m.group(2)
                 for idx, symbol in enumerate(symbols):
-                    test_name = f"{test_file}::test_{idx+1}"
-                    if symbol == '.':
+                    test_name = f"{test_file}::test_{idx + 1}"
+                    if symbol == ".":
                         passed_tests.add(test_name)
-                    elif symbol == 's':
+                    elif symbol == "s":
                         skipped_tests.add(test_name)
-                    elif symbol == 'x':
+                    elif symbol == "x":
                         # Could be expected failure or similar, not counted as passed/failed/skipped
                         pass
-                    elif symbol == 'F':
+                    elif symbol == "F":
                         # Already handled in failures section
                         pass
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -73,7 +72,7 @@ pytest -v -s tests/instantiate/test_helpers.py
 ###ACTION_DELIMITER###
 pip uninstall -y pytest && pip install pytest==7.4.4
 ###ACTION_DELIMITER###
-bash /home/hydra/test_commands.sh"""
+bash /home/hydra/test_commands.sh""",
             ),
             File(
                 ".",
@@ -82,9 +81,7 @@ bash /home/hydra/test_commands.sh"""
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no build_helpers tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -97,9 +94,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no build_helpers tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -112,9 +107,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no build_helpers tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -177,7 +170,7 @@ class HYDRA_V1_3_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -191,15 +184,11 @@ class HYDRA_V1_3_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Pattern for PASSED, ERROR, SKIPPED, XFAIL, XPASS
         # PASSED/ERROR/XFAIL/XPASS/FAILED <testname>
         # SKIPPED [n] <testname>: ...
@@ -218,11 +207,6 @@ class HYDRA_V1_3_0(Instance):
             if m:
                 skipped_tests.add(m.group(1).strip())
                 continue
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

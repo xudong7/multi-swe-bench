@@ -239,9 +239,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                        pr=self.pr
-                    ),
+""".format(),
                 ),
                 File(
                     ".",
@@ -259,9 +257,7 @@ sed -i '/repositories {{/a \    maven(url = "https://artifactory.appodeal.com/ap
 sed -i -E 's/(version\s*=\s*)[^\s]+/\\15.9.4-SNAPSHOT/; s/(platformVersion\s*=\s*)[^\s]+/\\11.9.4-SNAPSHOT/; s/(vintageVersion\s*=\s*)[^\s]+/\\15.9.4-SNAPSHOT/' gradle.properties
 
 ./gradlew clean test --continue || true
-""".format(
-                        pr=self.pr
-                    ),
+""".format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -271,9 +267,7 @@ set -e
 
 cd /home/{pr.repo}
 ./gradlew clean test --continue
-""".format(
-                        pr=self.pr
-                    ),
+""".format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -285,9 +279,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 ./gradlew clean test --continue
 
-""".format(
-                        pr=self.pr
-                    ),
+""".format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -299,9 +291,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 ./gradlew clean test --continue
 
-""".format(
-                        pr=self.pr
-                    ),
+""".format(pr=self.pr),
                 ),
             ]
         elif self.pr.number <= 2721:
@@ -335,9 +325,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(),
                 ),
                 File(
                     ".",
@@ -366,9 +354,7 @@ allprojects {{
 }}
 EOF
 ./gradlew clean test --init-script ~/.gradle/init.gradle --max-workers 8 --continue || true
-""".format(
-                        pr=self.pr
-                    ),
+""".format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -378,9 +364,7 @@ set -e
 
 cd /home/{pr.repo}
 ./gradlew clean test --init-script ~/.gradle/init.gradle --max-workers 8 --continue
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -392,9 +376,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 ./gradlew clean test --init-script ~/.gradle/init.gradle --max-workers 8 --continue
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -406,9 +388,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 ./gradlew clean test --init-script ~/.gradle/init.gradle --max-workers 8 --continue
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
             ]
         return [
@@ -441,9 +421,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -457,9 +435,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 ./gradlew clean test --continue || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -469,9 +445,7 @@ set -e
 
 cd /home/{pr.repo}
 ./gradlew clean test --continue
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -483,9 +457,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 ./gradlew clean test --continue
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -497,9 +469,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 ./gradlew clean test --continue
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.6-buster"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -61,7 +60,7 @@ echo 'pytest --cov=pydantic' > /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
 make install
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -70,9 +69,7 @@ bash /home/pydantic/test_commands.sh"""
 cd /home/{pr.repo}
 pytest --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -85,9 +82,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -100,9 +95,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -165,7 +158,7 @@ class PYDANTIC_V0_25(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -179,39 +172,37 @@ class PYDANTIC_V0_25(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Extract failed test names from the FAILURES section
-        failures_section = re.search(r'=+ FAILURES =+[\s\S]+?(?=\n=+|\Z)', log)
+        failures_section = re.search(r"=+ FAILURES =+[\s\S]+?(?=\n=+|\Z)", log)
         failed_names = []
         if failures_section:
             # Find lines like: ____________________________ test_name _____________________________
-            failed_names = re.findall(r'^_{5,}\s+([\w\d_]+)\s+_{5,}$', failures_section.group(0), re.MULTILINE)
+            failed_names = re.findall(
+                r"^_{5,}\s+([\w\d_]+)\s+_{5,}$", failures_section.group(0), re.MULTILINE
+            )
             failed_tests.update(failed_names)
         # Parse summary lines for test results per file
-        summary_line_re = re.compile(r'^(tests/[^\s:]+\.py)\s+([.sF]+)', re.MULTILINE)
+        summary_line_re = re.compile(r"^(tests/[^\s:]+\.py)\s+([.sF]+)", re.MULTILINE)
         synthetic_failed = set()
         for match in summary_line_re.finditer(log):
             file_name = match.group(1)
             results = match.group(2)
             pass_idx = skip_idx = fail_idx = 1
             for c in results:
-                if c == '.':
+                if c == ".":
                     passed_tests.add(f"{file_name}::test_passed_{pass_idx}")
                     pass_idx += 1
-                elif c == 'F':
+                elif c == "F":
                     synthetic_name = f"{file_name}::test_failed_{fail_idx}"
                     failed_tests.add(synthetic_name)
                     synthetic_failed.add(synthetic_name)
                     fail_idx += 1
-                elif c == 's':
+                elif c == "s":
                     skipped_tests.add(f"{file_name}::test_skipped_{skip_idx}")
                     skip_idx += 1
         # If we have real failed test names, use them instead of synthetic
@@ -220,11 +211,6 @@ class PYDANTIC_V0_25(Instance):
             # Remove synthetic failed names from passed/skipped sets if any overlap
             passed_tests = {t for t in passed_tests if t not in synthetic_failed}
             skipped_tests = {t for t in skipped_tests if t not in synthetic_failed}
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

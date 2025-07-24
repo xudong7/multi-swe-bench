@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -63,7 +62,7 @@ ls -F conans/
 ###ACTION_DELIMITER###
 nosetests -A "not slow and not svn"
 ###ACTION_DELIMITER###
-echo 'nosetests -v --with-xunit --xunit-file=nosetests.xml' > /home/conan/test_commands.sh"""
+echo 'nosetests -v --with-xunit --xunit-file=nosetests.xml' > /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -72,9 +71,7 @@ echo 'nosetests -v --with-xunit --xunit-file=nosetests.xml' > /home/conan/test_c
 cd /home/{pr.repo}
 nosetests -v --with-xunit --xunit-file=nosetests.xml
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -87,9 +84,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests -v --with-xunit --xunit-file=nosetests.xml
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -102,9 +97,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests -v --with-xunit --xunit-file=nosetests.xml
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -167,7 +160,7 @@ class CONAN_1_22_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -181,21 +174,19 @@ class CONAN_1_22_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Implement the log parsing logic here
         # We'll use a dictionary to track the latest status of each test.
         test_results = {}
         # This regex is designed to capture the test name and the final status of a test.
         # It looks for lines that start with a test name, followed by '... ' and a status.
-        test_pattern = re.compile(r"^(?P<test_name>[-._a-zA-Z0-9]+)(?:\s+\(.*?\))?\s+\.\.\.\s+(?P<status>ok|FAIL|ERROR|skipped)$")
+        test_pattern = re.compile(
+            r"^(?P<test_name>[-._a-zA-Z0-9]+)(?:\s+\(.*?\))?\s+\.\.\.\s+(?P<status>ok|FAIL|ERROR|skipped)$"
+        )
         for line in log.splitlines():
             match = test_pattern.match(line)
             if match:
@@ -215,11 +206,6 @@ class CONAN_1_22_3(Instance):
         skipped_tests -= passed_tests
         # Make sure that a test that has failed is not in the skipped list
         skipped_tests -= failed_tests
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

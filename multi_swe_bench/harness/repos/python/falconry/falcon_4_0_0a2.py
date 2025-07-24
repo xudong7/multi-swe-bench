@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -79,7 +78,7 @@ pytest tests/ --ignore=tests/asgi/
 ###ACTION_DELIMITER###
 echo "pytest tests/ --ignore=tests/asgi/" > test_commands.sh
 ###ACTION_DELIMITER###
-"""
+""",
             ),
             File(
                 ".",
@@ -88,9 +87,7 @@ echo "pytest tests/ --ignore=tests/asgi/" > test_commands.sh
 cd /home/{pr.repo}
 pytest tests/ --ignore=tests/asgi/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -103,9 +100,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest tests/ --ignore=tests/asgi/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -118,9 +113,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest tests/ --ignore=tests/asgi/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -182,7 +175,7 @@ class FALCON_4_0_0A2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -196,29 +189,26 @@ class FALCON_4_0_0A2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
         # Match lines like: tests/test_wsgiref_inputwrapper_with_size.py .           [100%]
-        progress_pattern = re.compile(r'^(tests/test_.*\.py)\s+([.sFE]+)')
+        progress_pattern = re.compile(r"^(tests/test_.*\.py)\s+([.sFE]+)")
         # Match lines like: FAILED tests/test_mediatypes.py::test_invalid_media_range[text/plain; q=high]
-        failed_summary_pattern = re.compile(r'^FAILED (.*?.py::.+?)(?: -|$)')
+        failed_summary_pattern = re.compile(r"^FAILED (.*?.py::.+?)(?: -|$)")
         files_with_dots = set()
         files_with_s = set()
-        files_with_fe = set() # Files with F or E in progress
+        files_with_fe = set()  # Files with F or E in progress
         for line in log.splitlines():
             match = progress_pattern.match(line)
             if match:
                 test_file, statuses = match.groups()
-                if '.' in statuses:
+                if "." in statuses:
                     files_with_dots.add(test_file)
-                if 's' in statuses:
+                if "s" in statuses:
                     files_with_s.add(test_file)
-                if 'F' in statuses or 'E' in statuses:
+                if "F" in statuses or "E" in statuses:
                     files_with_fe.add(test_file)
         for line in log.splitlines():
             match = failed_summary_pattern.search(line)
@@ -226,15 +216,10 @@ class FALCON_4_0_0A2(Instance):
                 full_test_name = match.group(1)
                 if full_test_name:
                     failed_tests.add(full_test_name.strip())
-        failed_files = {name.split('::')[0] for name in failed_tests}
+        failed_files = {name.split("::")[0] for name in failed_tests}
         failed_files.update(files_with_fe)
         passed_tests.update(files_with_dots - failed_files - files_with_s)
         skipped_tests.update(files_with_s - failed_files)
-        parsed_results = {
-            'passed_tests': passed_tests,
-            'failed_tests': failed_tests,
-            'skipped_tests': skipped_tests,
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.10-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -101,7 +100,7 @@ bash /home/triage/test_commands.sh
 ###ACTION_DELIMITER###
 echo 'python -m pytest -rA --tb=no -p no:cacheprovider src/tests/' > /home/triage/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/triage/test_commands.sh"""
+bash /home/triage/test_commands.sh""",
             ),
             File(
                 ".",
@@ -110,9 +109,7 @@ bash /home/triage/test_commands.sh"""
 cd /home/{pr.repo}
 python -m pytest -rA --tb=no -p no:cacheprovider src/tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -125,9 +122,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python -m pytest -rA --tb=no -p no:cacheprovider src/tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -140,9 +135,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python -m pytest -rA --tb=no -p no:cacheprovider src/tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -204,7 +197,7 @@ class TRIAGE_V2_1_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -218,36 +211,27 @@ class TRIAGE_V2_1_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Implement the log parsing logic here
         # Pattern: <test_file.py> <results>
-        test_line_re = re.compile(r'^(\S+\.py)\s+([.FsfS]+)$')
+        test_line_re = re.compile(r"^(\S+\.py)\s+([.FsfS]+)$")
         for line in log.splitlines():
             m = test_line_re.match(line.strip())
             if m:
                 test_file, results = m.groups()
                 for idx, ch in enumerate(results, 1):
                     test_name = f"{test_file}::test_{idx}"
-                    if ch == '.':
+                    if ch == ".":
                         passed_tests.add(test_name)
-                    elif ch in ('F',):
+                    elif ch in ("F",):
                         failed_tests.add(test_name)
-                    elif ch in ('s', 'S'):
+                    elif ch in ("s", "S"):
                         skipped_tests.add(test_name)
         # End of parsing logic
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

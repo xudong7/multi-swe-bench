@@ -123,9 +123,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -146,9 +144,7 @@ nvm use || true
 corepack enable || true
 yes | yarn -v || true
 yarn || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -164,9 +160,7 @@ corepack enable || true
 yarn || true
 yarn compile || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN yarn test --no-bail
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -184,9 +178,7 @@ yarn || true
 yarn compile || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN yarn test --no-bail
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -204,9 +196,7 @@ yarn || true
 yarn compile || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN yarn test --no-bail
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -308,21 +298,21 @@ class blueprint(Instance):
 
         passed_res = [
             re.compile(r"PASS:?\s+([^\(]+)"),
-            re.compile(r"\s*[✔✓]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
+            re.compile(r"\s*[✔✓]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
         ]
 
         failed_res = [
             re.compile(r"FAIL:?\s+([^\(]+)"),
             re.compile(r"\s*[×✗]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
-            re.compile(r"\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
+            re.compile(r"\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
         ]
 
         skipped_res = [
             re.compile(r"SKIP:?\s+([^\(]+)"),
         ]
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
         for line in test_log.splitlines():
-            line = ansi_escape.sub('', line)
+            line = ansi_escape.sub("", line)
             for passed_re in passed_res:
                 m = passed_re.search(line)
                 if m and m.group(1) not in failed_tests:

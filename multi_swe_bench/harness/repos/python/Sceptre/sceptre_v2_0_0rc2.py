@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -63,7 +62,7 @@ apt-get update && apt-get install -y make
 ###ACTION_DELIMITER###
 make test
 ###ACTION_DELIMITER###
-echo "make test" > test_commands.sh"""
+echo "make test" > test_commands.sh""",
             ),
             File(
                 ".",
@@ -72,9 +71,7 @@ echo "make test" > test_commands.sh"""
 cd /home/{pr.repo}
 make test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -87,9 +84,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 make test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -102,9 +97,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 make test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -166,7 +159,7 @@ class SCEPTRE_V2_0_0RC2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -180,43 +173,35 @@ class SCEPTRE_V2_0_0RC2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
         lines = log.splitlines()
         for i, line in enumerate(lines):
-            if line.startswith('tests/') and '.py' in line:
+            if line.startswith("tests/") and ".py" in line:
                 test_file = line.split()[0]
                 results = "".join(line.split()[1:])
                 # Check for results on the next line as well
                 if i + 1 < len(lines):
-                    next_line = lines[i+1].strip()
-                    if re.match(r'^[\.FEsxXpPSs]+$', next_line):
+                    next_line = lines[i + 1].strip()
+                    if re.match(r"^[\.FEsxXpPSs]+$", next_line):
                         results += next_line
-                if 'F' in results or 'E' in results:
+                if "F" in results or "E" in results:
                     failed_tests.add(test_file)
-                elif 's' in results or 'S' in results:
+                elif "s" in results or "S" in results:
                     skipped_tests.add(test_file)
-                elif '.' in results:
+                elif "." in results:
                     passed_tests.add(test_file)
         # If the log summary indicates all tests passed, and we have no failures/skips,
         # trust the summary.
-        if 'passed' in log and not failed_tests and not skipped_tests: 
+        if "passed" in log and not failed_tests and not skipped_tests:
             all_tests_in_log = set(re.findall(r"^(tests/.*?\.py)", log, re.MULTILINE))
             passed_tests.update(all_tests_in_log)
         # Ensure a test is not in multiple sets.
         passed_tests -= failed_tests
         passed_tests -= skipped_tests
         failed_tests -= skipped_tests
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

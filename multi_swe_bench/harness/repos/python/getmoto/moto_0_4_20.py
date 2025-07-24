@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:2"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -53,7 +52,7 @@ pip install -r requirements-dev.txt
 ###ACTION_DELIMITER###
 echo 'nosetests -sv --with-coverage ./tests/' > /home/moto/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/moto/test_commands.sh"""
+bash /home/moto/test_commands.sh""",
             ),
             File(
                 ".",
@@ -62,9 +61,7 @@ bash /home/moto/test_commands.sh"""
 cd /home/{pr.repo}
 nosetests -sv --with-coverage ./tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -77,9 +74,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests -sv --with-coverage ./tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -92,9 +87,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests -sv --with-coverage ./tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -157,7 +150,7 @@ class MOTO_0_4_20(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -171,15 +164,11 @@ class MOTO_0_4_20(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Patterns for test results
         pass_pattern = re.compile(r"^(.*?)\s+\.\.\. ok$", re.MULTILINE)
         fail_pattern = re.compile(r"^(.*?)\s+\.\.\. FAIL$", re.MULTILINE)
@@ -193,11 +182,6 @@ class MOTO_0_4_20(Instance):
         for match in skip_pattern.finditer(log):
             test_name = match.group(1).strip()
             skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -57,7 +56,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -rs --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs' > /home/moto/test_commands.sh && chmod +x /home/moto/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/moto/test_commands.sh"""
+bash /home/moto/test_commands.sh""",
             ),
             File(
                 ".",
@@ -70,9 +69,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -rs --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -89,9 +86,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -rs --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -108,9 +103,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -rs --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -173,7 +166,7 @@ class MOTO_4_1_7(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -187,18 +180,16 @@ class MOTO_4_1_7(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # TODO: Implement the parse_log function
         # Regex to match test result lines: <test_path>::<test_name> <STATUS>
-        test_result_pattern = re.compile(r'^(.*?)\s+(PASSED|FAILED|SKIPPED)$', re.MULTILINE)
+        test_result_pattern = re.compile(
+            r"^(.*?)\s+(PASSED|FAILED|SKIPPED)$", re.MULTILINE
+        )
         for match in test_result_pattern.finditer(log):
             test_name, status = match.group(1), match.group(2)
             if status == "PASSED":
@@ -208,11 +199,6 @@ class MOTO_4_1_7(Instance):
             elif status == "SKIPPED":
                 skipped_tests.add(test_name)
         # Implement the log parsing logic here
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

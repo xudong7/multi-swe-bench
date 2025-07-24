@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -91,7 +90,7 @@ pytest tests/test_s3/
 ###ACTION_DELIMITER###
 echo 'pytest' > /home/moto/test_commands.sh
 ###ACTION_DELIMITER###
-"""
+""",
             ),
             File(
                 ".",
@@ -100,9 +99,7 @@ echo 'pytest' > /home/moto/test_commands.sh
 cd /home/{pr.repo}
 pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -115,9 +112,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -130,9 +125,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -195,7 +188,7 @@ class MOTO_3_1_18(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -209,18 +202,16 @@ class MOTO_3_1_18(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # TODO: Implement the parse_log function
         # Regex to capture test status and name
-        test_result_pattern = re.compile(r"^(FAILED|SKIPPED|ERROR).*(tests/.*\.py::\w+)")
+        test_result_pattern = re.compile(
+            r"^(FAILED|SKIPPED|ERROR).*(tests/.*\.py::\w+)"
+        )
         passed_test_pattern = re.compile(r"^(tests/.*\.py) (\.+)")
         for line in log.splitlines():
             match = test_result_pattern.match(line)
@@ -244,14 +235,9 @@ class MOTO_3_1_18(Instance):
                 # This is not ideal as we don't have the exact test names.
                 # A better approach would be to get the test names from the 'collected X items' part of the log.
                 for char in results:
-                    if char == '.':
+                    if char == ".":
                         # This is a placeholder, as we can't get the actual test name from this line
                         passed_tests.add(f"{test_file}::test_placeholder")
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

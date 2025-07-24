@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.12"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -56,7 +55,7 @@ python -m pytest ./tests/integration --reruns 5 --disable-warnings --no-header -
 ###ACTION_DELIMITER###
 bash /home/SDMetrics/test_commands.sh
 ###ACTION_DELIMITER###
-echo 'python -m pytest ./tests/unit --cov=sdmetrics --cov-report=xml --no-header -rA --tb=no -p no:cacheprovider' > test_commands.sh"""
+echo 'python -m pytest ./tests/unit --cov=sdmetrics --cov-report=xml --no-header -rA --tb=no -p no:cacheprovider' > test_commands.sh""",
             ),
             File(
                 ".",
@@ -65,9 +64,7 @@ echo 'python -m pytest ./tests/unit --cov=sdmetrics --cov-report=xml --no-header
 cd /home/{pr.repo}
 python -m pytest ./tests/unit --cov=sdmetrics --cov-report=xml --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -80,9 +77,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python -m pytest ./tests/unit --cov=sdmetrics --cov-report=xml --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -95,9 +90,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python -m pytest ./tests/unit --cov=sdmetrics --cov-report=xml --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -159,7 +152,7 @@ class SDMETRICS_V0_14_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -173,15 +166,11 @@ class SDMETRICS_V0_14_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Implement the log parsing logic here
         # Match lines like 'PASSED <test_path>::<test_name>' or 'FAILED <test_path>::<test_name>'
         for line in log.splitlines():
@@ -194,11 +183,6 @@ class SDMETRICS_V0_14_1(Instance):
                 failed_tests.add(failed_match.group(1).strip())
             elif skipped_match:
                 skipped_tests.add(skipped_match.group(1).strip())
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-buster"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -67,7 +66,7 @@ pipenv install pytz
 ###ACTION_DELIMITER###
 pipenv run pytest
 ###ACTION_DELIMITER###
-echo 'pipenv run pytest --no-header -rA --tb=no -p no:cacheprovider' > test_commands.sh"""
+echo 'pipenv run pytest --no-header -rA --tb=no -p no:cacheprovider' > test_commands.sh""",
             ),
             File(
                 ".",
@@ -76,9 +75,7 @@ echo 'pipenv run pytest --no-header -rA --tb=no -p no:cacheprovider' > test_comm
 cd /home/{pr.repo}
 pipenv run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -91,9 +88,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pipenv run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -106,9 +101,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pipenv run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -170,7 +163,7 @@ class ZULIP_TERMINAL_0_6_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -184,13 +177,11 @@ class ZULIP_TERMINAL_0_6_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
         in_summary = False
         for line in log.splitlines():
             if "short test summary info" in line:
@@ -217,12 +208,6 @@ class ZULIP_TERMINAL_0_6_0(Instance):
                 match = re.match(r"ERROR\s+(.*)", line)
                 if match:
                     failed_tests.add(match.group(1).strip())
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
-        
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -61,7 +60,7 @@ echo -e 'invoke unit
 invoke integration
 invoke readme' > /home/SDMetrics/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/SDMetrics/test_commands.sh"""
+bash /home/SDMetrics/test_commands.sh""",
             ),
             File(
                 ".",
@@ -72,9 +71,7 @@ invoke unit
 invoke integration
 invoke readme
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -89,9 +86,7 @@ invoke unit
 invoke integration
 invoke readme
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -106,9 +101,7 @@ invoke unit
 invoke integration
 invoke readme
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -170,7 +163,7 @@ class SDMETRICS_V0_9_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -184,17 +177,13 @@ class SDMETRICS_V0_9_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
         # Parse the log content and extract test execution results.
         passed_tests = set()  # Tests that passed successfully
         failed_tests = set()  # Tests that failed
         skipped_tests = set()  # Tests that were skipped
 
-        import re
-        import json
         # Improved: extract function-level test results from summary and progress lines
-        import re
         in_summary = False
         failed_tests = set()
         skipped_tests = set()
@@ -202,29 +191,29 @@ class SDMETRICS_V0_9_2(Instance):
         all_tests = set()
 
         # Regex for summary lines
-        summary_re = re.compile(r'^(FAILED|ERROR|SKIPPED) (tests/.*?\.py(?:::.*?)?)')
+        summary_re = re.compile(r"^(FAILED|ERROR|SKIPPED) (tests/.*?\.py(?:::.*?)?)")
         # Regex for progress lines (fallback for passed tests)
-        progress_re = re.compile(r'^(tests/.*?\.py)\s+([.RFEfs]+)\s*\[.*?%\]')
+        re.compile(r"^(tests/.*?\.py)\s+([.RFEfs]+)\s*\[.*?%\]")
         # Regex for function names in traceback or warning lines
-        func_re = re.compile(r'(tests/.*?\.py(?:::.*?)?)')
+        func_re = re.compile(r"(tests/.*?\.py(?:::.*?)?)")
 
         lines = log.splitlines()
         # First pass: extract from summary section
         for i, line in enumerate(lines):
-            if 'short test summary info' in line:
+            if "short test summary info" in line:
                 in_summary = True
                 continue
             if in_summary:
-                if line.strip() == '' or line.startswith('=') or line.startswith('!'):
+                if line.strip() == "" or line.startswith("=") or line.startswith("!"):
                     break
                 m = summary_re.match(line.strip())
                 if m:
                     status, testname = m.groups()
-                    if status == 'FAILED':
+                    if status == "FAILED":
                         failed_tests.add(testname)
-                    elif status == 'ERROR':
+                    elif status == "ERROR":
                         error_tests.add(testname)
-                    elif status == 'SKIPPED':
+                    elif status == "SKIPPED":
                         skipped_tests.add(testname)
 
         # Second pass: collect all test functions seen in the log
@@ -236,19 +225,26 @@ class SDMETRICS_V0_9_2(Instance):
         def is_valid_test_name(name):
             # Accept tests/file.py::func or tests/file.py::Class::func
             return bool(re.match(r"tests/.*?\.py::.+", name))
+
         def is_file_only(name):
             return bool(re.match(r"tests/.*?\.py$", name))
 
         # Passed = all_tests - failed - error - skipped
-        passed_tests = set(filter(lambda n: is_valid_test_name(n) or is_file_only(n), all_tests - failed_tests - error_tests - skipped_tests))
-        failed_tests = set(filter(lambda n: is_valid_test_name(n) or is_file_only(n), failed_tests | error_tests))
-        skipped_tests = set(filter(lambda n: is_valid_test_name(n) or is_file_only(n), skipped_tests))
-
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
+        passed_tests = set(
+            filter(
+                lambda n: is_valid_test_name(n) or is_file_only(n),
+                all_tests - failed_tests - error_tests - skipped_tests,
+            )
+        )
+        failed_tests = set(
+            filter(
+                lambda n: is_valid_test_name(n) or is_file_only(n),
+                failed_tests | error_tests,
+            )
+        )
+        skipped_tests = set(
+            filter(lambda n: is_valid_test_name(n) or is_file_only(n), skipped_tests)
+        )
 
         return TestResult(
             passed_count=len(passed_tests),

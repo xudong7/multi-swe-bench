@@ -111,9 +111,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -131,9 +129,7 @@ npm uninstall rollup
 npm install rollup@latest --save-dev
 
 npm install --legacy-peer-deps || npm install --force || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -143,9 +139,7 @@ set -e
 
 cd /home/{pr.repo}
 npm test -- --verbose && codecov 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -157,9 +151,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 npm test -- --verbose && codecov 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -171,9 +163,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 npm test -- --verbose && codecov 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

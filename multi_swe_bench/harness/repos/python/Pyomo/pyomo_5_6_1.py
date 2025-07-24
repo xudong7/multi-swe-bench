@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -75,7 +74,7 @@ pip install --force-reinstall PyUtilib==5.6.6
 ###ACTION_DELIMITER###
 pip install --force-reinstall PyUtilib==5.7.0
 ###ACTION_DELIMITER###
-bash /home/pyomo/test_commands.sh"""
+bash /home/pyomo/test_commands.sh""",
             ),
             File(
                 ".",
@@ -84,9 +83,7 @@ bash /home/pyomo/test_commands.sh"""
 cd /home/{pr.repo}
 test.pyomo -v --cat=nightly pyomo pyomo-model-libraries
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -99,9 +96,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 test.pyomo -v --cat=nightly pyomo pyomo-model-libraries
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -114,9 +109,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 test.pyomo -v --cat=nightly pyomo pyomo-model-libraries
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -178,7 +171,7 @@ class PYOMO_5_6_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -192,36 +185,29 @@ class PYOMO_5_6_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Regular expression to match test result lines
         # Example: test_name (test_class) ... ok
-            # Only match lines that start with a test function name (not 'Failure:')
-        test_line_re = re.compile(r'^(?P<name>\w+ \(.+?\)) \.\.\. (?P<status>ok|SKIP|ERROR)(: .*)?$')
+        # Only match lines that start with a test function name (not 'Failure:')
+        test_line_re = re.compile(
+            r"^(?P<name>\w+ \(.+?\)) \.\.\. (?P<status>ok|SKIP|ERROR)(: .*)?$"
+        )
         for line in log.splitlines():
             m = test_line_re.match(line)
             if m:
-                test_name = m.group('name').strip()
-                status = m.group('status')
-                if status == 'ok':
+                test_name = m.group("name").strip()
+                status = m.group("status")
+                if status == "ok":
                     passed_tests.add(test_name)
-                elif status == 'SKIP':
+                elif status == "SKIP":
                     skipped_tests.add(test_name)
-                elif status == 'ERROR':
+                elif status == "ERROR":
                     failed_tests.add(test_name)
         # Note: Lines like 'Failure: ... ... ERROR' are not matched by this regex and are ignored.
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

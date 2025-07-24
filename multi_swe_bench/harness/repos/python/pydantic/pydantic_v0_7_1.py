@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -59,7 +58,7 @@ bash /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
 pip uninstall -y msgpack-python ujson
 ###ACTION_DELIMITER###
-pytest --cov=pydantic -v"""
+pytest --cov=pydantic -v""",
             ),
             File(
                 ".",
@@ -70,9 +69,7 @@ pytest --cov=pydantic -v
 pip uninstall -y msgpack-python ujson
 pytest --cov=pydantic -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -87,9 +84,7 @@ pytest --cov=pydantic -v
 pip uninstall -y msgpack-python ujson
 pytest --cov=pydantic -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -104,9 +99,7 @@ pytest --cov=pydantic -v
 pip uninstall -y msgpack-python ujson
 pytest --cov=pydantic -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -169,7 +162,7 @@ class PYDANTIC_V0_7_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -183,20 +176,20 @@ class PYDANTIC_V0_7_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Improved parser: distinguish test-level and file-level results
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
         file_skipped = set()
-        import re
-        import json
         # Test-level: lines with '::' (test function)
-        test_pattern = re.compile(r"^(.*?::.*?)\s+(PASSED|FAILED|SKIPPED)\s*(\[.*?\])?$", re.MULTILINE)
+        test_pattern = re.compile(
+            r"^(.*?::.*?)\s+(PASSED|FAILED|SKIPPED)\s*(\[.*?\])?$", re.MULTILINE
+        )
         # File-level: lines with .py and no '::', only for SKIPPED
-        file_pattern = re.compile(r"^([\w\./-]+\.py)\s+SKIPPED\s*(\[.*?\])?$", re.MULTILINE)
+        file_pattern = re.compile(
+            r"^([\w\./-]+\.py)\s+SKIPPED\s*(\[.*?\])?$", re.MULTILINE
+        )
         for match in test_pattern.finditer(log):
             test_name, status = match.group(1).strip(), match.group(2)
             if status == "PASSED":
@@ -210,11 +203,6 @@ class PYDANTIC_V0_7_1(Instance):
             file_skipped.add(file_name)
         # Remove any overlap: a test cannot be both passed/failed and skipped
         skipped_tests = (skipped_tests | file_skipped) - passed_tests - failed_tests
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -77,7 +76,7 @@ pip install 'setuptools<59'
 ###ACTION_DELIMITER###
 bash /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
-"""
+""",
             ),
             File(
                 ".",
@@ -87,9 +86,7 @@ cd /home/{pr.repo}
 PYTHONWARNINGS="ignore::DeprecationWarning:distutils" pytest --cov=pydantic
 python tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -103,9 +100,7 @@ fi
 PYTHONWARNINGS="ignore::DeprecationWarning:distutils" pytest --cov=pydantic
 python tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -119,9 +114,7 @@ fi
 PYTHONWARNINGS="ignore::DeprecationWarning:distutils" pytest --cov=pydantic
 python tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -184,7 +177,7 @@ class PYDANTIC_V1_0B2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -198,29 +191,25 @@ class PYDANTIC_V1_0B2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Implementation: parse pytest log for test file results and errors
-        test_line_re = re.compile(r'^(tests/test_[^\s:]+\.py)\s+([.sF]+)')
-        error_collect_re = re.compile(r'ERROR collecting (tests/test_[^\s:]+\.py)')
+        test_line_re = re.compile(r"^(tests/test_[^\s:]+\.py)\s+([.sF]+)")
+        error_collect_re = re.compile(r"ERROR collecting (tests/test_[^\s:]+\.py)")
         for line in log.splitlines():
             m = test_line_re.match(line)
             if m:
                 test_file = m.group(1)
                 results = m.group(2)
-                if 'F' in results:
+                if "F" in results:
                     failed_tests.add(test_file)
-                if 's' in results:
+                if "s" in results:
                     skipped_tests.add(test_file)
-                if all(c in '.s' for c in results):
-                    if 's' in results:
+                if all(c in ".s" for c in results):
+                    if "s" in results:
                         # If only skipped and passed, but not failed
                         passed_tests.add(test_file)
                     else:
@@ -229,11 +218,6 @@ class PYDANTIC_V1_0B2(Instance):
             m = error_collect_re.search(line)
             if m:
                 failed_tests.add(m.group(1))
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

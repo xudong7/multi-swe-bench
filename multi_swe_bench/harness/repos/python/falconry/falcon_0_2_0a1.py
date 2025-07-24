@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:2.7"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -63,7 +62,7 @@ sed -i '127s/assertTrue/assertFalse/' tests/test_req_vars.py
 ###ACTION_DELIMITER###
 ./tools/clean_cythoned.sh ./falcon && nosetests --with-cprofile --cprofile-stats-erase --cprofile-stats-file=cprofile.dat
 ###ACTION_DELIMITER###
-echo "./tools/clean_cythoned.sh ./falcon && nosetests --with-cprofile --cprofile-stats-erase --cprofile-stats-file=cprofile.dat" > test_commands.sh"""
+echo "./tools/clean_cythoned.sh ./falcon && nosetests --with-cprofile --cprofile-stats-erase --cprofile-stats-file=cprofile.dat" > test_commands.sh""",
             ),
             File(
                 ".",
@@ -72,9 +71,7 @@ echo "./tools/clean_cythoned.sh ./falcon && nosetests --with-cprofile --cprofile
 cd /home/{pr.repo}
 ./tools/clean_cythoned.sh ./falcon && nosetests --with-cprofile --cprofile-stats-erase --cprofile-stats-file=cprofile.dat
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -87,9 +84,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 ./tools/clean_cythoned.sh ./falcon && nosetests --with-cprofile --cprofile-stats-erase --cprofile-stats-file=cprofile.dat
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -102,9 +97,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 ./tools/clean_cythoned.sh ./falcon && nosetests --with-cprofile --cprofile-stats-erase --cprofile-stats-file=cprofile.dat
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -166,7 +159,7 @@ class FALCON_0_2_0A1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -180,32 +173,23 @@ class FALCON_0_2_0A1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         for line in log.splitlines():
-            match = re.match(r'^(tests\..*?)\s*\.{3}\s*(.*)$', line)
+            match = re.match(r"^(tests\..*?)\s*\.{3}\s*(.*)$", line)
             if match:
                 test_name = match.group(1).strip()
                 status = match.group(2).strip().lower()
-                if 'ok' in status:
+                if "ok" in status:
                     passed_tests.add(test_name)
-                elif 'skipped' in status:
+                elif "skipped" in status:
                     skipped_tests.add(test_name)
-                elif 'fail' in status or 'error' in status:
+                elif "fail" in status or "error" in status:
                     failed_tests.add(test_name)
         # Implement the log parsing logic here
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

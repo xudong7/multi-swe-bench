@@ -108,9 +108,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -125,9 +123,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
 npm install --legacy-peer-deps || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -138,9 +134,7 @@ set -e
 cd /home/{pr.repo}
 npm run test:unit -- --verbose  
 npm run test:ssr  -- --verbose 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -153,9 +147,7 @@ git apply  --exclude package.json  --exclude yarn.lock --whitespace=nowarn /home
 npm run test:unit -- --verbose  
 npm run test:ssr  -- --verbose 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -168,9 +160,7 @@ git apply  --exclude package.json  --exclude yarn.lock --whitespace=nowarn /home
 npm run test:unit -- --verbose  
 npm run test:ssr  -- --verbose 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

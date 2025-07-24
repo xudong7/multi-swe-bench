@@ -110,9 +110,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(),
                 ),
                 File(
                     ".",
@@ -147,9 +145,7 @@ allprojects {{
 }}
 EOF
 ./gradlew clean jacocoUnitTestReport --max-workers 8 --continue || true
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -160,9 +156,7 @@ set -e
 cd /home/{pr.repo}
 ./gradlew clean jacocoUnitTestReport --max-workers 8 --continue
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -174,9 +168,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 ./gradlew clean jacocoUnitTestReport --max-workers 8 --continue
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -188,9 +180,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 ./gradlew clean jacocoUnitTestReport --max-workers 8 --continue
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
             ]
         return [
@@ -223,9 +213,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -239,9 +227,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 ./gradlew clean jacocoUnitTestReport --max-workers 8 --continue || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -252,9 +238,7 @@ set -e
 cd /home/{pr.repo}
 ./gradlew clean jacocoUnitTestReport --max-workers 8 --continue
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -266,9 +250,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 ./gradlew clean jacocoUnitTestReport --max-workers 8 --continue
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -280,9 +262,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 ./gradlew clean jacocoUnitTestReport --max-workers 8 --continue
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

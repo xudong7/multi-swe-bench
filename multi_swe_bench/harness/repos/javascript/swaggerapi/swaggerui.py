@@ -176,9 +176,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -198,9 +196,7 @@ nvm use || true
 npm ci || npm install || true
 npm run test || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -214,9 +210,7 @@ cd /home/{pr.repo}
 nvm use || true
 npm ci || npm install || true
 npm run test
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -232,9 +226,7 @@ nvm use || true
 npm ci || npm install || true
 npm run test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -250,9 +242,7 @@ nvm use || true
 npm ci || npm install || true
 npm run test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -360,15 +350,13 @@ class swaggerui(Instance):
         failed_res = [
             re.compile(r"^FAIL:?\s+([^\(]+)"),
             re.compile(r"\s*[×✗]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
-            re.compile(r"\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
+            re.compile(r"\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
         ]
 
-        skipped_res = [
-            re.compile(r"SKIP:?\s?(.+?)\s")
-        ]
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        skipped_res = [re.compile(r"SKIP:?\s?(.+?)\s")]
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
         for line in test_log.splitlines():
-            line = ansi_escape.sub('', line).strip()
+            line = ansi_escape.sub("", line).strip()
             for passed_re in passed_res:
                 m = passed_re.match(line)
                 if m and m.group(1).strip() not in failed_tests:

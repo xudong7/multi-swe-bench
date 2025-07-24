@@ -1,6 +1,4 @@
-import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +20,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -65,7 +63,7 @@ pip install PyYAML==3.12
 ###ACTION_DELIMITER###
 py.test
 ###ACTION_DELIMITER###
-echo 'py.test -v' > /home/sceptre/test_commands.sh"""
+echo 'py.test -v' > /home/sceptre/test_commands.sh""",
             ),
             File(
                 ".",
@@ -74,9 +72,7 @@ echo 'py.test -v' > /home/sceptre/test_commands.sh"""
 cd /home/{pr.repo}
 py.test -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -89,9 +85,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 py.test -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -104,9 +98,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 py.test -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -168,7 +160,7 @@ class SCEPTRE_V1_3_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -182,16 +174,12 @@ class SCEPTRE_V1_3_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() 
-        failed_tests = set() 
-        skipped_tests = set() 
-        import re
-        import json
-        lines = log.split('\n')
+        passed_tests = set()
+        failed_tests = set()
+        skipped_tests = set()
+        lines = log.split("\n")
         for i, line in enumerate(lines):
             line = line.strip()
             if line.endswith("PASSED"):
@@ -208,8 +196,12 @@ class SCEPTRE_V1_3_1(Instance):
             test_name = ""
             if test_line.startswith("tests/") and "::" in test_line:
                 test_name = test_line
-            elif i > 0 and lines[i-1].strip().startswith("tests/") and "::" in lines[i-1]:
-                test_name = lines[i-1].strip()
+            elif (
+                i > 0
+                and lines[i - 1].strip().startswith("tests/")
+                and "::" in lines[i - 1]
+            ):
+                test_name = lines[i - 1].strip()
             if test_name:
                 if status == "PASSED":
                     passed_tests.add(test_name)
@@ -217,11 +209,6 @@ class SCEPTRE_V1_3_1(Instance):
                     failed_tests.add(test_name)
                 elif status == "SKIPPED":
                     skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

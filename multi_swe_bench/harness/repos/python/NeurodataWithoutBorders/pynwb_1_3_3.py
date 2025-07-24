@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -69,7 +68,7 @@ git submodule update --init --recursive
 ###ACTION_DELIMITER###
 pip install -e .
 ###ACTION_DELIMITER###
-bash /home/pynwb/test_commands.sh"""
+bash /home/pynwb/test_commands.sh""",
             ),
             File(
                 ".",
@@ -78,9 +77,7 @@ bash /home/pynwb/test_commands.sh"""
 cd /home/{pr.repo}
 python test.py -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -93,9 +90,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python test.py -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -108,9 +103,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python test.py -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -172,7 +165,7 @@ class PYNWB_1_3_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -186,26 +179,25 @@ class PYNWB_1_3_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regular expression to match test result lines:
         # Example: | test_name | ... | pass |
-            # Improved regex: match lines with any leading spaces, a '|' at start, test name, and status at end
-        test_line_re = re.compile(r"^\s*\|\s*([^|]+?)\s*\|(?:[^|]*\|)*\s*(pass|fail|error|skipped)\s*\|\s*$", re.IGNORECASE)
-            # Regex to match ANSI escape codes
-        ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+        # Improved regex: match lines with any leading spaces, a '|' at start, test name, and status at end
+        test_line_re = re.compile(
+            r"^\s*\|\s*([^|]+?)\s*\|(?:[^|]*\|)*\s*(pass|fail|error|skipped)\s*\|\s*$",
+            re.IGNORECASE,
+        )
+        # Regex to match ANSI escape codes
+        ansi_escape = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
         current_class = None
         class_header_re = re.compile(r"^\s*([\w\.]+)\s*$")
         for line in log.splitlines():
             # Remove ANSI escape codes
-            clean_line = ansi_escape.sub('', line)
+            clean_line = ansi_escape.sub("", line)
             # Detect class/group header (e.g., test_base.TestImage)
             class_match = class_header_re.match(clean_line)
             if class_match and not clean_line.strip().startswith("|"):
@@ -215,7 +207,10 @@ class PYNWB_1_3_3(Instance):
             if match and current_class:
                 test_name = match.group(1).strip()
                 # Ignore lines that are just a colon or summary
-                if test_name.endswith(":") or test_name.lower() in {"test name", "test group/test case"}:
+                if test_name.endswith(":") or test_name.lower() in {
+                    "test name",
+                    "test group/test case",
+                }:
                     continue
                 status = match.group(2).lower()
                 # Build full test id
@@ -226,11 +221,6 @@ class PYNWB_1_3_3(Instance):
                     failed_tests.add(full_test_id)
                 elif status == "skipped":
                     skipped_tests.add(full_test_id)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

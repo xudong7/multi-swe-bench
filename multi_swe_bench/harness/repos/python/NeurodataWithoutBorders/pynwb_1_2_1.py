@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -75,7 +74,7 @@ bash /home/pynwb/test_commands.sh
 ###ACTION_DELIMITER###
 git submodule update --init --recursive
 ###ACTION_DELIMITER###
-bash /home/pynwb/test_commands.sh"""
+bash /home/pynwb/test_commands.sh""",
             ),
             File(
                 ".",
@@ -84,9 +83,7 @@ bash /home/pynwb/test_commands.sh"""
 cd /home/{pr.repo}
 python test.py -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -99,9 +96,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python test.py -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -114,9 +109,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python test.py -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -178,7 +171,7 @@ class PYNWB_1_2_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -192,27 +185,30 @@ class PYNWB_1_2_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
-        import re
         # Regex to match test result lines
-        test_line_pattern = re.compile(r"^\s*\|\s*([^|]+?)\s*\|.*\|\s*(pass|fail|error)\s*(\|)?\s*$")
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        test_line_pattern = re.compile(
+            r"^\s*\|\s*([^|]+?)\s*\|.*\|\s*(pass|fail|error)\s*(\|)?\s*$"
+        )
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
         # Track the last status for each test
         test_status = {}
         for line in log.splitlines():
-            clean_line = ansi_escape.sub('', line)
+            clean_line = ansi_escape.sub("", line)
             match = test_line_pattern.match(clean_line)
             if match:
                 raw_name = match.group(1).strip()
                 # Normalize test name: remove trailing colons and excessive whitespace
-                test_name = re.sub(r':\s*$', '', raw_name)
+                test_name = re.sub(r":\s*$", "", raw_name)
                 status = match.group(2)
                 # Always update to the latest status
                 test_status[test_name] = status
-        passed_tests = {name for name, status in test_status.items() if status == "pass"}
-        failed_tests = {name for name, status in test_status.items() if status in ("fail", "error")}
+        passed_tests = {
+            name for name, status in test_status.items() if status == "pass"
+        }
+        failed_tests = {
+            name for name, status in test_status.items() if status in ("fail", "error")
+        }
         skipped_tests = set()  # Not present in your logs
         # Remove any overlap: a test can only be in one set, and the last status wins
         failed_tests -= passed_tests

@@ -109,9 +109,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -127,9 +125,7 @@ bash /home/check_git_changes.sh
 jq 'del(.pnpm.patchedDependencies)' package.json > package.tmp.json && mv package.tmp.json package.json
 pnpm install  --no-frozen-lockfile
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -141,9 +137,7 @@ cd /home/{pr.repo}
 pnpm build
 pnpm test -- --verbose --testLocationInResults
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -156,9 +150,7 @@ git apply /home/test.patch
 pnpm build
 pnpm test -- --verbose --testLocationInResults
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -171,9 +163,7 @@ git apply /home/test.patch /home/fix.patch
 pnpm build
 pnpm test -- --verbose --testLocationInResults
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -254,9 +244,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -272,9 +260,7 @@ bash /home/check_git_changes.sh
 rm -rf node_modules
 yarn --frozen-lockfile
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -286,9 +272,7 @@ cd /home/{pr.repo}
 yarn build
 yarn test -- --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -301,9 +285,7 @@ git apply /home/test.patch
 yarn build
 yarn test -- --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -316,9 +298,7 @@ git apply /home/test.patch /home/fix.patch
 yarn build
 yarn test -- --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

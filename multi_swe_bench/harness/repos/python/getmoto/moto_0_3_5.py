@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:2.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -59,7 +58,7 @@ pip install tox
 ###ACTION_DELIMITER###
 tox
 ###ACTION_DELIMITER###
-echo 'nosetests -v' > test_commands.sh"""
+echo 'nosetests -v' > test_commands.sh""",
             ),
             File(
                 ".",
@@ -68,9 +67,7 @@ echo 'nosetests -v' > test_commands.sh"""
 cd /home/{pr.repo}
 nosetests -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -83,9 +80,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -98,9 +93,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -163,7 +156,7 @@ class MOTO_0_3_5(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -177,15 +170,11 @@ class MOTO_0_3_5(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # TODO: Implement the parse_log function
         passed_regex = re.compile(r"^(test_.*) \.\.\. ok$")
         failed_regex = re.compile(r"^(test_.*) \.\.\. FAIL$")
@@ -200,11 +189,6 @@ class MOTO_0_3_5(Instance):
                 failed_tests.add(failed_match2.group(1))
             elif skipped_match := skipped_regex.match(line):
                 skipped_tests.add(skipped_match.group(1))
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

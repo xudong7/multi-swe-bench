@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -57,7 +56,7 @@ pip install -r requirements.txt
 ###ACTION_DELIMITER###
 make coverage-ci
 ###ACTION_DELIMITER###
-echo "make coverage-ci" > /home/sceptre/test_commands.sh"""
+echo "make coverage-ci" > /home/sceptre/test_commands.sh""",
             ),
             File(
                 ".",
@@ -66,9 +65,7 @@ echo "make coverage-ci" > /home/sceptre/test_commands.sh"""
 cd /home/{pr.repo}
 make coverage-ci
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -81,9 +78,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 make coverage-ci
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -96,9 +91,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 make coverage-ci
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -160,7 +153,7 @@ class SCEPTRE_V2_1_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -174,41 +167,47 @@ class SCEPTRE_V2_1_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Failed tests with full names
-        failed_tests_section = re.search(r"=+ FAILURES =+([\s\S]+?)=+ (?:short test summary info|warnings summary) =+", log)
+        failed_tests_section = re.search(
+            r"=+ FAILURES =+([\s\S]+?)=+ (?:short test summary info|warnings summary) =+",
+            log,
+        )
         if failed_tests_section:
-            failed_tests.update(re.findall(r"^_+\s(.+)\s_+$", failed_tests_section.group(1), re.MULTILINE))
+            failed_tests.update(
+                re.findall(
+                    r"^_+\s(.+)\s_+$", failed_tests_section.group(1), re.MULTILINE
+                )
+            )
         # All tests execution summary
-        test_summary_section = re.search(r"=+ test session starts =+([\s\S]+?)=+ (?:FAILURES|short test summary info|warnings summary) =+", log)
+        test_summary_section = re.search(
+            r"=+ test session starts =+([\s\S]+?)=+ (?:FAILURES|short test summary info|warnings summary) =+",
+            log,
+        )
         if test_summary_section:
             # Extract file paths and their test results ('.', 'F', 's')
-            test_files_results = re.findall(r"^(tests/.*\.py)\s+([.FfSsEe\s]+)$", test_summary_section.group(1), re.MULTILINE)
+            test_files_results = re.findall(
+                r"^(tests/.*\.py)\s+([.FfSsEe\s]+)$",
+                test_summary_section.group(1),
+                re.MULTILINE,
+            )
             for file_path, results in test_files_results:
                 # Clean up the results string
-                results = ''.join(results.split())
-                passed_count = results.count('.')
-                skipped_count = results.count('s')
+                results = "".join(results.split())
+                passed_count = results.count(".")
+                skipped_count = results.count("s")
                 if passed_count > 0:
                     # Generate pseudo-names for passed tests since the log doesn't provide them
                     for i in range(passed_count):
-                        passed_tests.add(f"{file_path}::passed_{i+1}")
+                        passed_tests.add(f"{file_path}::passed_{i + 1}")
                 if skipped_count > 0:
                     # Generate pseudo-names for skipped tests
                     for i in range(skipped_count):
-                        skipped_tests.add(f"{file_path}::skipped_{i+1}")
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
+                        skipped_tests.add(f"{file_path}::skipped_{i + 1}")
 
         return TestResult(
             passed_count=len(passed_tests),

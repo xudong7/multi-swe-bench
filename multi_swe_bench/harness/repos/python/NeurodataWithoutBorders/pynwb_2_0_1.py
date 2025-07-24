@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -69,7 +68,7 @@ pip install -r requirements-dev.txt
 ###ACTION_DELIMITER###
 bash /home/pynwb/test_commands.sh
 ###ACTION_DELIMITER###
-"""
+""",
             ),
             File(
                 ".",
@@ -78,9 +77,7 @@ bash /home/pynwb/test_commands.sh
 cd /home/{pr.repo}
 tox
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -93,9 +90,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 tox
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -108,9 +103,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 tox
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -172,7 +165,7 @@ class PYNWB_2_0_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -186,32 +179,26 @@ class PYNWB_2_0_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Implement the log parsing logic here
         # Regex to match test_name (class_name)
         test_pattern = re.compile(r"(test_[\w_]+ \([\w\.]+\))")
-        fail_lines = set()
-        pass_lines = set()
         # First, split log into lines and scan for failure context
         lines = log.splitlines()
         failed_test_names = set()
         for i, line in enumerate(lines):
             # If line ends with '... FAIL' or contains 'FAIL:'
-            if line.strip().endswith('... FAIL') or line.strip().startswith('FAIL:'):
+            if line.strip().endswith("... FAIL") or line.strip().startswith("FAIL:"):
                 # Extract all test_name (class_name) in this line
                 for match in test_pattern.findall(line):
                     failed_test_names.add(match)
             # Also check for traceback blocks (lines starting with 'FAIL: test_')
-            elif line.strip().startswith('FAIL:'):
-                m = re.search(r'FAIL: (test_[\w_]+ \([\w\.]+\))', line)
+            elif line.strip().startswith("FAIL:"):
+                m = re.search(r"FAIL: (test_[\w_]+ \([\w\.]+\))", line)
                 if m:
                     failed_test_names.add(m.group(1))
         # Now, extract all test_name (class_name) and assign to pass/fail
@@ -222,11 +209,6 @@ class PYNWB_2_0_1(Instance):
                 else:
                     passed_tests.add(match)
         # Skipped tests not present in these logs
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

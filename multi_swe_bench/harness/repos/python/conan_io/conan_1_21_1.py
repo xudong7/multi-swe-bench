@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -63,7 +62,7 @@ bash /home/conan/test_commands.sh
 ###ACTION_DELIMITER###
 pip install 'MarkupSafe<2.1'
 ###ACTION_DELIMITER###
-bash /home/conan/test_commands.sh"""
+bash /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -72,9 +71,7 @@ bash /home/conan/test_commands.sh"""
 cd /home/{pr.repo}
 nosetests -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -87,9 +84,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -102,9 +97,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -167,7 +160,7 @@ class CONAN_1_21_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -181,33 +174,32 @@ class CONAN_1_21_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         """
         Parse the log content and extract test execution results.
         Only the last status for each test is considered.
         """
-        import re
         # Map test name to its last status
         test_status = {}
         # Strict regex for test result lines
-        test_result_re = re.compile(r'^(?P<name>[^\(\n]+)\s*\([^\)]*\)\s*\.\.\.\s*(?P<status>ok|FAIL|ERROR|SKIP(?::.*)?)$')
+        test_result_re = re.compile(
+            r"^(?P<name>[^\(\n]+)\s*\([^\)]*\)\s*\.\.\.\s*(?P<status>ok|FAIL|ERROR|SKIP(?::.*)?)$"
+        )
         for line in log.splitlines():
             m = test_result_re.match(line)
             if m:
-                name = m.group('name').strip()
-                status = m.group('status')
-                if status == 'ok':
-                    test_status[name] = 'passed'
-                elif status == 'FAIL' or status == 'ERROR':
-                    test_status[name] = 'failed'
-                elif status.startswith('SKIP'):
-                    test_status[name] = 'skipped'
+                name = m.group("name").strip()
+                status = m.group("status")
+                if status == "ok":
+                    test_status[name] = "passed"
+                elif status == "FAIL" or status == "ERROR":
+                    test_status[name] = "failed"
+                elif status.startswith("SKIP"):
+                    test_status[name] = "skipped"
         # Now, assign to sets based on last status
-        passed_tests = {n for n, s in test_status.items() if s == 'passed'}
-        failed_tests = {n for n, s in test_status.items() if s == 'failed'}
-        skipped_tests = {n for n, s in test_status.items() if s == 'skipped'}
+        passed_tests = {n for n, s in test_status.items() if s == "passed"}
+        failed_tests = {n for n, s in test_status.items() if s == "failed"}
+        skipped_tests = {n for n, s in test_status.items() if s == "skipped"}
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "ubuntu:22.04"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -61,7 +60,7 @@ pip install .[test]
 ###ACTION_DELIMITER###
 echo 'pytest --no-header -rA --tb=no -p no:cacheprovider' > /home/hydromt/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/hydromt/test_commands.sh"""
+bash /home/hydromt/test_commands.sh""",
             ),
             File(
                 ".",
@@ -70,9 +69,7 @@ bash /home/hydromt/test_commands.sh"""
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -85,9 +82,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -100,9 +95,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -164,7 +157,7 @@ class HYDROMT_V0_4_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -178,33 +171,28 @@ class HYDROMT_V0_4_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
         def clean_skipped(name):
-                return name.split(":")[0] if ":" in name else name
+            return name.split(":")[0] if ":" in name else name
+
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex patterns for test results
         passed_pat = re.compile(r"^PASSED +([\w./\[\]:-]+)", re.MULTILINE)
         failed_pat = re.compile(r"^FAILED +([\w./\[\]:-]+)", re.MULTILINE)
         error_pat = re.compile(r"^ERROR +([\w./\[\]:-]+)", re.MULTILINE)
         skipped_pat = re.compile(r"^SKIPPED \[\d+\] ([\w./\[\]:-]+)", re.MULTILINE)
+
         # Clean up skipped test names (remove trailing colon/line info)
         def clean_skipped(name):
             return name.split(":")[0] if ":" in name else name
+
         passed_tests.update(passed_pat.findall(log))
         failed_tests.update(failed_pat.findall(log))
         failed_tests.update(error_pat.findall(log))  # Treat ERROR as failed
         skipped_tests.update(clean_skipped(name) for name in skipped_pat.findall(log))
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

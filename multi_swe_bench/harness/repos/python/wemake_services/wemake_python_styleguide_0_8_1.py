@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -59,7 +58,7 @@ poetry lock
 ###ACTION_DELIMITER###
 poetry install
 ###ACTION_DELIMITER###
-echo 'poetry run pytest' > test_commands.sh"""
+echo 'poetry run pytest' > test_commands.sh""",
             ),
             File(
                 ".",
@@ -68,9 +67,7 @@ echo 'poetry run pytest' > test_commands.sh"""
 cd /home/{pr.repo}
 poetry run pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -83,9 +80,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 poetry run pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -98,9 +93,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 poetry run pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -162,7 +155,7 @@ class WEMAKE_PYTHON_STYLEGUIDE_0_8_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -176,42 +169,45 @@ class WEMAKE_PYTHON_STYLEGUIDE_0_8_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        passed_tests_pattern = re.compile(r'^(tests/.*?\.py) (?:\.+s?)+', re.MULTILINE)
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
+        passed_tests_pattern = re.compile(r"^(tests/.*?\.py) (?:\.+s?)+", re.MULTILINE)
         passed_tests.update(passed_tests_pattern.findall(log))
         # Regex to find failed tests from the "short test summary info" section
-        failed_tests_pattern = re.compile(r"^(?:FAILURES|ERRORS) \s+tests/.*?\.py::(.*?)$", re.MULTILINE)
+        failed_tests_pattern = re.compile(
+            r"^(?:FAILURES|ERRORS) \s+tests/.*?\.py::(.*?)$", re.MULTILINE
+        )
         failed_tests.update(re.findall(failed_tests_pattern, log))
-        short_summary_pattern = re.compile(r'''==.*? short test summary info.*?==
-    (.*?)=*==''', re.DOTALL)
+        short_summary_pattern = re.compile(
+            r"""==.*? short test summary info.*?==
+    (.*?)=*==""",
+            re.DOTALL,
+        )
         short_summary_match = short_summary_pattern.search(log)
         if short_summary_match:
             summary_content = short_summary_match.group(1)
-            failed_tests.update(re.findall(r'^(?:FAIL|ERROR) (.*?)$', summary_content, re.MULTILINE))
-        error_collecting_pattern = re.compile(r"^_ ERROR collecting (.*?) _$", re.MULTILINE)
+            failed_tests.update(
+                re.findall(r"^(?:FAIL|ERROR) (.*?)$", summary_content, re.MULTILINE)
+            )
+        error_collecting_pattern = re.compile(
+            r"^_ ERROR collecting (.*?) _$", re.MULTILINE
+        )
         failed_tests.update(error_collecting_pattern.findall(log))
         # Regex to handle skipped tests
-        skipped_tests_pattern = re.compile(r'^(.*\.py):\d+: (?:xpass|XFAIL)$', re.MULTILINE)
+        skipped_tests_pattern = re.compile(
+            r"^(.*\.py):\d+: (?:xpass|XFAIL)$", re.MULTILINE
+        )
         skipped_tests.update(re.findall(skipped_tests_pattern, log))
         # Regex to handle deselected tests
-        deselected_pattern = re.compile(r'(\d+) deselected$')
+        deselected_pattern = re.compile(r"(\d+) deselected$")
         deselected_match = deselected_pattern.search(log)
         if deselected_match:
             deselected_count = int(deselected_match.group(1))
             for _ in range(deselected_count):
                 skipped_tests.add("deselected")
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

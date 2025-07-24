@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -59,7 +58,7 @@ echo 'python setup.py test' > test_commands.sh
 ###ACTION_DELIMITER###
 chmod +x test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pint/test_commands.sh"""
+bash /home/pint/test_commands.sh""",
             ),
             File(
                 ".",
@@ -68,9 +67,7 @@ bash /home/pint/test_commands.sh"""
 cd /home/{pr.repo}
 python setup.py test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -83,9 +80,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python setup.py test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -98,9 +93,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python setup.py test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -162,7 +155,7 @@ class PINT_0_4(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -176,35 +169,28 @@ class PINT_0_4(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Implement the log parsing logic here
         # Regex to match test result lines
         # Example: test_name (test_class) ... status [optional reason]
-        test_line_re = re.compile(r'^(?P<name>\w+) \((?P<class>[\w\.]+)\) \.\.\. (?P<status>ok|ERROR|skipped|expected failure)')
+        test_line_re = re.compile(
+            r"^(?P<name>\w+) \((?P<class>[\w\.]+)\) \.\.\. (?P<status>ok|ERROR|skipped|expected failure)"
+        )
         for line in log.splitlines():
             m = test_line_re.match(line)
             if m:
                 test_id = f"{m.group('name')} ({m.group('class')})"
-                status = m.group('status')
-                if status == 'ok':
+                status = m.group("status")
+                if status == "ok":
                     passed_tests.add(test_id)
-                elif status == 'ERROR':
+                elif status == "ERROR":
                     failed_tests.add(test_id)
-                elif status in ('skipped', 'expected failure'):
+                elif status in ("skipped", "expected failure"):
                     skipped_tests.add(test_id)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

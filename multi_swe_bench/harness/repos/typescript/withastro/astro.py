@@ -109,9 +109,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -127,9 +125,7 @@ bash /home/check_git_changes.sh
 
 pnpm install  || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -141,9 +137,7 @@ cd /home/{pr.repo}
 pnpm run build
 pnpm run test 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -156,9 +150,7 @@ git apply /home/test.patch
 pnpm run build
 pnpm run test 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -171,9 +163,7 @@ git apply /home/test.patch /home/fix.patch
 pnpm run build
 pnpm run test 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

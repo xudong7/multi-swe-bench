@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -67,7 +66,7 @@ bash /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
 echo 'pytest -rA --tb=no' > /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -76,9 +75,7 @@ bash /home/pydantic/test_commands.sh"""
 cd /home/{pr.repo}
 pytest -rA --tb=no
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -91,9 +88,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest -rA --tb=no
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -106,9 +101,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest -rA --tb=no
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -171,7 +164,7 @@ class PYDANTIC_V0_20A1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -185,35 +178,26 @@ class PYDANTIC_V0_20A1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # For each line, look for lines that start with a test file and status sequence
-        test_line_pattern = re.compile(r'^(tests/[^\s]+\.py)\s+([.sF]+)')
+        test_line_pattern = re.compile(r"^(tests/[^\s]+\.py)\s+([.sF]+)")
         for line in log.splitlines():
             match = test_line_pattern.match(line)
             if match:
                 filename = match.group(1)
                 status_seq = match.group(2)
                 for idx, status in enumerate(status_seq):
-                    test_id = f"{filename}::test_{idx+1}"
-                    if status == '.':
+                    test_id = f"{filename}::test_{idx + 1}"
+                    if status == ".":
                         passed_tests.add(test_id)
-                    elif status == 's':
+                    elif status == "s":
                         skipped_tests.add(test_id)
-                    elif status == 'F':
+                    elif status == "F":
                         failed_tests.add(test_id)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

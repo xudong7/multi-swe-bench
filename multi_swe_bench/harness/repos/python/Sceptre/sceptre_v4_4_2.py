@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.10-alpine"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -55,7 +54,7 @@ poetry install
 ###ACTION_DELIMITER###
 echo 'poetry run pytest --no-header -rA --tb=no -p no:cacheprovider' > test_commands.sh
 ###ACTION_DELIMITER###
-bash test_commands.sh"""
+bash test_commands.sh""",
             ),
             File(
                 ".",
@@ -64,9 +63,7 @@ bash test_commands.sh"""
 cd /home/{pr.repo}
 poetry run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -79,9 +76,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 poetry run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -94,9 +89,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 poetry run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -158,7 +151,7 @@ class SCEPTRE_V4_4_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -172,17 +165,15 @@ class SCEPTRE_V4_4_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Implement the log parsing logic here
-        test_pattern = re.compile(r"^(PASSED|FAILED|SKIPPED|ERROR)\s+(.*)$", re.MULTILINE)
+        test_pattern = re.compile(
+            r"^(PASSED|FAILED|SKIPPED|ERROR)\s+(.*)$", re.MULTILINE
+        )
         for match in test_pattern.finditer(log):
             status, test_name = match.groups()
             test_name = test_name.strip()
@@ -196,7 +187,10 @@ class SCEPTRE_V4_4_2(Instance):
                 skipped_tests.add(test_name)
             elif status == "ERROR":
                 failed_tests.add(test_name)
-        summary_pattern = re.compile(r"=========================== short test summary info ============================\n(.*?)\n=+", re.DOTALL)
+        summary_pattern = re.compile(
+            r"=========================== short test summary info ============================\n(.*?)\n=+",
+            re.DOTALL,
+        )
         summary_match = summary_pattern.search(log)
         if summary_match:
             summary_text = summary_match.group(1)
@@ -206,11 +200,6 @@ class SCEPTRE_V4_4_2(Instance):
                 test_name = test_name.strip()
                 if status == "ERROR":
                     failed_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

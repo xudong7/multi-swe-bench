@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.6-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -96,7 +95,7 @@ bash /home/conan/test_commands.sh
 ###ACTION_DELIMITER###
 pip install PyJWT
 ###ACTION_DELIMITER###
-bash /home/conan/test_commands.sh"""
+bash /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -106,9 +105,7 @@ cd /home/{pr.repo}
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 nosetests . -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -122,9 +119,7 @@ fi
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 nosetests . -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -138,9 +133,7 @@ fi
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 nosetests . -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -203,7 +196,7 @@ class CONAN_1_4_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -217,44 +210,35 @@ class CONAN_1_4_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Improved log parsing logic for robustness
         # Regex pattern: test_name (class) ... status
         # Status can be: ok, ERROR, FAIL, FAILED, SKIP: <reason>
         test_line_re = re.compile(
-            r'^(?P<name>[a-zA-Z0-9_\.]+) \((?P<class>[^\)]+)\) \.{3} (?P<status>ok|ERROR|FAIL|FAILED|SKIP:.*?)$',
-            re.MULTILINE
+            r"^(?P<name>[a-zA-Z0-9_\.]+) \((?P<class>[^\)]+)\) \.{3} (?P<status>ok|ERROR|FAIL|FAILED|SKIP:.*?)$",
+            re.MULTILINE,
         )
         seen_tests = {}
         for match in test_line_re.finditer(log):
             test_id = f"{match.group('name')} ({match.group('class')})"
-            status = match.group('status')
+            status = match.group("status")
             if test_id in seen_tests:
                 continue  # Only count the first occurrence
             seen_tests[test_id] = status
-            if status == 'ok':
+            if status == "ok":
                 passed_tests.add(test_id)
-            elif status.startswith('SKIP:'):
+            elif status.startswith("SKIP:"):
                 skipped_tests.add(test_id)
-            elif status in ('ERROR', 'FAIL', 'FAILED'):
+            elif status in ("ERROR", "FAIL", "FAILED"):
                 failed_tests.add(test_id)
         # Remove any overlap (should not happen, but just in case)
         passed_tests -= failed_tests
         passed_tests -= skipped_tests
         failed_tests -= skipped_tests
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

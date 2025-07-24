@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -69,7 +68,7 @@ python3.8 -m pip install numpy==1.17.* pandas==1.0.* pytest pytest-xdist moto>=1
 ###ACTION_DELIMITER###
 python3.8 -m pip install --no-deps -e .[complete]
 ###ACTION_DELIMITER###
-echo 'pytest dask --runslow -n3 --no-header -rA --tb=no -p no:cacheprovider' > /home/dask/test_commands.sh && chmod +x /home/dask/test_commands.sh"""
+echo 'pytest dask --runslow -n3 --no-header -rA --tb=no -p no:cacheprovider' > /home/dask/test_commands.sh && chmod +x /home/dask/test_commands.sh""",
             ),
             File(
                 ".",
@@ -78,9 +77,7 @@ echo 'pytest dask --runslow -n3 --no-header -rA --tb=no -p no:cacheprovider' > /
 cd /home/{pr.repo}
 pytest dask --runslow -n3 --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -93,9 +90,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest dask --runslow -n3 --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -108,9 +103,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest dask --runslow -n3 --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -172,7 +165,7 @@ class DASK_2_29_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -186,15 +179,11 @@ class DASK_2_29_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Implement the log parsing logic here
         # Regex patterns for PASSED, FAILED, SKIPPED
         passed_pattern = re.compile(r"^PASSED ([^\s].*?)(?:\s-.*)?$", re.MULTILINE)
@@ -203,11 +192,6 @@ class DASK_2_29_0(Instance):
         passed_tests.update(passed_pattern.findall(log))
         failed_tests.update(failed_pattern.findall(log))
         skipped_tests.update(skipped_pattern.findall(log))
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

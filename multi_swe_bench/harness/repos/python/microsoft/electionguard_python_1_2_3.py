@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -65,7 +64,7 @@ bash /home/electionguard-python/test_commands.sh
 ###ACTION_DELIMITER###
 poetry run pip install gmpy2
 ###ACTION_DELIMITER###
-bash /home/electionguard-python/test_commands.sh"""
+bash /home/electionguard-python/test_commands.sh""",
             ),
             File(
                 ".",
@@ -74,9 +73,7 @@ bash /home/electionguard-python/test_commands.sh"""
 cd /home/{pr.repo}
 PYTHONPATH=src make test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -89,9 +86,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 PYTHONPATH=src make test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -104,9 +99,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 PYTHONPATH=src make test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -168,7 +161,7 @@ class ELECTIONGUARD_PYTHON_1_2_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -182,36 +175,27 @@ class ELECTIONGUARD_PYTHON_1_2_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Pattern to match test result lines, e.g.:
         # tests/unit/test_ballot_box.py ....
-        result_line_re = re.compile(r'^(tests/.*?\.py)\s+([.sF]+)')
+        result_line_re = re.compile(r"^(tests/.*?\.py)\s+([.sF]+)")
         for line in log.splitlines():
             m = result_line_re.match(line)
             if m:
                 file_name = m.group(1)
                 results = m.group(2)
                 for idx, ch in enumerate(results):
-                    test_id = f"{file_name}::test_{idx+1}"
-                    if ch == '.':
+                    test_id = f"{file_name}::test_{idx + 1}"
+                    if ch == ".":
                         passed_tests.add(test_id)
-                    elif ch == 's':
+                    elif ch == "s":
                         skipped_tests.add(test_id)
-                    elif ch == 'F':
+                    elif ch == "F":
                         failed_tests.add(test_id)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

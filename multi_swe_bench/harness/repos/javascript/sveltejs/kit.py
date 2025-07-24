@@ -176,9 +176,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -196,9 +194,7 @@ bash /home/check_git_changes.sh
 pnpm install || true
 pnpm exec playwright install-deps || true
 pnpm playwright install chromium || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -216,9 +212,7 @@ pnpm run sync-all || true
 pnpm test:kit || true
 pnpm test:vite-ecosystem-ci || true
 pnpm test:others || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -238,9 +232,7 @@ pnpm test:kit || true
 pnpm test:vite-ecosystem-ci || true
 pnpm test:others || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -259,9 +251,7 @@ pnpm run sync-all || true
 pnpm test:kit || true
 pnpm test:vite-ecosystem-ci || true
 pnpm test:others || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -363,18 +353,19 @@ class kit(Instance):
 
         passed_res = [
             re.compile(r"^PASS:?\s+([^\(]+)"),
-            re.compile(r"^\s*[✔✓]\s+(?:\d+\s+)?(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
+            re.compile(
+                r"^\s*[✔✓]\s+(?:\d+\s+)?(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"
+            ),
         ]
 
         failed_res = [
             re.compile(r"^FAIL:?\s+([^\(]+)"),
-            re.compile(r"\s*[×✗✘]\s+(?:\d+\s+)?(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
-
+            re.compile(
+                r"\s*[×✗✘]\s+(?:\d+\s+)?(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"
+            ),
         ]
 
-        skipped_res = [
-            re.compile(r"SKIP:?\s?(.+?)\s")
-        ]
+        skipped_res = [re.compile(r"SKIP:?\s?(.+?)\s")]
 
         for line in test_log.splitlines():
             for passed_re in passed_res:

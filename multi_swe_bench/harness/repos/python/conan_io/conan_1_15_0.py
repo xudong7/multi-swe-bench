@@ -1,9 +1,6 @@
 import re
-import sys
 
-import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -25,10 +22,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.5-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -94,7 +91,7 @@ apt-get install -y meson ninja-build pkg-config
 ###ACTION_DELIMITER###
 nosetests
 ###ACTION_DELIMITER###
-echo 'nosetests --verbose -A "not slow and not svn"' > /home/conan/test_commands.sh"""
+echo 'nosetests --verbose -A "not slow and not svn"' > /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -103,9 +100,7 @@ echo 'nosetests --verbose -A "not slow and not svn"' > /home/conan/test_commands
 cd /home/{pr.repo}
 nosetests --verbose -A "not slow and not svn"
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -118,9 +113,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests --verbose -A "not slow and not svn"
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -133,9 +126,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests --verbose -A "not slow and not svn"
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -198,7 +189,7 @@ class CONAN_1_15_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -212,14 +203,12 @@ class CONAN_1_15_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
         test_statuses = {}
-        test_pattern = re.compile(r'^(.*?) \(.*?\) \.\.\. (.*)$')
+        test_pattern = re.compile(r"^(.*?) \(.*?\) \.\.\. (.*)$")
         for line in log.splitlines():
             match = test_pattern.match(line)
             if match:
@@ -229,9 +218,9 @@ class CONAN_1_15_0(Instance):
                     test_statuses[test_name] = []
                 test_statuses[test_name].append(status)
         for test_name, statuses in test_statuses.items():
-            if 'FAIL' in statuses or 'ERROR' in statuses:
+            if "FAIL" in statuses or "ERROR" in statuses:
                 failed_tests.add(test_name)
-            elif 'ok' in statuses:
+            elif "ok" in statuses:
                 passed_tests.add(test_name)
             else:
                 skipped_tests.add(test_name)

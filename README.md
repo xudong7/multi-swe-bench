@@ -41,6 +41,8 @@ We are extremely delighted to release **Multi-SWE-bench**! Multi-SWE-bench addre
 We aim to accelerate progress in automated issue resolution and RL, bridging the gap toward AGI. Let's join the **Multi-SWE-RL community** to expand datasets, tools, and research collaboration!
 
 ## 📢 News
+[2025/07/15] 🔥 We are excited to announce the release of [Multi-SWE-bench flash](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench-flash)! This collection features 300 carefully selected multilingual evaluation instances, designed for rapid evaluation and efficient agent rollouts.
+
 [2025/05/10]📢 Our EnvAgent is coming soon! It uses LLMs to automate multilingual environment setup, taking Multi-SWE-RL to the next level. Stay tuned!⏰
 
 [2025/04/15]🔥We released [Multi-SWE-bench mini](https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench_mini)! A lightweight version of the full benchmark — 400 instances in total, covering 8 languages, designed to reduce compute cost and make evaluation faster and easier.
@@ -63,6 +65,15 @@ Finally, to build Multi-SWE-bench from source, follow these steps:
 git clone git@github.com:multi-swe-bench/multi-swe-bench.git
 cd multi-swe-bench
 pip install -e .
+```
+
+### Development Setup
+
+For development, install with dev dependencies and set up pre-commit hooks:
+
+```bash
+pip install -e ".[dev]"
+pre-commit install
 ```
 
 ## 📊 Evaluation
@@ -142,7 +153,6 @@ The evaluation process will generate a `final_report.json` file in your specifie
 Note, if there are issues when applying the above config file with git apply, you can add the following item. This will replace `git apply` with `patch --batch`, which can increase the success rate of applying patches:
 ```json
 {
-    ...
     "fix_patch_run_cmd": "bash -c \"apt update && apt install -y patch && sed -i 's@git apply /home/test.patch /home/fix.patch@patch --batch --fuzz=5 -p1 -i /home/test.patch;patch --batch --fuzz=5 -p1 -i /home/fix.patch@g' /home/fix-run.sh && bash /home/fix-run.sh\""
 }
 ```
@@ -169,17 +179,6 @@ Note, if there are issues when applying the above config file with git apply, yo
 | `max_workers_run_instance` | Maximum number of concurrent worker threads for running instances |
 | `log_dir` | Directory for log files |
 | `log_level` | Logging level. Options: `"DEBUG"`, `"INFO"`, `"WARNING"`, `"ERROR"`, `"CRITICAL"` |
-
-#### ✅ Integration Checklist
-
-We are working to unify instances from prior benchmarks or training dataset into our framework for consistent comparison and reuse.
-
-- [x] Integrate 500 Python instances from [SWE-bench verified](https://arxiv.org/abs/2310.06770) 
-- [x] Integrate 78 Java instances from [SWE-bench-java](https://arxiv.org/abs/2408.14354)
-- [x] Support customizing `run.sh`, `test-run.sh`, and `fix-run.sh` commands via configuration file using `"run_cmd"`, `"test_patch_run_cmd"`, and `"fix_patch_run_cmd"`
-- [x] Publish as a [pip package](https://pypi.org/project/multi-swe-bench) for easier installation and reuse
-- [ ] Integrate 2,438 Python instances from [SWE-gym](https://arxiv.org/abs/2412.21139)
-- [ ] Integrate instances from [R2E-Gym](https://github.com/R2E-Gym/R2E-Gym)
 
 
 ## [🏆 Multi-SWE-RL Community](https://huggingface.co/Multi-SWE-RL)

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -84,7 +83,7 @@ rm -rf /usr/local/lib/python3.7/site-packages/zipp* && pip install 'zipp<3.8.0'
 pip install -r requirements-dev.txt
 ###ACTION_DELIMITER###
 echo "pytest -sv --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --ignore tests/test_ec2 --ignore tests/test_sqs
-MOTO_CALL_RESET_API=false pytest --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs" > test_commands.sh && chmod +x test_commands.sh"""
+MOTO_CALL_RESET_API=false pytest --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs" > test_commands.sh && chmod +x test_commands.sh""",
             ),
             File(
                 ".",
@@ -94,9 +93,7 @@ cd /home/{pr.repo}
 pytest -sv --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --ignore tests/test_ec2 --ignore tests/test_sqs
 MOTO_CALL_RESET_API=false pytest --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -110,9 +107,7 @@ fi
 pytest -sv --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --ignore tests/test_ec2 --ignore tests/test_sqs
 MOTO_CALL_RESET_API=false pytest --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -126,9 +121,7 @@ fi
 pytest -sv --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --ignore tests/test_ec2 --ignore tests/test_sqs
 MOTO_CALL_RESET_API=false pytest --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -191,7 +184,7 @@ class MOTO_4_0_6(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -205,42 +198,35 @@ class MOTO_4_0_6(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Implement the log parsing logic here
         # Regex patterns for test results
         # Example: tests/test_file.py::test_name PASSED
-        test_result_pattern = re.compile(r'^(?P<name>\S+::\S+) (?P<status>PASSED|FAILED|SKIPPED)')
+        test_result_pattern = re.compile(
+            r"^(?P<name>\S+::\S+) (?P<status>PASSED|FAILED|SKIPPED)"
+        )
         # Example: FAILED tests/test_file.py::test_name - <error message>
-        failed_prefix_pattern = re.compile(r'^FAILED (?P<name>\S+::\S+)')
+        failed_prefix_pattern = re.compile(r"^FAILED (?P<name>\S+::\S+)")
         for line in log.splitlines():
             m = test_result_pattern.match(line)
             if m:
-                name = m.group('name')
-                status = m.group('status')
-                if status == 'PASSED':
+                name = m.group("name")
+                status = m.group("status")
+                if status == "PASSED":
                     passed_tests.add(name)
-                elif status == 'FAILED':
+                elif status == "FAILED":
                     failed_tests.add(name)
-                elif status == 'SKIPPED':
+                elif status == "SKIPPED":
                     skipped_tests.add(name)
                 continue
             m2 = failed_prefix_pattern.match(line)
             if m2:
-                name = m2.group('name')
+                name = m2.group("name")
                 failed_tests.add(name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

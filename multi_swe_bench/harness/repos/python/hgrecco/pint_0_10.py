@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -53,7 +52,7 @@ pip install .[test,numpy,uncertainties] matplotlib
 ###ACTION_DELIMITER###
 echo 'python -bb -m pytest -rfsxEX -s --cov=pint' > /home/pint/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pint/test_commands.sh"""
+bash /home/pint/test_commands.sh""",
             ),
             File(
                 ".",
@@ -62,9 +61,7 @@ bash /home/pint/test_commands.sh"""
 cd /home/{pr.repo}
 python -bb -m pytest -rfsxEX -s --cov=pint
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -77,9 +74,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python -bb -m pytest -rfsxEX -s --cov=pint
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -92,9 +87,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python -bb -m pytest -rfsxEX -s --cov=pint
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -156,7 +149,7 @@ class PINT_0_10(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -170,22 +163,18 @@ class PINT_0_10(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex patterns for summary lines
-        skip_summary_re = re.compile(r'SKIPPED \[\d+\] ([^:]+):(\d+):')
-        xfail_summary_re = re.compile(r'XFAIL ([^ ]+)')
-        error_summary_re = re.compile(r'ERROR ([^ ]+)')
-        fail_summary_re = re.compile(r'FAILED ([^ ]+)')
+        skip_summary_re = re.compile(r"SKIPPED \[\d+\] ([^:]+):(\d+):")
+        xfail_summary_re = re.compile(r"XFAIL ([^ ]+)")
+        error_summary_re = re.compile(r"ERROR ([^ ]+)")
+        fail_summary_re = re.compile(r"FAILED ([^ ]+)")
         # Regex for per-file test lines (dots, s, x, F, E)
-        test_line_re = re.compile(r'^(\S+\.py) ([.sxFE]+)')
+        test_line_re = re.compile(r"^(\S+\.py) ([.sxFE]+)")
         # Track test status by file and position
         for line in log.splitlines():
             m = test_line_re.match(line)
@@ -193,17 +182,17 @@ class PINT_0_10(Instance):
                 fname, results = m.groups()
                 for idx, ch in enumerate(results):
                     # Compose a synthetic test name: file.py::<index>
-                    test_id = f"{fname}::{idx+1}"
-                    if ch == '.':
+                    test_id = f"{fname}::{idx + 1}"
+                    if ch == ".":
                         passed_tests.add(test_id)
-                    elif ch == 's':
+                    elif ch == "s":
                         skipped_tests.add(test_id)
-                    elif ch == 'x':
+                    elif ch == "x":
                         # xfail or xpass, treat as failed for now
                         failed_tests.add(test_id)
-                    elif ch == 'F':
+                    elif ch == "F":
                         failed_tests.add(test_id)
-                    elif ch == 'E':
+                    elif ch == "E":
                         failed_tests.add(test_id)
         # Parse summary info for more precise test names
         for line in log.splitlines():
@@ -220,12 +209,7 @@ class PINT_0_10(Instance):
             if m:
                 failed_tests.add(m.group(1))
         # Remove any test from passed if it is also in failed/skipped
-        passed_tests -= (failed_tests | skipped_tests)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
+        passed_tests -= failed_tests | skipped_tests
 
         return TestResult(
             passed_count=len(passed_tests),

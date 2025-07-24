@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -94,7 +93,7 @@ pytest tests/test_encoding" > test_commands.sh
 bash test_commands.sh
 ###ACTION_DELIMITER###
 echo "export PYTHONPATH=.
-pytest" > test_commands.sh"""
+pytest" > test_commands.sh""",
             ),
             File(
                 ".",
@@ -104,9 +103,7 @@ cd /home/{pr.repo}
 export PYTHONPATH=.
 pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -120,9 +117,7 @@ fi
 export PYTHONPATH=.
 pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -136,9 +131,7 @@ fi
 export PYTHONPATH=.
 pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -200,7 +193,7 @@ class FEATURE_ENGINE_V1_1_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -214,15 +207,11 @@ class FEATURE_ENGINE_V1_1_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Implement the log parsing logic here
         # Get failed tests from summary
         summary_marker = "=========================== short test summary info ============================"
@@ -242,21 +231,16 @@ class FEATURE_ENGINE_V1_1_1(Instance):
                 test_file = match.group(1).strip()
                 statuses = match.group(2)
                 # Check for failures indicated by 'F' that might not be in the summary
-                if 'F' in statuses and test_file not in failed_test_files:
+                if "F" in statuses and test_file not in failed_test_files:
                     failed_tests.add(test_file)
                     failed_test_files.add(test_file)
                 # If the file has any failure, we don't consider it for passed/skipped.
                 if test_file in failed_test_files:
                     continue
-                if 's' in statuses:
+                if "s" in statuses:
                     skipped_tests.add(test_file)
-                if '.' in statuses:
+                if "." in statuses:
                     passed_tests.add(test_file)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

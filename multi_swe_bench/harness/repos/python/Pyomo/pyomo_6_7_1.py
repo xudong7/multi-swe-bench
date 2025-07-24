@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -53,7 +52,7 @@ pip install -e .[tests]
 ###ACTION_DELIMITER###
 echo 'pytest --no-header -rA --tb=no -p no:cacheprovider -v pyomo examples doc' > /home/pyomo/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pyomo/test_commands.sh"""
+bash /home/pyomo/test_commands.sh""",
             ),
             File(
                 ".",
@@ -62,9 +61,7 @@ bash /home/pyomo/test_commands.sh"""
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider -v pyomo examples doc
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -77,9 +74,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider -v pyomo examples doc
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -92,9 +87,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider -v pyomo examples doc
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -156,7 +149,7 @@ class PYOMO_6_7_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -170,43 +163,39 @@ class PYOMO_6_7_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Patterns for inline and summary lines
         # Inline: <test_path>::<class>::<test_name> <STATUS>
-        inline_pattern = re.compile(r'^(\S+::\S+::\S+) (PASSED|FAILED|SKIPPED)')
+        inline_pattern = re.compile(r"^(\S+::\S+::\S+) (PASSED|FAILED|SKIPPED)")
         # Summary: <STATUS> <test_path>::<class>::<test_name>
-        summary_pattern = re.compile(r'^(PASSED|FAILED|SKIPPED) (\S+::\S+::\S+)')
+        summary_pattern = re.compile(r"^(PASSED|FAILED|SKIPPED) (\S+::\S+::\S+)")
         # Skipped summary with reason: SKIPPED [1] <test_path>:<line>: ...
-        skipped_summary_pattern = re.compile(r'^SKIPPED \[\d+\] (\S+):\d+:')
+        skipped_summary_pattern = re.compile(r"^SKIPPED \[\d+\] (\S+):\d+:")
         for line in log.splitlines():
             # Inline pattern
             m = inline_pattern.match(line)
             if m:
                 test_name, status = m.group(1), m.group(2)
-                if status == 'PASSED':
+                if status == "PASSED":
                     passed_tests.add(test_name)
-                elif status == 'FAILED':
+                elif status == "FAILED":
                     failed_tests.add(test_name)
-                elif status == 'SKIPPED':
+                elif status == "SKIPPED":
                     skipped_tests.add(test_name)
                 continue
             # Summary pattern
             m = summary_pattern.match(line)
             if m:
                 status, test_name = m.group(1), m.group(2)
-                if status == 'PASSED':
+                if status == "PASSED":
                     passed_tests.add(test_name)
-                elif status == 'FAILED':
+                elif status == "FAILED":
                     failed_tests.add(test_name)
-                elif status == 'SKIPPED':
+                elif status == "SKIPPED":
                     skipped_tests.add(test_name)
                 continue
             # Skipped summary with reason (extract file path as test name)
@@ -215,11 +204,6 @@ class PYOMO_6_7_1(Instance):
                 test_name = m.group(1)
                 skipped_tests.add(test_name)
                 continue
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

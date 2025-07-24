@@ -125,9 +125,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -143,9 +141,7 @@ bash /home/check_git_changes.sh
 
 ./gradlew clean test --continue || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -156,9 +152,7 @@ set -e
 cd /home/{pr.repo}
 ./gradlew clean test --continue
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -170,9 +164,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 ./gradlew clean test --continue
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -184,9 +176,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 ./gradlew clean test --continue
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -308,9 +298,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -326,9 +314,7 @@ bash /home/check_git_changes.sh
 
 ./gradlew clean test --continue || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -339,9 +325,7 @@ set -e
 cd /home/{pr.repo}
 ./gradlew jib-maven-plugin:test --tests com.google.cloud.tools.jib.maven.MavenProjectPropertiesTest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -353,9 +337,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 ./gradlew jib-maven-plugin:test --tests com.google.cloud.tools.jib.maven.MavenProjectPropertiesTest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -367,9 +349,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 ./gradlew jib-maven-plugin:test --tests com.google.cloud.tools.jib.maven.MavenProjectPropertiesTest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

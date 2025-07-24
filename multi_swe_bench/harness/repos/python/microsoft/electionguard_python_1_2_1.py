@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -73,7 +72,7 @@ echo 'poetry run pytest tests/unit --no-header -rA --tb=no -p no:cacheprovider
 poetry run pytest tests/property --no-header -rA --tb=no -p no:cacheprovider
 poetry run pytest tests/integration --no-header -rA --tb=no -p no:cacheprovider' > test_commands.sh && chmod +x test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/electionguard-python/test_commands.sh"""
+bash /home/electionguard-python/test_commands.sh""",
             ),
             File(
                 ".",
@@ -84,9 +83,7 @@ poetry run pytest tests/unit --no-header -rA --tb=no -p no:cacheprovider
 poetry run pytest tests/property --no-header -rA --tb=no -p no:cacheprovider
 poetry run pytest tests/integration --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -101,9 +98,7 @@ poetry run pytest tests/unit --no-header -rA --tb=no -p no:cacheprovider
 poetry run pytest tests/property --no-header -rA --tb=no -p no:cacheprovider
 poetry run pytest tests/integration --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -118,9 +113,7 @@ poetry run pytest tests/unit --no-header -rA --tb=no -p no:cacheprovider
 poetry run pytest tests/property --no-header -rA --tb=no -p no:cacheprovider
 poetry run pytest tests/integration --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -182,7 +175,7 @@ class ELECTIONGUARD_PYTHON_1_2_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -196,15 +189,11 @@ class ELECTIONGUARD_PYTHON_1_2_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Match PASSED and FAILED lines
         passed_pattern = re.compile(r"^PASSED\s+(.+)$", re.MULTILINE)
         failed_pattern = re.compile(r"^FAILED\s+(.+)$", re.MULTILINE)
@@ -216,11 +205,6 @@ class ELECTIONGUARD_PYTHON_1_2_1(Instance):
             failed_tests.add(match.group(1).strip())
         for match in skipped_pattern.finditer(log):
             skipped_tests.add(match.group(1).strip())
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

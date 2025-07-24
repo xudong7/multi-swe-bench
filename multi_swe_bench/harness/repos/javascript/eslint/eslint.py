@@ -123,9 +123,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -144,9 +142,7 @@ bash /home/check_git_changes.sh
 nvm install || true
 nvm use || true
 npm install || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -162,9 +158,7 @@ npm install || true
 node Makefile mocha || true
 node Makefile karma || true
 node Makefile fuzz || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -182,9 +176,7 @@ node Makefile mocha || true
 node Makefile karma || true
 node Makefile fuzz || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -202,9 +194,7 @@ node Makefile mocha || true
 node Makefile karma || true
 node Makefile fuzz || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -303,24 +293,26 @@ class eslint(Instance):
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        ignore_tests =["ast-utils", "bin/eslint.js"]
+        ignore_tests = ["ast-utils", "bin/eslint.js"]
         passed_res = [
             re.compile(r"PASS:?\s+([^\(]+)"),
-            re.compile(r"\s*[✔✓]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
+            re.compile(r"\s*[✔✓]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
         ]
 
         failed_res = [
             re.compile(r"FAIL:?\s+([^\(]+)"),
             re.compile(r"\s*[×✗]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
-            re.compile(r"^(?!\s*\(node:)\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
+            re.compile(
+                r"^(?!\s*\(node:)\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"
+            ),
         ]
 
         skipped_res = [
             re.compile(r"SKIP:?\s+([^\(]+)"),
         ]
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
         for line in test_log.splitlines():
-            line = ansi_escape.sub('', line)
+            line = ansi_escape.sub("", line)
             line = line.strip()
             for passed_re in passed_res:
                 m = passed_re.search(line)
@@ -344,9 +336,9 @@ class eslint(Instance):
                 failed_tests.remove(test)
 
         if failed_tests:
-            failed_tests.add('ToTal_Test')
+            failed_tests.add("ToTal_Test")
         else:
-            passed_tests.add('ToTal_Test')
+            passed_tests.add("ToTal_Test")
         return TestResult(
             passed_count=len(passed_tests),
             failed_count=len(failed_tests),

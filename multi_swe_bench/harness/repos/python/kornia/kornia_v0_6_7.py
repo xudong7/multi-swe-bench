@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -61,7 +60,7 @@ pytest -s -v --no-header -rA --tb=short -p no:cacheprovider
 ###ACTION_DELIMITER###
 apt-get update && apt-get install -y libgl1
 ###ACTION_DELIMITER###
-bash /home/kornia/test_commands.sh"""
+bash /home/kornia/test_commands.sh""",
             ),
             File(
                 ".",
@@ -70,9 +69,7 @@ bash /home/kornia/test_commands.sh"""
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -85,9 +82,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -100,9 +95,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -164,7 +157,7 @@ class KORNIA_V0_6_7(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -178,14 +171,11 @@ class KORNIA_V0_6_7(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Pattern: STATUS test_name (e.g., PASSED test/foo.py::test_bar)
         for line in log.splitlines():
             m = re.match(r"^(PASSED|FAILED|SKIPPED) (.+)$", line.strip())
@@ -197,12 +187,6 @@ class KORNIA_V0_6_7(Instance):
                     failed_tests.add(test_name)
                 elif status == "SKIPPED":
                     skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
-        
 
         return TestResult(
             passed_count=len(passed_tests),

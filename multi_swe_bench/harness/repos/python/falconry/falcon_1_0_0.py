@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:2.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -61,7 +60,7 @@ pip install ddt==1.4.4
 ###ACTION_DELIMITER###
 nosetests -v --with-coverage
 ###ACTION_DELIMITER###
-echo 'nosetests -v --with-coverage' > /home/falcon/test_commands.sh"""
+echo 'nosetests -v --with-coverage' > /home/falcon/test_commands.sh""",
             ),
             File(
                 ".",
@@ -70,9 +69,7 @@ echo 'nosetests -v --with-coverage' > /home/falcon/test_commands.sh"""
 cd /home/{pr.repo}
 nosetests -v --with-coverage
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -85,9 +82,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests -v --with-coverage
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -100,9 +95,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests -v --with-coverage
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -164,7 +157,7 @@ class FALCON_1_0_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -178,14 +171,11 @@ class FALCON_1_0_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         test_pattern = re.compile(r"^(tests\..*?) \.\.\. (.*)$")
         for line in log.splitlines():
             match = test_pattern.match(line)
@@ -198,11 +188,6 @@ class FALCON_1_0_0(Instance):
                     failed_tests.add(test_name)
                 elif "skipped" in status:
                     skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

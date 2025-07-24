@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.12"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -56,7 +55,7 @@ apt-get update && apt-get install -y libopenmpi-dev
 pip install -e .[dev]
 ###ACTION_DELIMITER###
 echo 'pytest --no-header -rA --tb=no -p no:cacheprovider tests/ --cov --cov-report=term-missing --cov-append --cov-config=.coveragerc --hypothesis-show-statistics
-pytest --no-header -rA --tb=no -p no:cacheprovider integration_tests/ -v' > /home/haddock3/test_commands.sh && chmod +x /home/haddock3/test_commands.sh"""
+pytest --no-header -rA --tb=no -p no:cacheprovider integration_tests/ -v' > /home/haddock3/test_commands.sh && chmod +x /home/haddock3/test_commands.sh""",
             ),
             File(
                 ".",
@@ -66,9 +65,7 @@ cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider tests/ --cov --cov-report=term-missing --cov-append --cov-config=.coveragerc --hypothesis-show-statistics
 pytest --no-header -rA --tb=no -p no:cacheprovider integration_tests/ -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -82,9 +79,7 @@ fi
 pytest --no-header -rA --tb=no -p no:cacheprovider tests/ --cov --cov-report=term-missing --cov-append --cov-config=.coveragerc --hypothesis-show-statistics
 pytest --no-header -rA --tb=no -p no:cacheprovider integration_tests/ -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -98,9 +93,7 @@ fi
 pytest --no-header -rA --tb=no -p no:cacheprovider tests/ --cov --cov-report=term-missing --cov-append --cov-config=.coveragerc --hypothesis-show-statistics
 pytest --no-header -rA --tb=no -p no:cacheprovider integration_tests/ -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -162,7 +155,7 @@ class HADDOCK3_2024_10_0B6(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -176,15 +169,11 @@ class HADDOCK3_2024_10_0B6(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex patterns for test results
         passed_pattern = re.compile(r"^PASSED (.+)", re.MULTILINE)
         failed_pattern = re.compile(r"^FAILED (.+?)(?: - .*)?$", re.MULTILINE)
@@ -201,11 +190,6 @@ class HADDOCK3_2024_10_0B6(Instance):
         for match in skipped_pattern.finditer(log):
             skipped_id = match.group(1).strip()
             skipped_tests.add(skipped_id)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

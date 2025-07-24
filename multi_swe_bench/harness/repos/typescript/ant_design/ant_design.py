@@ -118,9 +118,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -136,9 +134,7 @@ bash /home/check_git_changes.sh
 
 bun install 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -149,9 +145,7 @@ set -e
 cd /home/{pr.repo}
 bun run test -- --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -163,9 +157,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 bun run test -- --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -177,9 +169,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 bun run test -- --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -219,7 +209,6 @@ class AntDesign(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-
         return AntDesignImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:

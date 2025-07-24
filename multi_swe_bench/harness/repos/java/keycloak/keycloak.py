@@ -107,9 +107,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -123,9 +121,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -135,9 +131,7 @@ set -e
 
 cd /home/{pr.repo}
 ./mvnw clean test -fae
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -149,9 +143,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 ./mvnw clean test -fae
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -163,9 +155,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 ./mvnw clean test -fae
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

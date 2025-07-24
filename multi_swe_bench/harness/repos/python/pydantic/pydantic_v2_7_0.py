@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -63,7 +62,7 @@ pdm install --group testing
 ###ACTION_DELIMITER###
 echo 'pdm run coverage run -m pytest --durations=10' > /home/pydantic/test_commands.sh && chmod +x /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -72,9 +71,7 @@ bash /home/pydantic/test_commands.sh"""
 cd /home/{pr.repo}
 pdm run coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -87,9 +84,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pdm run coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -102,9 +97,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pdm run coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -167,7 +160,7 @@ class PYDANTIC_V2_7_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -181,53 +174,55 @@ class PYDANTIC_V2_7_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Implementation: parse pytest log output
         # 1. Extract failed test names from error headers
         # Match lines like: _____________________________ test_func_name ______________________________
         # Require at least 10 underscores on both sides, and no brackets or spaces in the name
         # Only match lines with a single function name (letters, numbers, underscores, possibly brackets)
         # Only match lines with a single function name (letters, numbers, underscores, brackets, hyphens)
-        failed_test_pattern = re.compile(r'^_{10,}\s*([\w\[\]\-]+)\s*_{10,}$', re.MULTILINE)
+        failed_test_pattern = re.compile(
+            r"^_{10,}\s*([\w\[\]\-]+)\s*_{10,}$", re.MULTILINE
+        )
         for match in failed_test_pattern.finditer(log):
             name = match.group(1).strip()
             # Exclude lines with spaces, dots, or colons (not a function name)
-            if name and all(c not in name for c in ' .:'):
+            if name and all(c not in name for c in " .:"):
                 failed_tests.add(name)
         # 2. Parse compact output for passed/skipped tests
         # Example: tests/test_abc.py .s
         # Match lines that start with a file path and are immediately followed by result characters, ignoring trailing content
         # Match lines that start with a file path and are immediately followed by result characters, ignoring trailing content
-        compact_line_pattern = re.compile(r'^(tests/[^:]+\.py)\s+([.sFx]+)\s*(\[\s*\d+%\])?\s*$', re.MULTILINE)
+        compact_line_pattern = re.compile(
+            r"^(tests/[^:]+\.py)\s+([.sFx]+)\s*(\[\s*\d+%\])?\s*$", re.MULTILINE
+        )
         for match in compact_line_pattern.finditer(log):
             file_path = match.group(1)
             results = match.group(2)
             # Extract only the contiguous sequence of result characters (., s, F, x) at the start
-            m = re.match(r'^([.sFx]+)', results)
+            m = re.match(r"^([.sFx]+)", results)
             if m:
                 results = m.group(1)
             else:
-                results = ''
+                results = ""
             for idx, ch in enumerate(results):
-                test_name = f"{file_path}::test_{idx+1}"
-                if ch == '.':
+                test_name = f"{file_path}::test_{idx + 1}"
+                if ch == ".":
                     passed_tests.add(test_name)
-                elif ch == 's':
+                elif ch == "s":
                     skipped_tests.add(test_name)
                 # 'F' and 'x' are not added here; 'F' is handled by error headers, 'x' is xfail
         # Debug print for passed_tests
         print("DEBUG passed_tests sample:", list(passed_tests)[:10])
         # 3. Optionally, extract more precise test names from lines like:
         # tests/test_config.py:347 TestsBaseConfig.test_config_class_is_deprecated
-        detailed_name_pattern = re.compile(r'^(tests/[^:]+\.py):(\d+)\s+([\w\[\].:-]+)', re.MULTILINE)
+        detailed_name_pattern = re.compile(
+            r"^(tests/[^:]+\.py):(\d+)\s+([\w\[\].:-]+)", re.MULTILINE
+        )
         for match in detailed_name_pattern.finditer(log):
             file_path = match.group(1)
             # line_no = match.group(2)  # Not used
@@ -240,11 +235,6 @@ class PYDANTIC_V2_7_0(Instance):
         # Remove any overlap (shouldn't happen, but just in case)
         passed_tests -= failed_tests
         skipped_tests -= failed_tests
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

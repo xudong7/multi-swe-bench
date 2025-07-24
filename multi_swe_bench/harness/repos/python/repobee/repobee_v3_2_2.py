@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -70,7 +69,7 @@ chmod +x /home/repobee/test_commands.sh
 ###ACTION_DELIMITER###
 cat /home/repobee/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/repobee/test_commands.sh"""
+bash /home/repobee/test_commands.sh""",
             ),
             File(
                 ".",
@@ -82,9 +81,7 @@ export PYTHONWARNINGS="ignore:Unverified HTTPS request"
 export PYTHONPATH="$(pwd)/src"
 pytest -vv --showlocals tests system_tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -100,9 +97,7 @@ export PYTHONWARNINGS="ignore:Unverified HTTPS request"
 export PYTHONPATH="$(pwd)/src"
 pytest -vv --showlocals tests system_tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -118,9 +113,7 @@ export PYTHONWARNINGS="ignore:Unverified HTTPS request"
 export PYTHONPATH="$(pwd)/src"
 pytest -vv --showlocals tests system_tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -182,7 +175,7 @@ class REPOBEE_V3_2_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -196,20 +189,21 @@ class REPOBEE_V3_2_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
         # Regex patterns for test result lines
         # Inline format: test_path::test_name STATUS [ ... ]
         # Inline format: test_path::test_name STATUS [ ... ] (requires at least one '::' in test name)
-        inline_pattern = re.compile(r"^([\w./-]+::[\w./:-]+)\s+(PASSED|FAILED|ERROR|SKIPPED|XPASS|XFAIL)\b")
+        inline_pattern = re.compile(
+            r"^([\w./-]+::[\w./:-]+)\s+(PASSED|FAILED|ERROR|SKIPPED|XPASS|XFAIL)\b"
+        )
         # Standalone failed format: STATUS test_path::test_name (requires at least one '::' in test name)
-        standalone_failed_pattern = re.compile(r"^(FAILED|ERROR)\s+([\w./-]+::[\w./:-]+)$")
+        standalone_failed_pattern = re.compile(
+            r"^(FAILED|ERROR)\s+([\w./-]+::[\w./:-]+)$"
+        )
         for line in log.splitlines():
             # Check for inline format
             m = inline_pattern.match(line)
@@ -230,11 +224,6 @@ class REPOBEE_V3_2_2(Instance):
                 if status in ("FAILED", "ERROR"):
                     failed_tests.add(test_name)
                 continue
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

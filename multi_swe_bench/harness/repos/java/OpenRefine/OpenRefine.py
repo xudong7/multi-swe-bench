@@ -68,7 +68,6 @@ RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && 
 """
 
 
-
 class OpenRefineImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -124,9 +123,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -168,9 +165,7 @@ grep -q "<mirror>" ~/.m2/settings.xml || sed -i '/<\/settings>/i \\
 </mirrors>' ~/.m2/settings.xml
 fi
 mvn clean test -fn || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -179,9 +174,7 @@ mvn clean test -fn || true
 set -e
 cd /home/{pr.repo}
 mvn clean test -fn || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -192,9 +185,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 mvn clean test -fn || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -205,9 +196,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 mvn clean test -fn || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -329,7 +318,7 @@ class OpenRefine(Instance):
             ),
             re.compile(
                 r"(?:\[\x1B\[[0-9;]*m)?INFO(?:\x1B\[[0-9;]*m)?\]?\s+([a-zA-Z0-9 \-_.]+?)\s+\.{3,}\s+(?:\x1B\[[0-9;]*m)?SUCCESS"
-            )
+            ),
         ]
 
         re_fail_tests = [
@@ -338,7 +327,7 @@ class OpenRefine(Instance):
             ),
             re.compile(
                 r"(?:\[\x1B\[[0-9;]*m)?INFO(?:\x1B\[[0-9;]*m)?\]?\s+([a-zA-Z0-9 \-_.]+?)\s+\.{3,}\s+(?:\x1B\[[0-9;]*m)?FAILURE"
-            )
+            ),
         ]
         for line in test_log.splitlines():
             line = line.strip()
@@ -363,4 +352,3 @@ class OpenRefine(Instance):
             failed_tests=failed_tests,
             skipped_tests=skipped_tests,
         )
-

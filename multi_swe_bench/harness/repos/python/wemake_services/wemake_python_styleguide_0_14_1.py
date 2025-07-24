@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -55,7 +54,7 @@ poetry install
 ###ACTION_DELIMITER###
 poetry run pytest
 ###ACTION_DELIMITER###
-echo "poetry run pytest" > test_commands.sh"""
+echo "poetry run pytest" > test_commands.sh""",
             ),
             File(
                 ".",
@@ -64,9 +63,7 @@ echo "poetry run pytest" > test_commands.sh"""
 cd /home/{pr.repo}
 poetry run pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -79,9 +76,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 poetry run pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -94,9 +89,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 poetry run pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -158,7 +151,7 @@ class WEMAKE_PYTHON_STYLEGUIDE_0_14_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -172,56 +165,49 @@ class WEMAKE_PYTHON_STYLEGUIDE_0_14_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         test_status = {}
         status_line_pattern = re.compile(r"^(tests/.*?\.py)\s+([\.sFE]+)")
         for line in log.splitlines():
             match = status_line_pattern.match(line)
             if match:
                 test_file, statuses = match.groups()
-                if 'F' in statuses or 'E' in statuses:
-                    test_status[test_file] = 'failed'
-                elif 's' in statuses:
-                    if test_status.get(test_file) != 'failed':
-                        test_status[test_file] = 'skipped'
+                if "F" in statuses or "E" in statuses:
+                    test_status[test_file] = "failed"
+                elif "s" in statuses:
+                    if test_status.get(test_file) != "failed":
+                        test_status[test_file] = "skipped"
                 else:
                     if test_file not in test_status:
-                        test_status[test_file] = 'passed'
+                        test_status[test_file] = "passed"
         error_collecting_pattern = re.compile(r"ERROR collecting (tests[^\s]*\.py)")
         for match in error_collecting_pattern.finditer(log):
-            test_status[match.group(1)] = 'failed'
+            test_status[match.group(1)] = "failed"
         skipped_summary_pattern = re.compile(r"SKIPPED[^]]*]\s(tests[^\s]*?\.py)")
         for match in skipped_summary_pattern.finditer(log):
             test_file = match.group(1)
-            if test_status.get(test_file) != 'failed':
-                test_status[test_file] = 'skipped'
-        failures_section_pattern = re.compile(r"^=+ FAILURES =+$(.*?)^=+", re.MULTILINE | re.DOTALL)
+            if test_status.get(test_file) != "failed":
+                test_status[test_file] = "skipped"
+        failures_section_pattern = re.compile(
+            r"^=+ FAILURES =+$(.*?)^=+", re.MULTILINE | re.DOTALL
+        )
         failure_file_pattern = re.compile(r"^(tests/.*?\.py)", re.MULTILINE)
         failures_section_match = failures_section_pattern.search(log)
         if failures_section_match:
             section = failures_section_match.group(1)
             for f in failure_file_pattern.findall(section):
-                test_status[f] = 'failed'
+                test_status[f] = "failed"
         for file, status in test_status.items():
-            if status == 'failed':
+            if status == "failed":
                 failed_tests.add(file)
-            elif status == 'skipped':
+            elif status == "skipped":
                 skipped_tests.add(file)
             else:
                 passed_tests.add(file)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

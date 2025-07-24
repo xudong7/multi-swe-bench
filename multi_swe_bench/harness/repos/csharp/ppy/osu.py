@@ -112,9 +112,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -128,9 +126,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 dotnet tool restore
 dotnet restore osu.Desktop.slnf
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -150,9 +146,7 @@ osu.Game.Rulesets.Mania.Tests/bin/Debug/**/osu.Game.Rulesets.Mania.Tests.dll \
 osu.Game.Tournament.Tests/bin/Debug/**/osu.Game.Tournament.Tests.dll \
 Templates/**/*.Tests/bin/Debug/**/*.Tests.dll \
 --logger "trx;LogFileName=TestResults.trx"  -v normal -- NUnit.ConsoleOut=0 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -173,9 +167,7 @@ osu.Game.Rulesets.Mania.Tests/bin/Debug/**/osu.Game.Rulesets.Mania.Tests.dll \
 osu.Game.Tournament.Tests/bin/Debug/**/osu.Game.Tournament.Tests.dll \
 Templates/**/*.Tests/bin/Debug/**/*.Tests.dll \
 --logger "trx;LogFileName=TestResults.trx"  -v normal -- NUnit.ConsoleOut=0 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -196,9 +188,7 @@ osu.Game.Rulesets.Mania.Tests/bin/Debug/**/osu.Game.Rulesets.Mania.Tests.dll \
 osu.Game.Tournament.Tests/bin/Debug/**/osu.Game.Tournament.Tests.dll \
 Templates/**/*.Tests/bin/Debug/**/*.Tests.dll \
 --logger "trx;LogFileName=TestResults.trx" -v normal -- NUnit.ConsoleOut=0 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -258,21 +248,20 @@ class osu(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, test_log: str) -> TestResult:
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
 
-        parent_re  = re.compile(r'^\s*Running all tests in\s+(.+)$')
-        status_re  = re.compile(
-            r'^\s*(Passed|Failed|Skipped)\s+(.+?)(?=\s+\[[^\]]+\]\s*$)'
+        parent_re = re.compile(r"^\s*Running all tests in\s+(.+)$")
+        status_re = re.compile(
+            r"^\s*(Passed|Failed|Skipped)\s+(.+?)(?=\s+\[[^\]]+\]\s*$)"
         )
 
         status_map = {
-            'Passed':  passed_tests,
-            'Failed':  failed_tests,
-            'Skipped': skipped_tests,
+            "Passed": passed_tests,
+            "Failed": failed_tests,
+            "Skipped": skipped_tests,
         }
 
         current_parent: str | None = None
@@ -299,4 +288,3 @@ class osu(Instance):
             failed_tests=failed_tests,
             skipped_tests=skipped_tests,
         )
-

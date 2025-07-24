@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -57,7 +56,7 @@ uv sync --frozen --group all --all-extras
 ###ACTION_DELIMITER###
 echo 'uv run coverage run -m pytest --durations=10 -v' > /home/pydantic/test_commands.sh && chmod +x /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -66,9 +65,7 @@ bash /home/pydantic/test_commands.sh"""
 cd /home/{pr.repo}
 uv run coverage run -m pytest --durations=10 -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -81,9 +78,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 uv run coverage run -m pytest --durations=10 -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -96,9 +91,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 uv run coverage run -m pytest --durations=10 -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -161,7 +154,7 @@ class PYDANTIC_V2_11_0A1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -175,21 +168,18 @@ class PYDANTIC_V2_11_0A1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         """
         Parse the log content and extract test execution results.
         Returns a dictionary with keys: passed_tests, failed_tests, skipped_tests.
         """
-        import re
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
         # Regex to match test result lines
         # Example: tests/test_file.py::test_name[params] PASSED [  0%]
         test_result_re = re.compile(
-            r'^(?P<name>[\w\./\-\[\]:{}\", =]+)\s+(?P<status>PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\b'
+            r"^(?P<name>[\w\./\-\[\]:{}\", =]+)\s+(?P<status>PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)\b"
         )
         for line in log.splitlines():
             match = test_result_re.match(line)

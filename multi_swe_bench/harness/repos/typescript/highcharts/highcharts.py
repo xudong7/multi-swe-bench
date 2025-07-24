@@ -67,7 +67,6 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | b
 """
 
 
-
 class highchartsImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -124,9 +123,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -145,9 +142,7 @@ nvm install 22
 nvm use 22
 npm install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -166,9 +161,7 @@ export DISPLAY=:99
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test-node || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npx gulp test --single-run --ts --splitbrowsers ChromeHeadless || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -188,9 +181,7 @@ export DISPLAY=:99
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test-node || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npx gulp test --single-run --ts --splitbrowsers ChromeHeadless || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -210,9 +201,7 @@ export DISPLAY=:99
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test-node || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npx gulp test --single-run --ts --splitbrowsers ChromeHeadless || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -312,23 +301,23 @@ class highcharts(Instance):
         failed_tests = set()
         skipped_tests = set()
 
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
 
         pass_patterns = [
-            re.compile(r'^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$'),
+            re.compile(r"^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$"),
         ]
 
         fail_patterns = [
-            re.compile(r'^[\s]*✖\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$'),
-            re.compile(r'^\s*\d+\)\s*(.+)$')
+            re.compile(r"^[\s]*✖\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$"),
+            re.compile(r"^\s*\d+\)\s*(.+)$"),
         ]
 
         skip_patterns = [
-            re.compile(r'^\s*-\s+(.*)$'),  # - skipped
+            re.compile(r"^\s*-\s+(.*)$"),  # - skipped
         ]
 
         for line in test_log.splitlines():
-            line = ansi_escape.sub('', line).strip()
+            line = ansi_escape.sub("", line).strip()
             if not line:
                 continue
 

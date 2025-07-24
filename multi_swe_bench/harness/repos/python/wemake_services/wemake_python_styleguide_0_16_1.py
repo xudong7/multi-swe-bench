@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -61,7 +60,7 @@ make test
 ###ACTION_DELIMITER###
 poetry run pytest
 ###ACTION_DELIMITER###
-echo 'poetry run pytest --no-header -rA --tb=no -p no:cacheprovider' > test_commands.sh"""
+echo 'poetry run pytest --no-header -rA --tb=no -p no:cacheprovider' > test_commands.sh""",
             ),
             File(
                 ".",
@@ -70,9 +69,7 @@ echo 'poetry run pytest --no-header -rA --tb=no -p no:cacheprovider' > test_comm
 cd /home/{pr.repo}
 poetry run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -85,9 +82,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 poetry run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -100,9 +95,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 poetry run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -164,7 +157,7 @@ class WEMAKE_PYTHON_STYLEGUIDE_0_16_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -178,29 +171,26 @@ class WEMAKE_PYTHON_STYLEGUIDE_0_16_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        import re
         all_test_files = set()
         failed_tests = set()
         skipped_tests = set()
         # Regex for lines showing test progress
-        progress_pattern = re.compile(r'^(tests/.*?\.py)')
+        progress_pattern = re.compile(r"^(tests/.*?\.py)")
         # Regex for lines in the final "SKIPPED" summary
-        skipped_summary_pattern = re.compile(r'^SKIPPED \[\[\d+\] (tests/.*?\.py):')
+        skipped_summary_pattern = re.compile(r"^SKIPPED \[\[\d+\] (tests/.*?\.py):")
         for line in log.splitlines():
             # Match progress lines
             progress_match = progress_pattern.match(line)
-            if progress_match and '[' in line and ']' in line:
+            if progress_match and "[" in line and "]" in line:
                 file_path = progress_match.group(1)
                 all_test_files.add(file_path)
                 # Check for 'F' for failure
-                if ' F ' in line or line.endswith(' F'):
+                if " F " in line or line.endswith(" F"):
                     failed_tests.add(file_path)
                 # Check for 's' for skipped
-                if ' s ' in line:
+                if " s " in line:
                     skipped_tests.add(file_path)
                 continue
             # Match skipped summary lines
@@ -212,11 +202,6 @@ class WEMAKE_PYTHON_STYLEGUIDE_0_16_1(Instance):
         passed_tests = all_test_files - failed_tests - skipped_tests
         # A test that is in both failed and skipped sets should be considered failed.
         skipped_tests -= failed_tests
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

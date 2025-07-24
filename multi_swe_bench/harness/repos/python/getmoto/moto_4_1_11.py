@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -61,7 +60,7 @@ make test
 ###ACTION_DELIMITER###
 make test-only
 ###ACTION_DELIMITER###
-echo -e '#!/bin/bash\nset -e\npytest --no-header -rA --tb=no -p no:cacheprovider' > /home/moto/test_commands.sh"""
+echo -e '#!/bin/bash\nset -e\npytest --no-header -rA --tb=no -p no:cacheprovider' > /home/moto/test_commands.sh""",
             ),
             File(
                 ".",
@@ -72,9 +71,7 @@ cd /home/{pr.repo}
 set -e
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -89,9 +86,7 @@ fi
 set -e
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -106,9 +101,7 @@ fi
 set -e
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -171,7 +164,7 @@ class MOTO_4_1_11(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -185,19 +178,17 @@ class MOTO_4_1_11(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # This pattern is for lines that show test progress with statuses
         progress_pattern = re.compile(r"^(tests/test_.*?\.py)\s+([.sF]+)")
         # This pattern is for lines in the summary that explicitly state a failure/error
-        summary_error_pattern = re.compile(r"^(?:ERROR|FAILURES?|FAILED):?\s*(tests/test_.*?\.py)")
+        summary_error_pattern = re.compile(
+            r"^(?:ERROR|FAILURES?|FAILED):?\s*(tests/test_.*?\.py)"
+        )
         for line in log.splitlines():
             # Check for the progress-style lines first
             progress_match = progress_pattern.match(line)
@@ -216,11 +207,6 @@ class MOTO_4_1_11(Instance):
         passed_tests.difference_update(failed_tests)
         skipped_tests.difference_update(failed_tests)
         passed_tests.difference_update(skipped_tests)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -117,9 +117,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -142,9 +140,7 @@ bash /home/check_git_changes.sh
 
 ./mvnw -V --no-transfer-progress -Pgen-javadoc -Pgen-dokka clean package -Dsurefire.useFile=false -Dmaven.test.skip=false -DfailIfNoTests=false || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -155,9 +151,7 @@ set -e
 cd /home/{pr.repo}
 ./mvnw -V --no-transfer-progress -Pgen-javadoc -Pgen-dokka clean test -Dsurefire.useFile=false -Dmaven.test.skip=false -DfailIfNoTests=false
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -169,9 +163,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 ./mvnw -V --no-transfer-progress -Pgen-javadoc -Pgen-dokka clean test -Dsurefire.useFile=false -Dmaven.test.skip=false -DfailIfNoTests=false
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -183,9 +175,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 ./mvnw -V --no-transfer-progress -Pgen-javadoc -Pgen-dokka clean test -Dsurefire.useFile=false -Dmaven.test.skip=false -DfailIfNoTests=false
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

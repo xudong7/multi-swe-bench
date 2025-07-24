@@ -107,9 +107,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -124,9 +122,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 npm ci || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -136,9 +132,7 @@ set -e
 
 cd /home/{pr.repo}
 npx jest --verbose
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -150,9 +144,7 @@ cd /home/{pr.repo}
 git apply  --exclude package-lock.json --whitespace=nowarn /home/test.patch
 npx jest --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -164,9 +156,7 @@ cd /home/{pr.repo}
 git apply  --exclude package-lock.json --whitespace=nowarn /home/test.patch /home/fix.patch
 npx jest --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -247,9 +237,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -265,9 +253,7 @@ bash /home/check_git_changes.sh
 npm install || true
 npm install sinon@1.14.1
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -277,9 +263,7 @@ set -e
 
 cd /home/{pr.repo}
 npm test
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -291,9 +275,7 @@ cd /home/{pr.repo}
 git apply  --exclude package-lock.json --whitespace=nowarn /home/test.patch
 npm test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -305,9 +287,7 @@ cd /home/{pr.repo}
 git apply  --exclude package-lock.json --whitespace=nowarn /home/test.patch /home/fix.patch
 npm test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

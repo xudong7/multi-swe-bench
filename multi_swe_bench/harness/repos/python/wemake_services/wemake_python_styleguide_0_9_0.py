@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -59,7 +58,7 @@ poetry install
 ###ACTION_DELIMITER###
 echo 'poetry run pytest' > test_commands.sh
 ###ACTION_DELIMITER###
-cat test_commands.sh"""
+cat test_commands.sh""",
             ),
             File(
                 ".",
@@ -68,9 +67,7 @@ cat test_commands.sh"""
 cd /home/{pr.repo}
 poetry run pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -83,9 +80,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 poetry run pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -98,9 +93,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 poetry run pytest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -162,7 +155,7 @@ class WEMAKE_PYTHON_STYLEGUIDE_0_9_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -176,47 +169,46 @@ class WEMAKE_PYTHON_STYLEGUIDE_0_9_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        all_tests = set(re.findall(r'(tests/.*?\.py)', log))
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
+        all_tests = set(re.findall(r"(tests/.*?\.py)", log))
         failed_tests = set()
         skipped_tests = set()
         # 1. Parse "short test summary info" - most reliable
-        summary_section = re.search(r'=========================== short test summary info ============================([\s\S]*)', log)
+        summary_section = re.search(
+            r"=========================== short test summary info ============================([\s\S]*)",
+            log,
+        )
         if summary_section:
             summary_content = summary_section.group(1)
             # Find failed tests, format: FAILED tests/test_visitors/test_ast/test_naming/test_naming_rules/test_wrong_name.py::test_wrong_short_name
-            failed_matches = re.findall(r'FAILED (tests/.*?\.py)', summary_content)
+            failed_matches = re.findall(r"FAILED (tests/.*?\.py)", summary_content)
             for match in failed_matches:
                 failed_tests.add(match)
             # Find skipped tests, format: SKIPPED [1] tests/test_visitors/test_ast/test_imports/test_nested_imports.py:76: got python3.8...
-            skipped_matches = re.findall(r'SKIPPED \[.*?\] (tests/.*?\.py)', summary_content)
+            skipped_matches = re.findall(
+                r"SKIPPED \[.*?\] (tests/.*?\.py)", summary_content
+            )
             for match in skipped_matches:
                 skipped_tests.add(match)
         # 2. Parse pytest output for failures (F) and skips (s) for logs without summary
-        test_result_lines = re.findall(r'^(tests/.*?\.py)\s+([\.Fsx]+)', log, re.MULTILINE)
+        test_result_lines = re.findall(
+            r"^(tests/.*?\.py)\s+([\.Fsx]+)", log, re.MULTILINE
+        )
         for test_file, results in test_result_lines:
-            if 'F' in results:
+            if "F" in results:
                 failed_tests.add(test_file)
-            if 's' in results or 'x' in results:
+            if "s" in results or "x" in results:
                 skipped_tests.add(test_file)
         # 3. Parse for collection errors
-        error_matches = re.findall(r'_ ERROR collecting (tests/.*?\.py) _', log)
+        error_matches = re.findall(r"_ ERROR collecting (tests/.*?\.py) _", log)
         for match in error_matches:
             failed_tests.add(match)
         # 4. Infer passed tests
         passed_tests = all_tests - failed_tests - skipped_tests
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

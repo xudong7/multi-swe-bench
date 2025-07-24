@@ -115,9 +115,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -139,9 +137,7 @@ yes | yarn -v || true
 rm -f yarn.lock || true
 yarn --immutable || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -156,9 +152,7 @@ nvm use || true
 yarn --immutable|| true
 yarn build:js || true
 yarn test -- --verbose || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -175,9 +169,7 @@ yarn --immutable || true
 yarn build:js || true
 yarn test -- --verbose || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -194,9 +186,7 @@ yarn --immutable || true
 yarn build:js || true
 yarn test -- --verbose || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -299,18 +289,16 @@ class jest(Instance):
         passed_res = [
             re.compile(r"^PASS:?\s+(.+?)(?:\s+\(\d+(\.\d+)?s\))?$"),
             re.compile(r"✓\s+(\d+.*?)\s+\(\d+ms\)"),
-            re.compile(r"^\s*[✓✔]\s+(.+)$")
+            re.compile(r"^\s*[✓✔]\s+(.+)$"),
         ]
 
         failed_res = [
             re.compile(r"^FAIL:?\s+(.+?)(?:\s+\(\d+(\.\d+)?s\))?$"),
             re.compile(r"✕\s+(\d+.*?)\s+\(\d+ms\)"),
-            re.compile(r"^\s*[×✗]\s+(.+)$")
+            re.compile(r"^\s*[×✗]\s+(.+)$"),
         ]
 
-        skipped_res = [
-            re.compile(r"SKIP:?\s?(.+?)\s")
-        ]
+        skipped_res = [re.compile(r"SKIP:?\s?(.+?)\s")]
 
         for line in test_log.splitlines():
             for passed_re in passed_res:

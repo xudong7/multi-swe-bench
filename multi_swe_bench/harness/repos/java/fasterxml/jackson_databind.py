@@ -205,9 +205,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -241,9 +239,7 @@ set -e
 
 cd /home/{pr.repo}
 mvn clean test -Dmaven.test.skip=false -DfailIfNoTests=false
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -255,9 +251,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 mvn clean test -Dmaven.test.skip=false -DfailIfNoTests=false
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -269,9 +263,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 mvn clean test -Dmaven.test.skip=false -DfailIfNoTests=false
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -410,9 +402,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -446,9 +436,7 @@ set -e
 
 cd /home/{pr.repo}
 mvn clean test -Dsurefire.useFile=false -Dmaven.test.skip=false -Dtest=com.fasterxml.jackson.databind.deser.creators.JsonCreatorModeForEnum3566 -DfailIfNoTests=false -am
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -460,9 +448,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 mvn clean test -Dsurefire.useFile=false -Dmaven.test.skip=false -Dtest=com.fasterxml.jackson.databind.deser.creators.JsonCreatorModeForEnum3566 -DfailIfNoTests=false -am
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -474,9 +460,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 mvn clean test -Dsurefire.useFile=false -Dmaven.test.skip=false -Dtest=com.fasterxml.jackson.databind.deser.creators.JsonCreatorModeForEnum3566 -DfailIfNoTests=false -am
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

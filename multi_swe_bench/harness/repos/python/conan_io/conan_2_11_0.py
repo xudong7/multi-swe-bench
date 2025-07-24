@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -63,7 +62,7 @@ export PYTHONPATH=$PYTHONPATH:$(pwd)
 ###ACTION_DELIMITER###
 python -m pytest test/ --tb=no -p no:cacheprovider -rA
 ###ACTION_DELIMITER###
-echo "python -m pytest test/ --tb=no -p no:cacheprovider -rA" > test_commands.sh"""
+echo "python -m pytest test/ --tb=no -p no:cacheprovider -rA" > test_commands.sh""",
             ),
             File(
                 ".",
@@ -72,9 +71,7 @@ echo "python -m pytest test/ --tb=no -p no:cacheprovider -rA" > test_commands.sh
 cd /home/{pr.repo}
 python -m pytest test/ --tb=no -p no:cacheprovider -rA
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -87,9 +84,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python -m pytest test/ --tb=no -p no:cacheprovider -rA
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -102,9 +97,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python -m pytest test/ --tb=no -p no:cacheprovider -rA
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -167,7 +160,7 @@ class CONAN_2_11_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -181,23 +174,22 @@ class CONAN_2_11_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
         # This pattern will match lines that represent a test file and the results of the tests in that file
         # e.g. test/functional/only_source_test.py ....                                 [  0%]
-        test_file_pattern = re.compile(r"^(test/.*?\.py) (\.+|s+|F+|E+)")
+        re.compile(r"^(test/.*?\.py) (\.+|s+|F+|E+)")
         # This pattern will match lines that show the full result of a test, usually at the end of the log
         # e.g. FAILED test/functional/test_local_recipes_index.py::TestLocalRecipeIndexNew::test_conan_new_local_recipes_index
         full_test_result_pattern = re.compile(r"^(PASSED|FAILED|SKIPPED|ERROR) (.*)")
         # This pattern will match lines that show a test file and a result, but without the dots, etc.
         # e.g. ERROR test/functional/tools_versions_test.py
-        file_level_result_pattern = re.compile(r"^(PASSED|FAILED|SKIPPED|ERROR) (test/.*?\.py)$")
+        file_level_result_pattern = re.compile(
+            r"^(PASSED|FAILED|SKIPPED|ERROR) (test/.*?\.py)$"
+        )
         for line in log.splitlines():
             # First, check for full test results, as they are the most reliable
             match = full_test_result_pattern.match(line)
@@ -226,11 +218,6 @@ class CONAN_2_11_0(Instance):
                 test_name = line.strip().split(" - ")[0]
                 if test_name not in failed_tests and test_name not in skipped_tests:
                     passed_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

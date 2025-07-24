@@ -105,6 +105,7 @@ ENV TZ=Etc/UTC
 
 """
 
+
 class vaporImageBaseSwift5_1(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -154,6 +155,7 @@ RUN apt update && apt install -y openssl libssl-dev
 {self.clear_env}
 
 """
+
 
 class vaporImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
@@ -213,9 +215,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(),
                 ),
                 File(
                     ".",
@@ -229,9 +229,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -242,9 +240,7 @@ set -e
 cd /home/{pr.repo}
 swift test --enable-test-discovery --sanitize=thread
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -256,9 +252,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 swift test --enable-test-discovery --sanitize=thread
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -270,9 +264,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 swift test --enable-test-discovery --sanitize=thread
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
             ]
         return [
@@ -305,9 +297,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -321,9 +311,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -334,9 +322,7 @@ set -e
 cd /home/{pr.repo}
 swift test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -348,9 +334,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 swift test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -362,9 +346,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 swift test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -429,12 +411,8 @@ class vapor(Instance):
         failed_tests = set()
         skipped_tests = set()
 
-        re_pass_tests = [
-            re.compile(r"^(?:Test Case|Test Suite) '(.+?)' passed")
-        ]
-        re_fail_tests = [
-            re.compile(r"^(?:Test Case|Test Suite) '(.+?)' failed")
-        ]
+        re_pass_tests = [re.compile(r"^(?:Test Case|Test Suite) '(.+?)' passed")]
+        re_fail_tests = [re.compile(r"^(?:Test Case|Test Suite) '(.+?)' failed")]
 
         for line in test_log.splitlines():
             line = line.strip()

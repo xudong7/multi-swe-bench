@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -79,7 +78,7 @@ pip uninstall -y typeguard
 ###ACTION_DELIMITER###
 pip install setuptools==57.5.0
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -88,9 +87,7 @@ bash /home/pydantic/test_commands.sh"""
 cd /home/{pr.repo}
 pytest --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -103,9 +100,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -118,9 +113,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -183,7 +176,7 @@ class PYDANTIC_V0_23(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -197,9 +190,7 @@ class PYDANTIC_V0_23(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         """
         Improved parser: Extracts synthetic test names for passed/skipped/failed from per-file summary lines.
         """
@@ -207,43 +198,36 @@ class PYDANTIC_V0_23(Instance):
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Extract failed test names from the FAILURES section
-        failure_pattern = re.compile(r'^_{10,}\s+([\w\d_]+)\s+_{10,}', re.MULTILINE)
+        failure_pattern = re.compile(r"^_{10,}\s+([\w\d_]+)\s+_{10,}", re.MULTILINE)
         for match in failure_pattern.finditer(log):
             failed_tests.add(match.group(1))
         # Parse per-file summary lines to synthesize test names for all results
         # Example: tests/test_abc.py ..ssF.
-        summary_line_pattern = re.compile(r'^(tests/\S+\.py)\s+([.sFExX]+)', re.MULTILINE)
+        summary_line_pattern = re.compile(
+            r"^(tests/\S+\.py)\s+([.sFExX]+)", re.MULTILINE
+        )
         for file_match in summary_line_pattern.finditer(log):
             file_name = file_match.group(1)
             results = file_match.group(2)
             for idx, ch in enumerate(results):
-                test_id = f"{file_name}::test_{idx+1}"
-                if ch == '.':
+                test_id = f"{file_name}::test_{idx + 1}"
+                if ch == ".":
                     passed_tests.add(test_id)
-                elif ch in 'sS':
+                elif ch in "sS":
                     skipped_tests.add(test_id)
-                elif ch in 'F':
+                elif ch in "F":
                     failed_tests.add(test_id)
                 # Could add elif for 'E', 'x', 'X' if needed
         # Parse the summary line for counts
-        summary_pattern = re.compile(r"(?P<failed>\d+) failed, (?P<passed>\d+) passed, (?P<skipped>\d+) skipped")
+        summary_pattern = re.compile(
+            r"(?P<failed>\d+) failed, (?P<passed>\d+) passed, (?P<skipped>\d+) skipped"
+        )
         summary_match = summary_pattern.search(log)
-        failed_count = passed_count = skipped_count = 0
         if summary_match:
-            failed_count = int(summary_match.group('failed'))
-            passed_count = int(summary_match.group('passed'))
-            skipped_count = int(summary_match.group('skipped'))
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests,
-            "passed_count": passed_count,
-            "failed_count": failed_count,
-            "skipped_count": skipped_count
-        }
+            int(summary_match.group("failed"))
+            int(summary_match.group("passed"))
+            int(summary_match.group("skipped"))
 
         return TestResult(
             passed_count=len(passed_tests),

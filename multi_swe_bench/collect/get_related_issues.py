@@ -52,7 +52,7 @@ def get_github(token) -> Github:
 
 
 def get_top_repositories(g: Github, language=None, limit=10):
-    query = f"stars:>1"
+    query = "stars:>1"
     if language:
         query += f" language:{language}"
 

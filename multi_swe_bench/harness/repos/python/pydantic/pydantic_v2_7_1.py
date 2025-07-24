@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -127,7 +126,7 @@ bash /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
 .venv/bin/pip install email-validator
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -136,9 +135,7 @@ bash /home/pydantic/test_commands.sh"""
 cd /home/{pr.repo}
 .venv/bin/pdm run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -151,9 +148,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 .venv/bin/pdm run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -166,9 +161,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 .venv/bin/pdm run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -231,7 +224,7 @@ class PYDANTIC_V2_7_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -245,17 +238,15 @@ class PYDANTIC_V2_7_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Improved regex patterns for test results (robust for parameterized names)
-        result_pattern = re.compile(r"^(PASSED|FAILED|XFAIL|XPASS) +([^\s]+\.py::[^\s]+)", re.MULTILINE)
+        result_pattern = re.compile(
+            r"^(PASSED|FAILED|XFAIL|XPASS) +([^\s]+\.py::[^\s]+)", re.MULTILINE
+        )
         skip_pattern = re.compile(r"^SKIPPED \[\d+\] ([^:]+\.py):(\d+)", re.MULTILINE)
         # Temporary sets
         passed_tests = set()
@@ -266,13 +257,13 @@ class PYDANTIC_V2_7_1(Instance):
         for match in result_pattern.finditer(log):
             status, testname = match.groups()
             testname = testname.strip()
-            if status == 'PASSED':
+            if status == "PASSED":
                 passed_tests.add(testname)
-            elif status == 'FAILED':
+            elif status == "FAILED":
                 failed_tests.add(testname)
-            elif status == 'XFAIL':
+            elif status == "XFAIL":
                 xfail_tests.add(testname)
-            elif status == 'XPASS':
+            elif status == "XPASS":
                 xpass_tests.add(testname)
         # Parse skipped tests (file:line)
         for file, line in skip_pattern.findall(log):
@@ -283,11 +274,6 @@ class PYDANTIC_V2_7_1(Instance):
         failed_tests |= xfail_tests
         # Optionally, treat xpass as passed (or keep separate)
         passed_tests |= xpass_tests
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

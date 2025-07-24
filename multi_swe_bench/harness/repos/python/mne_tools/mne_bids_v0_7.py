@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -69,7 +68,7 @@ pip install mne==0.21.2
 ###ACTION_DELIMITER###
 python setup.py develop
 ###ACTION_DELIMITER###
-bash test_commands.sh"""
+bash test_commands.sh""",
             ),
             File(
                 ".",
@@ -78,9 +77,7 @@ bash test_commands.sh"""
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider mne_bids
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -93,9 +90,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider mne_bids
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -108,9 +103,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider mne_bids
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -172,7 +165,7 @@ class MNE_BIDS_V0_7(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -186,54 +179,47 @@ class MNE_BIDS_V0_7(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
         # Parse the log content and extract test execution results.
         passed_tests = set()  # Tests that passed successfully
         failed_tests = set()  # Tests that failed
         skipped_tests = set()  # Tests that were skipped
-        import re
-        import json
         # Extract lines with test file results, e.g.:
         # mne_bids/commands/tests/test_cli.py FF.....s [  4%]
-        test_file_pattern = re.compile(r'^(\S+\.py)\s+([F\.s]+)')
+        test_file_pattern = re.compile(r"^(\S+\.py)\s+([F\.s]+)")
         test_file_results = []
         for line in log.splitlines():
             m = test_file_pattern.match(line)
             if m:
                 test_file_results.append((m.group(1), m.group(2)))
+
         # test_file_results is a list of (test_file, result_string)
         def extract_test_functions(filepath):
             # Extract test function names in order from the given file
             test_names = []
             try:
-                with open(filepath, 'r', encoding='utf-8', errors='replace') as f:
+                with open(filepath, "r", encoding="utf-8", errors="replace") as f:
                     for line in f:
-                        m = re.match(r'\s*def (test_[\w_]+)', line)
+                        m = re.match(r"\s*def (test_[\w_]+)", line)
                         if m:
                             test_names.append(m.group(1))
             except Exception:
                 pass
             return test_names
+
         for test_file, result_string in test_file_results:
             test_names = extract_test_functions(test_file)
             for i, result_char in enumerate(result_string):
                 if i < len(test_names):
                     test_name = f"{test_file}::{test_names[i]}"
                 else:
-                    test_name = f"{test_file}::unknown_test_{i+1}"
-                if result_char == '.':
+                    test_name = f"{test_file}::unknown_test_{i + 1}"
+                if result_char == ".":
                     passed_tests.add(test_name)
-                elif result_char == 'F':
+                elif result_char == "F":
                     failed_tests.add(test_name)
-                elif result_char == 's':
+                elif result_char == "s":
                     skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
-        
 
         return TestResult(
             passed_count=len(passed_tests),

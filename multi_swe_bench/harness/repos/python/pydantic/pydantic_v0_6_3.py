@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.6"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -95,7 +94,7 @@ echo 'pytest --cov=pydantic -rA --tb=short -p no:isort -p no:sugar
 pip uninstall -y msgpack-python ujson
 pytest --cov=pydantic -rA --tb=short -p no:isort -p no:sugar' > /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -106,9 +105,7 @@ pytest --cov=pydantic -rA --tb=short -p no:isort -p no:sugar
 pip uninstall -y msgpack-python ujson
 pytest --cov=pydantic -rA --tb=short -p no:isort -p no:sugar
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -123,9 +120,7 @@ pytest --cov=pydantic -rA --tb=short -p no:isort -p no:sugar
 pip uninstall -y msgpack-python ujson
 pytest --cov=pydantic -rA --tb=short -p no:isort -p no:sugar
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -140,9 +135,7 @@ pytest --cov=pydantic -rA --tb=short -p no:isort -p no:sugar
 pip uninstall -y msgpack-python ujson
 pytest --cov=pydantic -rA --tb=short -p no:isort -p no:sugar
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -205,7 +198,7 @@ class PYDANTIC_V0_6_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -219,16 +212,12 @@ class PYDANTIC_V0_6_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
-            # Extract PASSED tests
+        # Extract PASSED tests
         for match in re.finditer(r"^PASSED ([^:]+::[^\s]+)", log, re.MULTILINE):
             passed_tests.add(match.group(1))
         # Extract FAILED tests
@@ -237,11 +226,6 @@ class PYDANTIC_V0_6_3(Instance):
         # Extract SKIPPED tests
         for match in re.finditer(r"^SKIPPED \[\d+\] ([^:]+):\d+:", log, re.MULTILINE):
             skipped_tests.add(match.group(1))
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -73,7 +72,7 @@ pip install numpy==1.16.6
 ###ACTION_DELIMITER###
 pip install pandas==0.24.2
 ###ACTION_DELIMITER###
-bash /home/geopandas/test_commands.sh"""
+bash /home/geopandas/test_commands.sh""",
             ),
             File(
                 ".",
@@ -82,9 +81,7 @@ bash /home/geopandas/test_commands.sh"""
 cd /home/{pr.repo}
 pytest geopandas --cov geopandas -v --cov-report term-missing
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -97,9 +94,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest geopandas --cov geopandas -v --cov-report term-missing
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -112,9 +107,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest geopandas --cov geopandas -v --cov-report term-missing
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -176,7 +169,7 @@ class GEOPANDAS_V0_5_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -190,18 +183,14 @@ class GEOPANDAS_V0_5_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Use regex to match test result lines like:
         # geopandas/io/tests/test_file.py::test_to_file[ESRI Shapefile-shp] PASSED [  0%]
-        test_result_re = re.compile(r'^(.*?)::(.*?) (PASSED|FAILED|SKIPPED) ?\[.*\]$')
+        test_result_re = re.compile(r"^(.*?)::(.*?) (PASSED|FAILED|SKIPPED) ?\[.*\]$")
         for line in log.splitlines():
             m = test_result_re.match(line.strip())
             if m:
@@ -214,11 +203,6 @@ class GEOPANDAS_V0_5_0(Instance):
                 elif status == "SKIPPED":
                     skipped_tests.add(test_full_name)
         # This logic will result in empty sets for logs without test results, as desired.
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

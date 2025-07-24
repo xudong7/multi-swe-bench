@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:2.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -71,7 +70,7 @@ nosetests
 ###ACTION_DELIMITER###
 pip install rednose
 ###ACTION_DELIMITER###
-echo 'nosetests -v --rednose' > test_commands.sh"""
+echo 'nosetests -v --rednose' > test_commands.sh""",
             ),
             File(
                 ".",
@@ -80,9 +79,7 @@ echo 'nosetests -v --rednose' > test_commands.sh"""
 cd /home/{pr.repo}
 nosetests -v --rednose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -95,9 +92,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests -v --rednose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -110,9 +105,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests -v --rednose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -175,7 +168,7 @@ class MOTO_0_3_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -189,17 +182,15 @@ class MOTO_0_3_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Implement the log parsing logic here
-        test_pattern = re.compile(r"^([^.\n].*?)\s*\.{3}\s*(passed|FAILED|skipped)", re.MULTILINE)
+        test_pattern = re.compile(
+            r"^([^.\n].*?)\s*\.{3}\s*(passed|FAILED|skipped)", re.MULTILINE
+        )
         for match in test_pattern.finditer(log):
             test_name = match.group(1).strip()
             status = match.group(2)
@@ -214,18 +205,15 @@ class MOTO_0_3_3(Instance):
         for i, line in enumerate(lines):
             if line == "FAILED":
                 if i > 0:
-                    match = failed_pattern.match(lines[i-1])
+                    match = failed_pattern.match(lines[i - 1])
                     if match:
                         failed_tests.add(match.group(1).strip())
-        exception_pattern = re.compile(r"^(.*?\s*\.{3})?.*Exception in thread.*", re.MULTILINE)
+        exception_pattern = re.compile(
+            r"^(.*?\s*\.{3})?.*Exception in thread.*", re.MULTILINE
+        )
         for match in exception_pattern.finditer(log):
             if match.group(1):
                 failed_tests.add(match.group(1).replace(" ...", "").strip())
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

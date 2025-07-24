@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -87,7 +86,7 @@ pip show typeguard
 ###ACTION_DELIMITER###
 pip install setuptools==44.0.0
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -98,9 +97,7 @@ make test
 pip uninstall -y ujson email-validator
 make test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -115,9 +112,7 @@ make test
 pip uninstall -y ujson email-validator
 make test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -132,9 +127,7 @@ make test
 pip uninstall -y ujson email-validator
 make test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -197,7 +190,7 @@ class PYDANTIC_V0_20(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -211,40 +204,40 @@ class PYDANTIC_V0_20(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # 1. Parse FAILURES section for actual test function names and their files
         # Build a list of (filename, function_name) for failed tests, in order
         failures = []
         in_failures = False
-        failure_func_re = re.compile(r'^_{5,}\s*(\w+(?:\[.*?\])?)\s*_{5,}$')
-        failure_file_re = re.compile(r'^(tests/[^:]+):(\d+): Failed')
+        failure_func_re = re.compile(r"^_{5,}\s*(\w+(?:\[.*?\])?)\s*_{5,}$")
+        failure_file_re = re.compile(r"^(tests/[^:]+):(\d+): Failed")
         current_fail = None
         for line in log.splitlines():
-            if 'FAILURES' in line:
+            if "FAILURES" in line:
                 in_failures = True
                 continue
             if in_failures:
                 m_func = failure_func_re.match(line)
                 if m_func:
-                    current_fail = {'func': m_func.group(1), 'file': None}
+                    current_fail = {"func": m_func.group(1), "file": None}
                 m_file = failure_file_re.match(line)
                 if m_file and current_fail:
-                    current_fail['file'] = m_file.group(1)
-                    failures.append((current_fail['file'], current_fail['func']))
+                    current_fail["file"] = m_file.group(1)
+                    failures.append((current_fail["file"], current_fail["func"]))
                     current_fail = None
-                if line.startswith('=') or line.startswith('-') or line.startswith('----------'):
+                if (
+                    line.startswith("=")
+                    or line.startswith("-")
+                    or line.startswith("----------")
+                ):
                     in_failures = False
                     current_fail = None
         # 2. Parse per-file test result lines
-        file_line_re = re.compile(r'^(tests/[^\s]+)\s+([.sF]+)')
+        file_line_re = re.compile(r"^(tests/[^\s]+)\s+([.sF]+)")
         test_index = {}
         # Build a mapping of (filename, fail_index) -> real failed test name
         fail_map = {}
@@ -252,38 +245,37 @@ class PYDANTIC_V0_20(Instance):
         for file, func in failures:
             if file not in fail_counts:
                 fail_counts[file] = 0
-            file_only = file.split(':')[0]  # Remove line number if present
-            fail_map[(file_only, fail_counts[file_only] if file_only in fail_counts else 0)] = func
+            file_only = file.split(":")[0]  # Remove line number if present
+            fail_map[
+                (file_only, fail_counts[file_only] if file_only in fail_counts else 0)
+            ] = func
             fail_counts[file_only] = fail_counts.get(file_only, 0) + 1
         # Parse per-file lines and assign real names to failed tests
         for line in log.splitlines():
             m = file_line_re.match(line)
             if m:
                 filename, results = m.groups()
-                file_only = filename.split(':')[0]  # Remove line number if present
+                file_only = filename.split(":")[0]  # Remove line number if present
                 if file_only not in test_index:
                     test_index[file_only] = 0
                 fail_idx = 0
                 for c in results:
                     test_name = f"{file_only}::test_{test_index[file_only]}"
-                    if c == '.':
+                    if c == ".":
                         passed_tests.add(test_name)
-                    elif c == 's':
+                    elif c == "s":
                         skipped_tests.add(test_name)
-                    elif c == 'F':
+                    elif c == "F":
                         # Use real name if available
                         real_name = fail_map.get((file_only, fail_idx))
                         if real_name:
-                            failed_tests.add(f"{file_only}::{real_name}")  # Use file and real function name
+                            failed_tests.add(
+                                f"{file_only}::{real_name}"
+                            )  # Use file and real function name
                         else:
                             failed_tests.add(test_name)
                         fail_idx += 1
                     test_index[file_only] += 1
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

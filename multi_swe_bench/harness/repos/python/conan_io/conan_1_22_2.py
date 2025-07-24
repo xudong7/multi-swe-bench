@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -65,7 +64,7 @@ export PYTHONPATH=$PYTHONPATH:$(pwd) && bash /home/conan/test_commands.sh
 ###ACTION_DELIMITER###
 pip install 'markupsafe<2.1.0'
 ###ACTION_DELIMITER###
-export PYTHONPATH=$PYTHONPATH:$(pwd) && bash /home/conan/test_commands.sh"""
+export PYTHONPATH=$PYTHONPATH:$(pwd) && bash /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -74,9 +73,7 @@ export PYTHONPATH=$PYTHONPATH:$(pwd) && bash /home/conan/test_commands.sh"""
 cd /home/{pr.repo}
 nosetests . -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -89,9 +86,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests . -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -104,9 +99,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests . -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -169,7 +162,7 @@ class CONAN_1_22_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -183,17 +176,15 @@ class CONAN_1_22_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         # Only the final status for each test is recorded.
-        import re
-        import json
         test_status = {}  # test_name -> status
         # Regular expression to match test result lines
         # Example: test_name (module.Class) ... ok
-        test_line_re = re.compile(r"^([\w\-\./]+) \([\w\._]+\) \.{3} (ok|FAIL|ERROR|SKIP(?:: [^\n]*)?)$")
+        test_line_re = re.compile(
+            r"^([\w\-\./]+) \([\w\._]+\) \.{3} (ok|FAIL|ERROR|SKIP(?:: [^\n]*)?)$"
+        )
         for line in log.splitlines():
             m = test_line_re.match(line.strip())
             if m:
@@ -204,13 +195,14 @@ class CONAN_1_22_2(Instance):
                     test_status[test_name] = "failed"
                 elif status.startswith("SKIP"):
                     test_status[test_name] = "skipped"
-        passed_tests = {name for name, status in test_status.items() if status == "passed"}
-        failed_tests = {name for name, status in test_status.items() if status == "failed"}
-        skipped_tests = {name for name, status in test_status.items() if status == "skipped"}
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
+        passed_tests = {
+            name for name, status in test_status.items() if status == "passed"
+        }
+        failed_tests = {
+            name for name, status in test_status.items() if status == "failed"
+        }
+        skipped_tests = {
+            name for name, status in test_status.items() if status == "skipped"
         }
 
         return TestResult(

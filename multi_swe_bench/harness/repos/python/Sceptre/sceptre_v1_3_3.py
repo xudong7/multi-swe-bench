@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -73,7 +72,7 @@ pip install moto
 ###ACTION_DELIMITER###
 make coverage-ci
 ###ACTION_DELIMITER###
-echo "make coverage-ci" > /home/sceptre/test_commands.sh"""
+echo "make coverage-ci" > /home/sceptre/test_commands.sh""",
             ),
             File(
                 ".",
@@ -82,9 +81,7 @@ echo "make coverage-ci" > /home/sceptre/test_commands.sh"""
 cd /home/{pr.repo}
 make coverage-ci
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -97,9 +94,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 make coverage-ci
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -112,9 +107,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 make coverage-ci
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -176,7 +169,7 @@ class SCEPTRE_V1_3_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -190,20 +183,19 @@ class SCEPTRE_V1_3_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         test_pattern = re.compile(r"^(tests\/test_.*\.py)")
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        summary_line = re.search(r"=============== (\d+) passed, (\d+) failed, (\d+) skipped ================", log)
+        summary_line = re.search(
+            r"=============== (\d+) passed, (\d+) failed, (\d+) skipped ================",
+            log,
+        )
         if summary_line:
             # This is a placeholder, as we need to identify the actual tests
             pass
@@ -235,10 +227,10 @@ class SCEPTRE_V1_3_3(Instance):
         for line in log.splitlines():
             if line.startswith("tests/test"):
                 all_tests.add(line.split("::")[0])
-        parsed_results = {
+        {
             "passed_tests": all_tests - failed_tests - skipped_tests,
             "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
+            "skipped_tests": skipped_tests,
         }
 
         return TestResult(

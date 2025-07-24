@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.7"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -65,7 +64,7 @@ wget https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.z
 ###ACTION_DELIMITER###
 pip3 install meson
 ###ACTION_DELIMITER###
-bash /home/conan/test_commands.sh"""
+bash /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -74,9 +73,7 @@ bash /home/conan/test_commands.sh"""
 cd /home/{pr.repo}
 nosetests -v .
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -89,9 +86,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests -v .
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -104,9 +99,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests -v .
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -169,7 +162,7 @@ class CONAN_1_13_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -183,18 +176,17 @@ class CONAN_1_13_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         """
         Parse the log content and extract test execution results.
         Returns a dict with sets of test names for passed, failed, and skipped tests.
         Only the last status for each test is considered.
         """
-        import re
         # More robust regex for test result lines
         # Example: test_name (test.class.Name) ... ok
-        test_line_re = re.compile(r"^([\w\-\.\/:,\[\]<>@#\$%\^&\*\+=~'\" ]+) \([\w\-\.\/:,\[\]<>@#\$%\^&\*\+=~'\" ]+\) \.\.\. (ok|FAIL|ERROR|SKIP: .*)$")
+        test_line_re = re.compile(
+            r"^([\w\-\.\/:,\[\]<>@#\$%\^&\*\+=~'\" ]+) \([\w\-\.\/:,\[\]<>@#\$%\^&\*\+=~'\" ]+\) \.\.\. (ok|FAIL|ERROR|SKIP: .*)$"
+        )
         test_status = {}  # test_name -> status
         for line in log.splitlines():
             match = test_line_re.match(line)
@@ -208,13 +200,14 @@ class CONAN_1_13_0(Instance):
                     test_status[test_name] = "failed"
                 elif status.startswith("SKIP"):
                     test_status[test_name] = "skipped"
-        passed_tests = {name for name, status in test_status.items() if status == "passed"}
-        failed_tests = {name for name, status in test_status.items() if status == "failed"}
-        skipped_tests = {name for name, status in test_status.items() if status == "skipped"}
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
+        passed_tests = {
+            name for name, status in test_status.items() if status == "passed"
+        }
+        failed_tests = {
+            name for name, status in test_status.items() if status == "failed"
+        }
+        skipped_tests = {
+            name for name, status in test_status.items() if status == "skipped"
         }
 
         return TestResult(

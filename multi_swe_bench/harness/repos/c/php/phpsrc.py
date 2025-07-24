@@ -111,9 +111,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -127,9 +125,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -142,9 +138,7 @@ cd /home/{pr.repo}
 ./configure --enable-debug
 make -j4
 make TEST_PHP_ARGS=-j4 NO_INTERACTION=1 test
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -159,9 +153,7 @@ git apply --whitespace=nowarn /home/test.patch
 make -j4
 make TEST_PHP_ARGS=-j4 NO_INTERACTION=1 test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -176,9 +168,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 make -j4
 make TEST_PHP_ARGS=-j4 NO_INTERACTION=1 test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

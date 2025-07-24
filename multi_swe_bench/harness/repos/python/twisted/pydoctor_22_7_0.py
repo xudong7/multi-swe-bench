@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -55,7 +54,7 @@ echo -e 'coverage erase
 coverage run -m pytest -vv pydoctor
 coverage report -m' > test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pydoctor/test_commands.sh"""
+bash /home/pydoctor/test_commands.sh""",
             ),
             File(
                 ".",
@@ -66,9 +65,7 @@ coverage erase
 coverage run -m pytest -vv pydoctor
 coverage report -m
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -83,9 +80,7 @@ coverage erase
 coverage run -m pytest -vv pydoctor
 coverage report -m
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -100,9 +95,7 @@ coverage erase
 coverage run -m pytest -vv pydoctor
 coverage report -m
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -164,7 +157,7 @@ class PYDOCTOR_22_7_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -178,18 +171,17 @@ class PYDOCTOR_22_7_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
         # Regex to match test result lines
         # Example: pydoctor/test/epydoc/test_epytext.py::test_basic_list PASSED [  0%]
         #          pydoctor/test/test_epydoc2stan.py::test_func_arg_and_ret_annotation XFAIL [ 68%]
-        result_pattern = re.compile(r'^(.*?)\s+(PASSED|FAILED|SKIPPED|XFAIL|XPASS)\b', re.MULTILINE)
+        result_pattern = re.compile(
+            r"^(.*?)\s+(PASSED|FAILED|SKIPPED|XFAIL|XPASS)\b", re.MULTILINE
+        )
         for match in result_pattern.finditer(log):
             test_name = match.group(1).strip()
             status = match.group(2)
@@ -203,11 +195,6 @@ class PYDOCTOR_22_7_0(Instance):
                 skipped_tests.add(test_name)
             elif status == "XPASS":
                 passed_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -489,9 +489,9 @@ class CliArgs:
                 if repo not in self._repo_commits:
                     self._repo_commits[repo] = repo_commits
 
-                self._repo_commits[repo].commits[
-                    instance.pr.base.sha
-                ] = instance.pr.number
+                self._repo_commits[repo].commits[instance.pr.base.sha] = (
+                    instance.pr.number
+                )
 
             for repo, repo_commits in self._repo_commits.items():
                 self.logger.debug(
@@ -541,11 +541,11 @@ class CliArgs:
                 git_util.clone_repository(self.repo_dir / repo.org, repo.org, repo.repo)
 
             is_clean, error_msg = git_util.is_clean(repo_dir)
-            #if it is not clean, try to clean it
+            # if it is not clean, try to clean it
             if not is_clean:
                 is_clean, error_msg = True, ""
                 git_util.clean(repo_dir)
-            #check if it is clean again
+            # check if it is clean again
             if not is_clean:
                 self.logger.error(error_msg)
                 error_happened = True
@@ -725,19 +725,29 @@ class CliArgs:
 
         if not self.human_mode:
             from multi_swe_bench.utils.session_util import run_and_save_logs
-            prepare_script_path= self.workdir / instance.pr.org / instance.pr.repo / "images"  /f"pr-{instance.pr.number}"/ "prepare.sh" 
-            output_fix = asyncio.run(run_and_save_logs(
-                "fix", 
-                instance.name(), 
-                f"{instance.fix_patch_run(self.fix_patch_run_cmd)} >> /home/fix_msb.log 2>&1", 
-                self.logger,
-                instance_dir / FIX_PATCH_RUN_LOG_FILE, 
-                "/home/fix_msb.log", 
-                prepare_script_path=prepare_script_path,
-                global_env=self.global_env
-            ))
+
+            prepare_script_path = (
+                self.workdir
+                / instance.pr.org
+                / instance.pr.repo
+                / "images"
+                / f"pr-{instance.pr.number}"
+                / "prepare.sh"
+            )
+            asyncio.run(
+                run_and_save_logs(
+                    "fix",
+                    instance.name(),
+                    f"{instance.fix_patch_run(self.fix_patch_run_cmd)} >> /home/fix_msb.log 2>&1",
+                    self.logger,
+                    instance_dir / FIX_PATCH_RUN_LOG_FILE,
+                    "/home/fix_msb.log",
+                    prepare_script_path=prepare_script_path,
+                    global_env=self.global_env,
+                )
+            )
         else:
-            output_fix = run_and_save_output(
+            run_and_save_output(
                 instance.name(),
                 instance.fix_patch_run(self.fix_patch_run_cmd),
                 instance_dir / FIX_PATCH_RUN_LOG_FILE,
@@ -816,7 +826,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error starting nix_swe container: {e}")
         sys.exit(1)
-    
+
     parser = get_parser()
     args = parser.parse_args()
     cli = CliArgs.from_dict(vars(args))

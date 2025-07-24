@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -69,7 +68,7 @@ bash /home/conan/test_commands.sh
 ###ACTION_DELIMITER###
 echo 'markupsafe<2.1.0' >> conans/requirements.txt
 ###ACTION_DELIMITER###
-tox --recreate -e full"""
+tox --recreate -e full""",
             ),
             File(
                 ".",
@@ -78,9 +77,7 @@ tox --recreate -e full"""
 cd /home/{pr.repo}
 tox -e full
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -93,9 +90,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 tox -e full
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -108,9 +103,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 tox -e full
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -173,7 +166,7 @@ class CONAN_1_31_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -187,39 +180,36 @@ class CONAN_1_31_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         """
         Parses a pytest log and extracts test results.
         Returns a dict with sets of test names for passed, failed, and skipped tests.
         """
-        import re
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
         pseudo_failed = set()
         # 1. Parse progress lines (file-level, pseudo test names)
-        progress_re = re.compile(r'^(\S+\.py)\s+([.sFx]+)')
+        progress_re = re.compile(r"^(\S+\.py)\s+([.sFx]+)")
         for line in log.splitlines():
             m = progress_re.match(line)
             if m:
                 test_file = m.group(1)
                 status_str = m.group(2)
                 for idx, ch in enumerate(status_str):
-                    pseudo_name = f"{test_file}::testcase_{idx+1}"
-                    if ch == '.':
+                    pseudo_name = f"{test_file}::testcase_{idx + 1}"
+                    if ch == ".":
                         passed_tests.add(pseudo_name)
-                    elif ch == 's':
+                    elif ch == "s":
                         skipped_tests.add(pseudo_name)
-                    elif ch == 'F':
+                    elif ch == "F":
                         pseudo_failed.add(pseudo_name)
-                    elif ch == 'x':
+                    elif ch == "x":
                         skipped_tests.add(pseudo_name)  # treat xfail/xpass as skipped
         # 2. Parse failure summary for real test names
         for line in log.splitlines():
-            if line.startswith('FAILED '):
-                test_full = line[7:].split(' - ')[0].strip()
+            if line.startswith("FAILED "):
+                test_full = line[7:].split(" - ")[0].strip()
                 failed_tests.add(test_full)
         # Remove pseudo-names for failed tests if real names are available
         if failed_tests:

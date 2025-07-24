@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -86,7 +85,7 @@ if sys.version_info < (3,8):
     sys.modules["importlib.metadata"] = importlib_metadata
 ' > /usr/local/lib/python3.7/site-packages/sitecustomize.py
 ###ACTION_DELIMITER###
-bash /home/scanpy/test_commands.sh"""
+bash /home/scanpy/test_commands.sh""",
             ),
             File(
                 ".",
@@ -96,9 +95,7 @@ cd /home/{pr.repo}
 export MPLBACKEND=Agg
 pytest --ignore=scanpy/tests/_images --no-header -rA -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -112,9 +109,7 @@ fi
 export MPLBACKEND=Agg
 pytest --ignore=scanpy/tests/_images --no-header -rA -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -128,9 +123,7 @@ fi
 export MPLBACKEND=Agg
 pytest --ignore=scanpy/tests/_images --no-header -rA -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -192,7 +185,7 @@ class SCANPY_1_4_6(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -206,14 +199,11 @@ class SCANPY_1_4_6(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regular expressions for test result lines
         passed_re = re.compile(r"^PASSED\s+([\w/\.-]+::\w+(?:\[.*?\])?)$")
         failed_re = re.compile(r"^FAILED\s+([\w/\.-]+::\w+(?:\[.*?\])?)")
@@ -231,12 +221,6 @@ class SCANPY_1_4_6(Instance):
             if m_skip:
                 skipped_tests.add(m_skip.group(1))
                 continue
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
-        
 
         return TestResult(
             passed_count=len(passed_tests),

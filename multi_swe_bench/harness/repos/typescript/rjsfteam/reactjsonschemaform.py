@@ -175,9 +175,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -196,9 +194,7 @@ nvm install || true
 nvm use || true
 npm ci || npm install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -213,9 +209,7 @@ nvm use || true
 npm ci || npm install || true
 npm run build-serial || true
 npm run test
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -231,9 +225,7 @@ nvm use || true
 npm ci || npm install || true
 npm run build-serial || true
 npm run test
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -249,9 +241,7 @@ nvm use || true
 npm ci || npm install || true
 npm run build-serial || true
 npm run test
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -353,23 +343,26 @@ class reactjsonschemaform(Instance):
 
         passed_res = [
             re.compile(r"^PASS:?\s+([^\(]+)"),
-            re.compile(r"\s*[✓✔]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
+            re.compile(r"\s*[✓✔]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
         ]
 
         failed_res = [
             re.compile(r"^FAIL:?\s+([^\(]+)"),
             re.compile(r"\s*[×✗✖✘]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
-            re.compile(r"\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
+            re.compile(r"\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
         ]
 
-        skipped_res = [
-        ]
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        skipped_res = []
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
         for line in test_log.splitlines():
-            line = ansi_escape.sub('', line).strip()
+            line = ansi_escape.sub("", line).strip()
             for passed_re in passed_res:
                 m = passed_re.search(line)
-                if m and m.group(1).strip() not in failed_tests and "built in" not in m.group(1).strip():
+                if (
+                    m
+                    and m.group(1).strip() not in failed_tests
+                    and "built in" not in m.group(1).strip()
+                ):
                     passed_tests.add(m.group(1).strip())
 
             for failed_re in failed_res:

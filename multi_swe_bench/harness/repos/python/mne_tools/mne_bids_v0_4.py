@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -79,7 +78,7 @@ bash /home/mne-bids/test_commands.sh
 ###ACTION_DELIMITER###
 pip install numpy==1.26.4
 ###ACTION_DELIMITER###
-bash /home/mne-bids/test_commands.sh"""
+bash /home/mne-bids/test_commands.sh""",
             ),
             File(
                 ".",
@@ -88,9 +87,7 @@ bash /home/mne-bids/test_commands.sh"""
 cd /home/{pr.repo}
 pytest -v -rA -p no:cacheprovider mne_bids
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -103,9 +100,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest -v -rA -p no:cacheprovider mne_bids
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -118,9 +113,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest -v -rA -p no:cacheprovider mne_bids
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -182,7 +175,7 @@ class MNE_BIDS_V0_4(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -196,17 +189,16 @@ class MNE_BIDS_V0_4(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regular expression to match test result lines
         # Example: mne_bids/tests/test_path.py::test_print_dir_tree PASSED [ 22%]
-        test_line_re = re.compile(r'^(.*?)::([\w\[\]\-]+)(?:\[.*?\])?\s+(PASSED|FAILED|ERROR|SKIPPED)')
+        test_line_re = re.compile(
+            r"^(.*?)::([\w\[\]\-]+)(?:\[.*?\])?\s+(PASSED|FAILED|ERROR|SKIPPED)"
+        )
         for line in log.splitlines():
             match = test_line_re.match(line)
             if match:
@@ -220,12 +212,6 @@ class MNE_BIDS_V0_4(Instance):
                     failed_tests.add(full_test_name)
                 elif status == "SKIPPED":
                     skipped_tests.add(full_test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
-        
 
         return TestResult(
             passed_count=len(passed_tests),

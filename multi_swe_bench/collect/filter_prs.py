@@ -100,11 +100,14 @@ def main(tokens: list[str], out_dir: Path, prs_file: Path, skip_commit_message: 
         g = get_github(random.choice(tokens))
         r = g.get_repo(f"{org}/{repo}")
 
-    with open(
-        out_dir / f"{org}__{repo}_filtered_prs.jsonl",
-        "w",
-        encoding="utf-8",
-    ) as out_file, open(prs_file, "r", encoding="utf-8") as in_file:
+    with (
+        open(
+            out_dir / f"{org}__{repo}_filtered_prs.jsonl",
+            "w",
+            encoding="utf-8",
+        ) as out_file,
+        open(prs_file, "r", encoding="utf-8") as in_file,
+    ):
         prs = [json.loads(line) for line in in_file]
 
         for pull in tqdm(prs, desc="Pull Requests"):

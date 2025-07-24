@@ -107,9 +107,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -124,9 +122,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
 npm ci || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -137,9 +133,7 @@ set -e
 cd /home/{pr.repo}
 npm run build
 npm run test:coverage -- --reporter=verbose
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -152,9 +146,7 @@ git apply  --exclude package-lock.json --whitespace=nowarn /home/test.patch
 npm run build
 npm run test:coverage -- --reporter=verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -167,9 +159,7 @@ git apply  --exclude package-lock.json --whitespace=nowarn /home/test.patch /hom
 npm run build
 npm run test:coverage -- --reporter=verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -250,9 +240,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -267,9 +255,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
 npm ci || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -279,9 +265,7 @@ set -e
 
 cd /home/{pr.repo}
 npm test -- --reporter=verbose
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -293,9 +277,7 @@ cd /home/{pr.repo}
 git apply  --exclude package-lock.json --whitespace=nowarn /home/test.patch
 npm test -- --reporter=verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -307,9 +289,7 @@ cd /home/{pr.repo}
 git apply  --exclude package-lock.json --whitespace=nowarn /home/test.patch /home/fix.patch
 npm test -- --reporter=verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

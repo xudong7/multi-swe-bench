@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -75,7 +74,7 @@ apt-get install -y libssl-dev
 ###ACTION_DELIMITER###
 pip install -r conans/requirements_osx.txt
 ###ACTION_DELIMITER###
-echo "pip install -r conans/requirements.txt && pip install -r conans/requirements_dev.txt && pip install -r conans/requirements_server.txt && nosetests --with-coverage --verbosity=2 conans.test" > /home/conan/test_commands.sh"""
+echo "pip install -r conans/requirements.txt && pip install -r conans/requirements_dev.txt && pip install -r conans/requirements_server.txt && nosetests --with-coverage --verbosity=2 conans.test" > /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -84,9 +83,7 @@ echo "pip install -r conans/requirements.txt && pip install -r conans/requiremen
 cd /home/{pr.repo}
 pip install -r conans/requirements.txt && pip install -r conans/requirements_dev.txt && pip install -r conans/requirements_server.txt && nosetests --with-coverage --verbosity=2 conans.test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -99,9 +96,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pip install -r conans/requirements.txt && pip install -r conans/requirements_dev.txt && pip install -r conans/requirements_server.txt && nosetests --with-coverage --verbosity=2 conans.test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -114,9 +109,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pip install -r conans/requirements.txt && pip install -r conans/requirements_dev.txt && pip install -r conans/requirements_server.txt && nosetests --with-coverage --verbosity=2 conans.test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -179,7 +172,7 @@ class CONAN_1_4_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -193,15 +186,11 @@ class CONAN_1_4_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # TODO: Implement the parse_log function
         passed_tests_regex = re.compile(r"^(?!.*warning:)(.*) \.\.\. ok$")
         failed_tests_regex = re.compile(r"^(?!.*warning:)(.*) \.\.\. (FAIL|ERROR)$")
@@ -229,11 +218,6 @@ class CONAN_1_4_3(Instance):
                 test_name = match_passed.group(1).strip()
                 if test_name not in failed_tests and test_name not in skipped_tests:
                     passed_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

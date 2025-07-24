@@ -68,7 +68,6 @@ RUN sed -i 's/archive.ubuntu.com/mirrors.aliyun.com/g' /etc/apt/sources.list && 
 """
 
 
-
 class kafkauiImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -124,9 +123,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -168,9 +165,7 @@ grep -q "<mirror>" ~/.m2/settings.xml || sed -i '/<\/settings>/i \\
 </mirrors>' ~/.m2/settings.xml
 fi
 ./mvnw clean test -fn || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -179,9 +174,7 @@ fi
 set -e
 cd /home/{pr.repo}
 ./mvnw clean test -fn || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -192,9 +185,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 ./mvnw clean test -fn || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -205,9 +196,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 ./mvnw clean test -fn || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -354,11 +343,15 @@ class kafkaui(Instance):
         skipped_tests = set()
         re_pass_tests = [
             re.compile(r"\[INFO\]\s+Tests run:.*?in\s+([^\s]+)"),
-            re.compile(r"\[INFO\]\s+([a-zA-Z0-9\-_.]+(?:\s+[0-9]+\.[0-9]+\.[^\s]+)?)\s+\.{3,}\s+SUCCESS")
+            re.compile(
+                r"\[INFO\]\s+([a-zA-Z0-9\-_.]+(?:\s+[0-9]+\.[0-9]+\.[^\s]+)?)\s+\.{3,}\s+SUCCESS"
+            ),
         ]
         re_fail_tests = [
             re.compile(r"\[ERROR\]\s+Tests run:.*?in\s+([^\s]+)"),
-            re.compile(r"\[INFO\]\s+([a-zA-Z0-9\-_.]+(?:\s+[0-9]+\.[0-9]+\.[^\s]+)?)\s+\.{3,}\s+FAILURE")
+            re.compile(
+                r"\[INFO\]\s+([a-zA-Z0-9\-_.]+(?:\s+[0-9]+\.[0-9]+\.[^\s]+)?)\s+\.{3,}\s+FAILURE"
+            ),
         ]
         for line in test_log.splitlines():
             line = line.strip()

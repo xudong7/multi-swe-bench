@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -53,7 +52,7 @@ pip install -r requirements-dev.txt
 ###ACTION_DELIMITER###
 pytest -v
 ###ACTION_DELIMITER###
-echo 'pytest --no-header -rA --tb=no -p no:cacheprovider --ignore=tests/test_end_to_end.py' > test_commands.sh"""
+echo 'pytest --no-header -rA --tb=no -p no:cacheprovider --ignore=tests/test_end_to_end.py' > test_commands.sh""",
             ),
             File(
                 ".",
@@ -62,9 +61,7 @@ echo 'pytest --no-header -rA --tb=no -p no:cacheprovider --ignore=tests/test_end
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider --ignore=tests/test_end_to_end.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -77,9 +74,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider --ignore=tests/test_end_to_end.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -92,9 +87,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider --ignore=tests/test_end_to_end.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -156,7 +149,7 @@ class EODAG_V2_9_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -170,19 +163,17 @@ class EODAG_V2_9_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # TODO: Implement the parse_log function
         # Implement the log parsing logic here
         test_statuses = {}
-        test_pattern = re.compile(r"^(PASSED|FAILED|SKIPPED)(?:\s\[\d+\])?\s(.*?)(::.*)?$")
+        test_pattern = re.compile(
+            r"^(PASSED|FAILED|SKIPPED)(?:\s\[\d+\])?\s(.*?)(::.*)?$"
+        )
         lines = log.splitlines()
         for line in lines:
             match = test_pattern.match(line)
@@ -194,17 +185,12 @@ class EODAG_V2_9_1(Instance):
                     test_statuses[test_file] = set()
                 test_statuses[test_file].add(status)
         for test_file, statuses in test_statuses.items():
-            if 'FAILED' in statuses:
+            if "FAILED" in statuses:
                 failed_tests.add(test_file)
-            elif 'SKIPPED' in statuses:
+            elif "SKIPPED" in statuses:
                 skipped_tests.add(test_file)
-            elif 'PASSED' in statuses:
+            elif "PASSED" in statuses:
                 passed_tests.add(test_file)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -109,9 +109,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -125,9 +123,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 sbt test || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -138,9 +134,7 @@ set -e
 cd /home/{pr.repo}
 sbt test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -152,9 +146,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 sbt test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -166,9 +158,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 sbt test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -259,16 +249,13 @@ class sbt(Instance):
 
     def parse_log(self, test_log: str) -> TestResult:
         import re
+
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        passed_res = [
-            re.compile(r"^\[info\] [+-] (?!.*\*\*\* FAILED \*\*\*)(.*)$")
-        ]
+        passed_res = [re.compile(r"^\[info\] [+-] (?!.*\*\*\* FAILED \*\*\*)(.*)$")]
 
-        failed_res = [
-            re.compile(r"^\[info\] - (.*) \*\*\* FAILED \*\*\*$")
-        ]
+        failed_res = [re.compile(r"^\[info\] - (.*) \*\*\* FAILED \*\*\*$")]
 
         skipped_res = []  # 留空，可扩展
 

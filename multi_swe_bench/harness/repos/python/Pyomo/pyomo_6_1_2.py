@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.10-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -91,7 +90,7 @@ bash /home/pyomo/test_commands.sh
 ###ACTION_DELIMITER###
 2to3 -w /usr/local/lib/python3.10/site-packages/nose
 ###ACTION_DELIMITER###
-bash /home/pyomo/test_commands.sh"""
+bash /home/pyomo/test_commands.sh""",
             ),
             File(
                 ".",
@@ -100,9 +99,7 @@ bash /home/pyomo/test_commands.sh"""
 cd /home/{pr.repo}
 python -m pyomo.common.unittest pyomo -v --cat=nightly --xunit
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -115,9 +112,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python -m pyomo.common.unittest pyomo -v --cat=nightly --xunit
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -130,9 +125,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python -m pyomo.common.unittest pyomo -v --cat=nightly --xunit
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -194,7 +187,7 @@ class PYOMO_6_1_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -208,50 +201,46 @@ class PYOMO_6_1_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
-            # Improved regex: only match lines like test_name (module.class) ... STATUS
-        result_re = re.compile(r'^(?P<test_name>\w+) \((?P<test_class>[\w\.]+)\) \.\.\. (?P<status>ok|FAIL|SKIP)(:.*)?$')
+        # Improved regex: only match lines like test_name (module.class) ... STATUS
+        result_re = re.compile(
+            r"^(?P<test_name>\w+) \((?P<test_class>[\w\.]+)\) \.\.\. (?P<status>ok|FAIL|SKIP)(:.*)?$"
+        )
         # Status precedence: failed > skipped > passed
-        status_order = {'failed_tests': 2, 'skipped_tests': 1, 'passed_tests': 0}
+        status_order = {"failed_tests": 2, "skipped_tests": 1, "passed_tests": 0}
         test_status = {}
         for line in log.splitlines():
             m = result_re.match(line)
             if m:
                 test_id = f"{m.group('test_class')}.{m.group('test_name')}"
-                status = m.group('status')
-                if status == 'ok':
-                    s = 'passed_tests'
-                elif status == 'FAIL':
-                    s = 'failed_tests'
-                elif status == 'SKIP':
-                    s = 'skipped_tests'
+                status = m.group("status")
+                if status == "ok":
+                    s = "passed_tests"
+                elif status == "FAIL":
+                    s = "failed_tests"
+                elif status == "SKIP":
+                    s = "skipped_tests"
                 # Only upgrade status if new status is more severe
-                if test_id not in test_status or status_order[s] > status_order[test_status[test_id]]:
+                if (
+                    test_id not in test_status
+                    or status_order[s] > status_order[test_status[test_id]]
+                ):
                     test_status[test_id] = s
         # Assign each test to only one set based on its final status
         failed_tests = set()
         skipped_tests = set()
         passed_tests = set()
         for k, v in test_status.items():
-            if v == 'failed_tests':
+            if v == "failed_tests":
                 failed_tests.add(k)
-            elif v == 'skipped_tests':
+            elif v == "skipped_tests":
                 skipped_tests.add(k)
-            elif v == 'passed_tests':
+            elif v == "passed_tests":
                 passed_tests.add(k)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

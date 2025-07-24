@@ -89,12 +89,8 @@ def run_pipeline(
     # step 5: build a complete dataset
     # - download patch
     # - split patch as fix_patch and test_patch
-    dataset_file = (
-        out_dir / f"{org}__{repo}_filtered_prs_with_issues.jsonl"
-    )
-    build_dataset(
-        tokens, out_dir, dataset_file, delay_on_error, retry_attempts
-    )
+    dataset_file = out_dir / f"{org}__{repo}_filtered_prs_with_issues.jsonl"
+    build_dataset(tokens, out_dir, dataset_file, delay_on_error, retry_attempts)
 
 
 if __name__ == "__main__":

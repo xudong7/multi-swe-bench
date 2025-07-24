@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.12-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -55,7 +54,7 @@ uv sync --frozen --group all --all-extras
 ###ACTION_DELIMITER###
 echo 'uv run coverage run -m pytest --durations=10 --parallel-threads 1' > /home/pydantic/test_commands.sh && chmod +x /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -64,9 +63,7 @@ bash /home/pydantic/test_commands.sh"""
 cd /home/{pr.repo}
 uv run coverage run -m pytest --durations=10 --parallel-threads 1
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -79,9 +76,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 uv run coverage run -m pytest --durations=10 --parallel-threads 1
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -94,9 +89,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 uv run coverage run -m pytest --durations=10 --parallel-threads 1
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -159,7 +152,7 @@ class PYDANTIC_V2_11_0B2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -173,39 +166,36 @@ class PYDANTIC_V2_11_0B2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Extract failed test names from the 'FAILURES' section
-        failure_section = re.search(r'=+ FAILURES =+[\s\S]+?(?==+ [A-Z ]+=+|\Z)', log)
+        failure_section = re.search(r"=+ FAILURES =+[\s\S]+?(?==+ [A-Z ]+=+|\Z)", log)
         if failure_section:
             # Find lines like '__________________________ test_name __________________________'
             for line in failure_section.group(0).splitlines():
-                if line.strip().startswith('_'):
-                    print('DEBUG: failure line:', repr(line))
-            for match in re.finditer(r'^_+\s*(.*?)\s*_+$', failure_section.group(0), re.MULTILINE):
+                if line.strip().startswith("_"):
+                    print("DEBUG: failure line:", repr(line))
+            for match in re.finditer(
+                r"^_+\s*(.*?)\s*_+$", failure_section.group(0), re.MULTILINE
+            ):
                 failed_tests.add(match.group(1))
             # Also try to extract test names from lines like 'def test_name' in the failure section
-            for match in re.finditer(r'^\s*def\s+([\w\d_]+)\s*\(', failure_section.group(0), re.MULTILINE):
+            for match in re.finditer(
+                r"^\s*def\s+([\w\d_]+)\s*\(", failure_section.group(0), re.MULTILINE
+            ):
                 failed_tests.add(match.group(1))
         # Note: Passed and skipped test names are not available in the log, only their counts.
         # Optionally, extract a few passed test names from the 'slowest durations' section
-        slowest_section = re.search(r'slowest 10 durations[\s\S]+?Results', log)
+        slowest_section = re.search(r"slowest 10 durations[\s\S]+?Results", log)
         if slowest_section:
-            for match in re.finditer(r'call\s+([\w/\.]+::[\w\[\]-]+)', slowest_section.group(0)):
+            for match in re.finditer(
+                r"call\s+([\w/\.]+::[\w\[\]-]+)", slowest_section.group(0)
+            ):
                 passed_tests.add(match.group(1))
         # Skipped test names are not available, so skipped_tests will remain empty.
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

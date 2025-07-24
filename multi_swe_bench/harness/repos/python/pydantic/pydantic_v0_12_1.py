@@ -1,8 +1,6 @@
 import re
 
-import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -24,10 +22,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -67,7 +65,7 @@ bash /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
 pip uninstall -y ujson email-validator
 ###ACTION_DELIMITER###
-pytest --cov=pydantic -v"""
+pytest --cov=pydantic -v""",
             ),
             File(
                 ".",
@@ -78,9 +76,7 @@ pytest --cov=pydantic -v
 pip uninstall -y ujson email-validator
 pytest --cov=pydantic -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -95,9 +91,7 @@ pytest --cov=pydantic -v
 pip uninstall -y ujson email-validator
 pytest --cov=pydantic -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -112,9 +106,7 @@ pytest --cov=pydantic -v
 pip uninstall -y ujson email-validator
 pytest --cov=pydantic -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -177,7 +169,7 @@ class PYDANTIC_V0_12_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -191,9 +183,7 @@ class PYDANTIC_V0_12_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
@@ -230,7 +220,7 @@ class PYDANTIC_V0_12_1(Instance):
                 continue
         # Remove any overlap: a test can only be in one set
         skipped_tests -= passed_tests
-        failed_tests -= (passed_tests | skipped_tests)
+        failed_tests -= passed_tests | skipped_tests
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -103,7 +102,7 @@ make clean && ./configure --prefix=/usr/local/python2.7 && make -j 4 && make ins
 ###ACTION_DELIMITER###
 echo '/usr/local/python2.7/bin/python2.7 -m nose -sv' > /home/hy/test_commands.sh && chmod +x /home/hy/test_commands.sh
 ###ACTION_DELIMITER###
-cd /home/hy && bash ./test_commands.sh"""
+cd /home/hy && bash ./test_commands.sh""",
             ),
             File(
                 ".",
@@ -112,9 +111,7 @@ cd /home/hy && bash ./test_commands.sh"""
 cd /home/{pr.repo}
 /usr/local/python2.7/bin/python2.7 -m nose -sv
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -127,9 +124,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 /usr/local/python2.7/bin/python2.7 -m nose -sv
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -142,9 +137,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 /usr/local/python2.7/bin/python2.7 -m nose -sv
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -206,7 +199,7 @@ class HY_0_9_6(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -220,18 +213,18 @@ class HY_0_9_6(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
         # Regex patterns for test results
         # Example: 'tests.test_do ... ok' or 'NATIVE: test the keyword? macro ... ERROR'
         pass_pattern = re.compile(r"^(.*?)(?:\s*\.\.\.)\s*ok\s*$", re.MULTILINE)
         fail_pattern = re.compile(r"^(.*?)(?:\s*\.\.\.)\s*ERROR\s*$", re.MULTILINE)
-        skip_pattern = re.compile(r"^(.*?)(?:\s*\.\.\.)\s*(?:SKIP|skipped)\s*$", re.MULTILINE)
+        skip_pattern = re.compile(
+            r"^(.*?)(?:\s*\.\.\.)\s*(?:SKIP|skipped)\s*$", re.MULTILINE
+        )
         for match in pass_pattern.finditer(log):
             test_name = match.group(1).strip()
             if test_name:
@@ -244,12 +237,6 @@ class HY_0_9_6(Instance):
             test_name = match.group(1).strip()
             if test_name:
                 skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
-        
 
         return TestResult(
             passed_count=len(passed_tests),

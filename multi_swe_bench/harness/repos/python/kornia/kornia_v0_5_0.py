@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "ubuntu:16.04"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -85,7 +84,7 @@ echo 'pytest -v --device all --dtype float32,float64 --cov=kornia test/ --flake8
 ###ACTION_DELIMITER###
 bash /home/kornia/test_commands.sh
 ###ACTION_DELIMITER###
-export PYENV_ROOT="$HOME/.pyenv" && export PATH="$PYENV_ROOT/bin:$PATH" && eval "$(pyenv init -)" && export PATH="$PYENV_ROOT/versions/3.8.18/bin:$PATH" && pytest -v --device all --dtype float32,float64 --cov=kornia test/ --flake8 --mypy"""
+export PYENV_ROOT="$HOME/.pyenv" && export PATH="$PYENV_ROOT/bin:$PATH" && eval "$(pyenv init -)" && export PATH="$PYENV_ROOT/versions/3.8.18/bin:$PATH" && pytest -v --device all --dtype float32,float64 --cov=kornia test/ --flake8 --mypy""",
             ),
             File(
                 ".",
@@ -94,9 +93,7 @@ export PYENV_ROOT="$HOME/.pyenv" && export PATH="$PYENV_ROOT/bin:$PATH" && eval 
 cd /home/{pr.repo}
 pytest -v --device all --dtype float32,float64 --cov=kornia test/ --flake8 --mypy
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -109,9 +106,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest -v --device all --dtype float32,float64 --cov=kornia test/ --flake8 --mypy
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -124,9 +119,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest -v --device all --dtype float32,float64 --cov=kornia test/ --flake8 --mypy
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -188,7 +181,7 @@ class KORNIA_V0_5_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -202,16 +195,14 @@ class KORNIA_V0_5_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
         # Regex pattern to match test result lines
         # Example: test/file.py::TestClass::test_name[param] PASSED [  0%]
-        pattern = re.compile(r'^(.*?) (PASSED|FAILED|SKIPPED)\b', re.MULTILINE)
+        pattern = re.compile(r"^(.*?) (PASSED|FAILED|SKIPPED)\b", re.MULTILINE)
         for match in pattern.finditer(log):
             test_name, status = match.group(1), match.group(2)
             if status == "PASSED":
@@ -220,12 +211,6 @@ class KORNIA_V0_5_0(Instance):
                 failed_tests.add(test_name.strip())
             elif status == "SKIPPED":
                 skipped_tests.add(test_name.strip())
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
-        
 
         return TestResult(
             passed_count=len(passed_tests),

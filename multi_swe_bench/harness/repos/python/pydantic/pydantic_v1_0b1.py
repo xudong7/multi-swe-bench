@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -90,7 +89,7 @@ bash /home/pydantic/test_commands.sh
 echo 'pytest --cov=pydantic -rA --tb=no -p no:cacheprovider
 python tests/try_assert.py' > /home/pydantic/test_commands.sh && chmod +x /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -100,9 +99,7 @@ cd /home/{pr.repo}
 pytest --cov=pydantic -rA --tb=no -p no:cacheprovider
 python tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -116,9 +113,7 @@ fi
 pytest --cov=pydantic -rA --tb=no -p no:cacheprovider
 python tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -132,9 +127,7 @@ fi
 pytest --cov=pydantic -rA --tb=no -p no:cacheprovider
 python tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -197,7 +190,7 @@ class PYDANTIC_V1_0B1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -211,15 +204,11 @@ class PYDANTIC_V1_0B1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex patterns for PASSED, FAILED, and SKIPPED
         passed_pattern = re.compile(r"^PASSED ([^\s]+)", re.MULTILINE)
         failed_pattern = re.compile(r"^FAILED ([^\s]+)", re.MULTILINE)
@@ -227,11 +216,6 @@ class PYDANTIC_V1_0B1(Instance):
         passed_tests.update(passed_pattern.findall(log))
         failed_tests.update(failed_pattern.findall(log))
         skipped_tests.update(skipped_pattern.findall(log))
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

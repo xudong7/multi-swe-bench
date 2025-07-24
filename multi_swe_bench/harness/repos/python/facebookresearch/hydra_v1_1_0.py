@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.8"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -69,7 +68,7 @@ bash /home/hydra/test_commands.sh
 ###ACTION_DELIMITER###
 python setup.py antlr
 ###ACTION_DELIMITER###
-bash /home/hydra/test_commands.sh"""
+bash /home/hydra/test_commands.sh""",
             ),
             File(
                 ".",
@@ -78,9 +77,7 @@ bash /home/hydra/test_commands.sh"""
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no build_helpers tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -93,9 +90,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no build_helpers tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -108,9 +103,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no build_helpers tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -173,7 +166,7 @@ class HYDRA_V1_1_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -187,33 +180,24 @@ class HYDRA_V1_1_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Implement the log parsing logic here
         # Regex for PASSED/FAILED/other statuses with test name
-        status_pattern = re.compile(r'^(PASSED|FAILED) ([^\s]+)$', re.MULTILINE)
+        status_pattern = re.compile(r"^(PASSED|FAILED) ([^\s]+)$", re.MULTILINE)
         # Regex for SKIPPED lines
-        skipped_pattern = re.compile(r'^SKIPPED \[\d+\] ([^:]+:\d+):', re.MULTILINE)
+        skipped_pattern = re.compile(r"^SKIPPED \[\d+\] ([^:]+:\d+):", re.MULTILINE)
         for match in status_pattern.finditer(log):
             status, test_name = match.groups()
-            if status == 'PASSED':
+            if status == "PASSED":
                 passed_tests.add(test_name)
-            elif status == 'FAILED':
+            elif status == "FAILED":
                 failed_tests.add(test_name)
         for match in skipped_pattern.finditer(log):
             skipped_tests.add(match.group(1))
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

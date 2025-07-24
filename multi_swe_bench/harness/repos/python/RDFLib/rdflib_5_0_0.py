@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -61,7 +60,7 @@ echo 'nose2 -v test rdflib' > /home/rdflib/test_commands.sh
 ###ACTION_DELIMITER###
 bash /home/rdflib/test_commands.sh
 ###ACTION_DELIMITER###
-"""
+""",
             ),
             File(
                 ".",
@@ -70,9 +69,7 @@ bash /home/rdflib/test_commands.sh
 cd /home/{pr.repo}
 nose2 -v test rdflib
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -85,9 +82,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nose2 -v test rdflib
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -100,9 +95,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nose2 -v test rdflib
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -164,7 +157,7 @@ class RDFLIB_5_0_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -178,14 +171,10 @@ class RDFLIB_5_0_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         # Use a dict to track the latest status for each test
         test_status = {}
-        import re
-        import json
         # Implement the log parsing logic here
         # Patterns:
         # 1. Standard test: testName (test.module.Class.method) ... ok/skipped/ERROR
@@ -200,7 +189,12 @@ class RDFLIB_5_0_0(Instance):
         quoted_re = re.compile(r"'([^']+)'")
         for line in log.splitlines():
             line = line.strip()
-            if not line or line.startswith('test.') and ':' in line and line.endswith(':') is False:
+            if (
+                not line
+                or line.startswith("test.")
+                and ":" in line
+                and line.endswith(":") is False
+            ):
                 # Ignore section headers and empty lines
                 continue
             if line.startswith("'"):
@@ -212,40 +206,35 @@ class RDFLIB_5_0_0(Instance):
                     all_quoted = quoted_re.findall(quoted)
                     if all_quoted:
                         name = all_quoted[-1]  # Only use the file path as the test name
-                        if status.startswith('ok'):
-                            test_status[name] = 'passed'
-                        elif status.startswith('skipped'):
-                            test_status[name] = 'skipped'
-                        elif status.startswith('ERROR'):
-                            test_status[name] = 'failed'
+                        if status.startswith("ok"):
+                            test_status[name] = "passed"
+                        elif status.startswith("skipped"):
+                            test_status[name] = "skipped"
+                        elif status.startswith("ERROR"):
+                            test_status[name] = "failed"
                 continue
             m = std_test_re.match(line)
             if m:
-                name = m.group('name')
-                status = line.rsplit('...', 1)[-1].strip()
-                if status.startswith('ok'):
-                    test_status[name] = 'passed'
-                elif status.startswith('skipped'):
-                    test_status[name] = 'skipped'
-                elif status.startswith('ERROR'):
-                    test_status[name] = 'failed'
+                name = m.group("name")
+                status = line.rsplit("...", 1)[-1].strip()
+                if status.startswith("ok"):
+                    test_status[name] = "passed"
+                elif status.startswith("skipped"):
+                    test_status[name] = "skipped"
+                elif status.startswith("ERROR"):
+                    test_status[name] = "failed"
                 continue
         # Build sets from the latest status for each test
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
         for name, status in test_status.items():
-            if status == 'passed':
+            if status == "passed":
                 passed_tests.add(name)
-            elif status == 'failed':
+            elif status == "failed":
                 failed_tests.add(name)
-            elif status == 'skipped':
+            elif status == "skipped":
                 skipped_tests.add(name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

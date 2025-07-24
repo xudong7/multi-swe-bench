@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -59,7 +58,7 @@ git clone https://github.com/Pyomo/pyomo-model-libraries.git
 ###ACTION_DELIMITER###
 echo 'test.pyomo -v --cat=nightly pyomo $(pwd)/pyomo-model-libraries' > /home/pyomo/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pyomo/test_commands.sh"""
+bash /home/pyomo/test_commands.sh""",
             ),
             File(
                 ".",
@@ -68,9 +67,7 @@ bash /home/pyomo/test_commands.sh"""
 cd /home/{pr.repo}
 test.pyomo -v --cat=nightly pyomo $(pwd)/pyomo-model-libraries
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -83,9 +80,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 test.pyomo -v --cat=nightly pyomo $(pwd)/pyomo-model-libraries
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -98,9 +93,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 test.pyomo -v --cat=nightly pyomo $(pwd)/pyomo-model-libraries
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -162,7 +155,7 @@ class PYOMO_5_5(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -176,15 +169,11 @@ class PYOMO_5_5(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         from collections import OrderedDict
-        import re
+
         # Only match lines that end with ... ok, ... ERROR, or ... SKIP: <reason>
-        test_line_re = re.compile(
-            r"^(.*?)\s+\.\.\.\s+(ok|ERROR|SKIP:.*)$"
-        )
+        test_line_re = re.compile(r"^(.*?)\s+\.\.\.\s+(ok|ERROR|SKIP:.*)$")
         test_status = OrderedDict()  # test_name/desc -> status
         for line in log.splitlines():
             m = test_line_re.match(line)

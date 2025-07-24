@@ -16,14 +16,13 @@ import argparse
 import json
 import os
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 import toml
 import yaml
 
 
 class ArgumentParser(argparse.ArgumentParser):
-
     def __init__(self, use_config: bool = True, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if use_config:

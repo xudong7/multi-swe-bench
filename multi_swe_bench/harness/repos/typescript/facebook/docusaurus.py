@@ -106,9 +106,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -123,9 +121,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 yarn install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -136,9 +132,7 @@ set -e
 cd /home/{pr.repo}
 yarn test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -150,9 +144,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 yarn test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -164,9 +156,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 yarn test 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -206,7 +196,6 @@ class Puppeteer(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-
         return PuppeteerImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:

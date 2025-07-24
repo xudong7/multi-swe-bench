@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -57,7 +56,7 @@ chmod +x test_commands.sh && bash ./test_commands.sh
 ###ACTION_DELIMITER###
 echo 'invoke unit' > test_commands.sh
 ###ACTION_DELIMITER###
-bash ./test_commands.sh"""
+bash ./test_commands.sh""",
             ),
             File(
                 ".",
@@ -66,9 +65,7 @@ bash ./test_commands.sh"""
 cd /home/{pr.repo}
 invoke unit
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -81,9 +78,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 invoke unit
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -96,9 +91,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 invoke unit
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -160,7 +153,7 @@ class SDMETRICS_V0_17_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -174,45 +167,36 @@ class SDMETRICS_V0_17_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Extract failed test names from lines starting with 'FAILED'
-        failed_pattern = re.compile(r'^FAILED (.+)$', re.MULTILINE)
+        failed_pattern = re.compile(r"^FAILED (.+)$", re.MULTILINE)
         for match in failed_pattern.finditer(log):
             failed_tests.add(match.group(1).strip())
         # Extract skipped test names from lines starting with 'SKIPPED'
-        skipped_pattern = re.compile(r'^SKIPPED (.+)$', re.MULTILINE)
+        skipped_pattern = re.compile(r"^SKIPPED (.+)$", re.MULTILINE)
         for match in skipped_pattern.finditer(log):
             skipped_tests.add(match.group(1).strip())
         # Parse compact summary lines for test status counts
-        summary_pattern = re.compile(r'^(\S+\.py)\s+([.FEsS]+)', re.MULTILINE)
+        summary_pattern = re.compile(r"^(\S+\.py)\s+([.FEsS]+)", re.MULTILINE)
         for match in summary_pattern.finditer(log):
             test_file = match.group(1)
             status_seq = match.group(2)
             for idx, status in enumerate(status_seq):
                 # We cannot get the test name in non-verbose mode, so use a placeholder
-                test_id = f"{test_file}::{idx+1}"
-                if status == '.':
+                test_id = f"{test_file}::{idx + 1}"
+                if status == ".":
                     passed_tests.add(test_id)
-                elif status in ('F', 'E'):
+                elif status in ("F", "E"):
                     # Only add if not already in failed_tests (from verbose summary)
                     if not any(test_file in t for t in failed_tests):
                         failed_tests.add(test_id)
-                elif status in ('s', 'S'):
+                elif status in ("s", "S"):
                     if not any(test_file in t for t in skipped_tests):
                         skipped_tests.add(test_id)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

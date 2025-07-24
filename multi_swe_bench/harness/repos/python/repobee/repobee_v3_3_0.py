@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -81,7 +80,7 @@ PYTHONPATH=src pytest --no-header -rA --tb=no -p no:cacheprovider system_tests' 
 ###ACTION_DELIMITER###
 bash /home/repobee/test_commands.sh
 ###ACTION_DELIMITER###
-sed -i '$s/^/REPOBEE_NO_VERIFY_SSL=true /' /home/repobee/test_commands.sh"""
+sed -i '$s/^/REPOBEE_NO_VERIFY_SSL=true /' /home/repobee/test_commands.sh""",
             ),
             File(
                 ".",
@@ -92,9 +91,7 @@ PYTHONPATH=src pytest --no-header -rA --tb=no -p no:cacheprovider tests/unit_tes
 PYTHONPATH=src pytest --no-header -rA --tb=no -p no:cacheprovider tests/new_integration_tests
 REPOBEE_NO_VERIFY_SSL=true PYTHONPATH=src pytest --no-header -rA --tb=no -p no:cacheprovider system_tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -109,9 +106,7 @@ PYTHONPATH=src pytest --no-header -rA --tb=no -p no:cacheprovider tests/unit_tes
 PYTHONPATH=src pytest --no-header -rA --tb=no -p no:cacheprovider tests/new_integration_tests
 REPOBEE_NO_VERIFY_SSL=true PYTHONPATH=src pytest --no-header -rA --tb=no -p no:cacheprovider system_tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -126,9 +121,7 @@ PYTHONPATH=src pytest --no-header -rA --tb=no -p no:cacheprovider tests/unit_tes
 PYTHONPATH=src pytest --no-header -rA --tb=no -p no:cacheprovider tests/new_integration_tests
 REPOBEE_NO_VERIFY_SSL=true PYTHONPATH=src pytest --no-header -rA --tb=no -p no:cacheprovider system_tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -190,7 +183,7 @@ class REPOBEE_V3_3_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -204,15 +197,11 @@ class REPOBEE_V3_3_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Implement the log parsing logic here
         # Patterns: PASSED <test_name>, ERROR <test_name>, SKIPPED <test_name>
         for line in log.splitlines():
@@ -227,11 +216,6 @@ class REPOBEE_V3_3_0(Instance):
                 failed_tests.add(m_failed.group(1))
             elif m_skipped:
                 skipped_tests.add(m_skipped.group(1))
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

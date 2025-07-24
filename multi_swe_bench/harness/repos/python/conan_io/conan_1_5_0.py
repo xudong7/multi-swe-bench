@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim-buster"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -69,7 +68,7 @@ apt-get install -y gcc
 ###ACTION_DELIMITER###
 nosetests --with-coverage --verbosity=2 conans.test --processes=4 --process-timeout=1000
 ###ACTION_DELIMITER###
-echo 'nosetests --with-coverage --verbosity=2 conans.test --processes=4 --process-timeout=1000' > /home/conan/test_commands.sh"""
+echo 'nosetests --with-coverage --verbosity=2 conans.test --processes=4 --process-timeout=1000' > /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -78,9 +77,7 @@ echo 'nosetests --with-coverage --verbosity=2 conans.test --processes=4 --proces
 cd /home/{pr.repo}
 nosetests --with-coverage --verbosity=2 conans.test --processes=4 --process-timeout=1000
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -93,9 +90,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests --with-coverage --verbosity=2 conans.test --processes=4 --process-timeout=1000
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -108,9 +103,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests --with-coverage --verbosity=2 conans.test --processes=4 --process-timeout=1000
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -173,7 +166,7 @@ class CONAN_1_5_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -187,15 +180,11 @@ class CONAN_1_5_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # TODO: Implement the parse_log function
         # Implement the log parsing logic here
         processed_tests = set()
@@ -221,11 +210,6 @@ class CONAN_1_5_0(Instance):
                     if test_name not in processed_tests:
                         skipped_tests.add(test_name)
                         processed_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

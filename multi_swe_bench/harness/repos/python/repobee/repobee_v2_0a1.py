@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -55,7 +54,7 @@ pip install -e .
 ###ACTION_DELIMITER###
 echo 'pytest --no-header -rA --tb=no -p no:cacheprovider tests/' > /home/repobee/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/repobee/test_commands.sh"""
+bash /home/repobee/test_commands.sh""",
             ),
             File(
                 ".",
@@ -64,9 +63,7 @@ bash /home/repobee/test_commands.sh"""
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -79,9 +76,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -94,9 +89,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -158,7 +151,7 @@ class REPOBEE_V2_0A1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -172,15 +165,11 @@ class REPOBEE_V2_0A1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Only consider lines in the summary section (after 'short test summary info')
         summary_start = re.search(r"=+ short test summary info =+", log)
         if not summary_start:
@@ -188,31 +177,26 @@ class REPOBEE_V2_0A1(Instance):
             return {
                 "passed_tests": passed_tests,
                 "failed_tests": failed_tests,
-                "skipped_tests": skipped_tests
+                "skipped_tests": skipped_tests,
             }
-        summary = log[summary_start.end():]
+        summary = log[summary_start.end() :]
         # Regex for status lines: PASSED/FAILED/SKIPPED/XFAIL/ERROR <testname>
         status_patterns = {
-            'PASSED': passed_tests,
-            'FAILED': failed_tests,
-            'SKIPPED': skipped_tests,
-            'XFAIL': skipped_tests,  # treat xfail as skipped for reporting
-            'ERROR': failed_tests,   # treat error as failed
+            "PASSED": passed_tests,
+            "FAILED": failed_tests,
+            "SKIPPED": skipped_tests,
+            "XFAIL": skipped_tests,  # treat xfail as skipped for reporting
+            "ERROR": failed_tests,  # treat error as failed
         }
         for line in summary.splitlines():
             for status, testset in status_patterns.items():
-                if line.startswith(status + ' '):
+                if line.startswith(status + " "):
                     # Extract test name (everything after status and space)
-                    test_name = line[len(status)+1:].strip()
+                    test_name = line[len(status) + 1 :].strip()
                     # Only add non-empty test names
                     if test_name:
                         testset.add(test_name)
                     break
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

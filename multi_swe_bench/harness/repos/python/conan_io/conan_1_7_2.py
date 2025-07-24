@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -59,7 +58,7 @@ pip install -r conans/requirements_dev.txt
 ###ACTION_DELIMITER###
 pip install -r conans/requirements_server.txt
 ###ACTION_DELIMITER###
-echo 'nosetests --with-coverage --verbosity=2 conans.test --processes=4 --process-timeout=1000' > /home/conan/test_commands.sh"""
+echo 'nosetests --with-coverage --verbosity=2 conans.test --processes=4 --process-timeout=1000' > /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -68,9 +67,7 @@ echo 'nosetests --with-coverage --verbosity=2 conans.test --processes=4 --proces
 cd /home/{pr.repo}
 nosetests --with-coverage --verbosity=2 conans.test --processes=4 --process-timeout=1000
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -83,9 +80,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests --with-coverage --verbosity=2 conans.test --processes=4 --process-timeout=1000
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -98,9 +93,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests --with-coverage --verbosity=2 conans.test --processes=4 --process-timeout=1000
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -163,7 +156,7 @@ class CONAN_1_7_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -177,47 +170,42 @@ class CONAN_1_7_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
         all_tests = {}
-        pattern1 = re.compile(r"""^(?!#)(.+?)\s*(?:\((.*?)\))?\s*\.\.\.\s*(ok|FAIL|ERROR|SKIP.*)$""", re.MULTILINE)
+        pattern1 = re.compile(
+            r"""^(?!#)(.+?)\s*(?:\((.*?)\))?\s*\.\.\.\s*(ok|FAIL|ERROR|SKIP.*)$""",
+            re.MULTILINE,
+        )
         for match in pattern1.finditer(log):
             test_name = match.group(1).strip()
             suite = match.group(2)
             status = match.group(3).strip()
-            unique_test_name = f'{test_name} ({suite.strip()})' if suite else test_name
+            unique_test_name = f"{test_name} ({suite.strip()})" if suite else test_name
             all_tests[unique_test_name] = status
         pattern2 = re.compile(r"""^FAIL:\s*(.+?)(?:\s\((.*?)\))?$""", re.MULTILINE)
         for match in pattern2.finditer(log):
             test_name = match.group(1).strip()
             suite = match.group(2)
-            unique_test_name = f'{test_name} ({suite.strip()})' if suite else test_name
+            unique_test_name = f"{test_name} ({suite.strip()})" if suite else test_name
             all_tests[unique_test_name] = "FAIL"
         failed_base_names = set()
         for unique_test_name, status in all_tests.items():
-            if status.startswith('FAIL') or status.startswith('ERROR'):
-                base_name = unique_test_name.split(' (')[0]
+            if status.startswith("FAIL") or status.startswith("ERROR"):
+                base_name = unique_test_name.split(" (")[0]
                 failed_base_names.add(base_name)
         for unique_test_name, status in all_tests.items():
-            base_name = unique_test_name.split(' (')[0]
-            if status.startswith('FAIL') or status.startswith('ERROR'):
+            base_name = unique_test_name.split(" (")[0]
+            if status.startswith("FAIL") or status.startswith("ERROR"):
                 failed_tests.add(unique_test_name)
-            elif status.startswith('SKIP'):
+            elif status.startswith("SKIP"):
                 skipped_tests.add(unique_test_name)
-            elif status == 'ok':
+            elif status == "ok":
                 if base_name not in failed_base_names:
                     passed_tests.add(unique_test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

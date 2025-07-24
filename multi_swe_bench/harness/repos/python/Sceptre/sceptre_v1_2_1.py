@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -77,7 +76,7 @@ sed -i "s|MagicMock()|MagicMock(return_value='/tmp')|g" tests/test_resolvers/tes
 ###ACTION_DELIMITER###
 echo "py.test --ignore=venv/ --ignore=env/ -s" > test_commands.sh
 ###ACTION_DELIMITER###
-sed -i "s/from mock import sentinel, MagicMock/from mock import sentinel/g" tests/test_resolvers/test_project_variables.py"""
+sed -i "s/from mock import sentinel, MagicMock/from mock import sentinel/g" tests/test_resolvers/test_project_variables.py""",
             ),
             File(
                 ".",
@@ -86,9 +85,7 @@ sed -i "s/from mock import sentinel, MagicMock/from mock import sentinel/g" test
 cd /home/{pr.repo}
 py.test --ignore=venv/ --ignore=env/ -s
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -101,9 +98,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 py.test --ignore=venv/ --ignore=env/ -s
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -116,9 +111,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 py.test --ignore=venv/ --ignore=env/ -s
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -180,7 +173,7 @@ class SCEPTRE_V1_2_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -194,32 +187,32 @@ class SCEPTRE_V1_2_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Implement the log parsing logic here
         # Isolate the test execution section.
-        try:     
-            log_section = log.split('collected ')[1].split('===')[0]
+        try:
+            log_section = log.split("collected ")[1].split("===")[0]
         except IndexError:
-            return {"passed_tests": set(), "failed_tests": set(), "skipped_tests": set()}
-        log_section = log_section.replace('\n', ' ')
-        test_pattern = re.compile(r'(tests/[^\s]+\.py)\s+([.FEs]+)')
+            return {
+                "passed_tests": set(),
+                "failed_tests": set(),
+                "skipped_tests": set(),
+            }
+        log_section = log_section.replace("\n", " ")
+        test_pattern = re.compile(r"(tests/[^\s]+\.py)\s+([.FEs]+)")
         test_results_map = {}
         for path, results in test_pattern.findall(log_section):
             if path not in test_results_map:
                 test_results_map[path] = ""
             test_results_map[path] += results
         for path, concatenated_results in test_results_map.items():
-            if 'F' in concatenated_results or 'E' in concatenated_results:
+            if "F" in concatenated_results or "E" in concatenated_results:
                 failed_tests.add(path)
-            elif 's' in concatenated_results:
+            elif "s" in concatenated_results:
                 skipped_tests.add(path)
             else:
                 passed_tests.add(path)
@@ -227,11 +220,6 @@ class SCEPTRE_V1_2_1(Instance):
         passed_tests -= failed_tests
         passed_tests -= skipped_tests
         skipped_tests -= failed_tests
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

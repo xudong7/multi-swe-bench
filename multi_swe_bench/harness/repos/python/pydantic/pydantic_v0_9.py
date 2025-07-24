@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.6-buster"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -53,7 +52,7 @@ echo 'pytest --cov=pydantic' > /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
 make install
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -62,9 +61,7 @@ bash /home/pydantic/test_commands.sh"""
 cd /home/{pr.repo}
 pytest --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -77,9 +74,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -92,9 +87,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -157,7 +150,7 @@ class PYDANTIC_V0_9(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -171,34 +164,30 @@ class PYDANTIC_V0_9(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # TODO: Implement the parse_log function
         # Extract failed test names from the FAILURES section
         # Look for lines like: ____________________________ test_name _____________________________
         failure_section = False
         for line in log.splitlines():
-            if line.startswith('=') and 'FAILURES' in line:
+            if line.startswith("=") and "FAILURES" in line:
                 failure_section = True
                 continue
             if failure_section:
-                m = re.match(r'^_{5,}\s+(test_[^\s]+)\s+_{5,}$', line)
+                m = re.match(r"^_{5,}\s+(test_[^\s]+)\s+_{5,}$", line)
                 if m:
                     failed_tests.add(m.group(1))
                 # End of failures section if we hit a line of '=' without 'FAILURES'
-                elif line.startswith('=') and 'FAILURES' not in line:
+                elif line.startswith("=") and "FAILURES" not in line:
                     break
         # Extract counts of passed and skipped tests from the summary line
         summary_match = re.search(r"(\d+) failed, (\d+) passed, (\d+) skipped", log)
         if summary_match:
-            failed_count = int(summary_match.group(1))
+            int(summary_match.group(1))
             passed_count = int(summary_match.group(2))
             skipped_count = int(summary_match.group(3))
             # Add placeholder names for passed and skipped tests
@@ -212,32 +201,24 @@ class PYDANTIC_V0_9(Instance):
             if summary_match:
                 passed_count = int(summary_match.group(1))
                 skipped_count = int(summary_match.group(2))
-                failed_count = 0
             else:
                 summary_match = re.search(r"(\d+) passed", log)
                 if summary_match:
                     passed_count = int(summary_match.group(1))
                     skipped_count = 0
-                    failed_count = 0
                 else:
                     summary_match = re.search(r"(\d+) skipped", log)
                     if summary_match:
                         passed_count = 0
                         skipped_count = int(summary_match.group(1))
-                        failed_count = 0
                     else:
-                        passed_count = skipped_count = failed_count = 0
+                        passed_count = skipped_count = 0
             for i in range(1, passed_count + 1):
                 passed_tests.add(f"passed_test_{i}")
             for i in range(1, skipped_count + 1):
                 skipped_tests.add(f"skipped_test_{i}")
         # For passed and skipped tests, names are not available in this log format
         # Implement the log parsing logic here
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

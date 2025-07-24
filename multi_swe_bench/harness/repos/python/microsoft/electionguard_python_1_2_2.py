@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -61,7 +60,7 @@ poetry install
 ###ACTION_DELIMITER###
 echo 'poetry run pytest -v -rA tests/unit
 poetry run pytest -v -rA tests/property
-poetry run pytest -v -rA tests/integration' > test_commands.sh"""
+poetry run pytest -v -rA tests/integration' > test_commands.sh""",
             ),
             File(
                 ".",
@@ -72,9 +71,7 @@ poetry run pytest -v -rA tests/unit
 poetry run pytest -v -rA tests/property
 poetry run pytest -v -rA tests/integration
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -89,9 +86,7 @@ poetry run pytest -v -rA tests/unit
 poetry run pytest -v -rA tests/property
 poetry run pytest -v -rA tests/integration
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -106,9 +101,7 @@ poetry run pytest -v -rA tests/unit
 poetry run pytest -v -rA tests/property
 poetry run pytest -v -rA tests/integration
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -170,7 +163,7 @@ class ELECTIONGUARD_PYTHON_1_2_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -184,18 +177,16 @@ class ELECTIONGUARD_PYTHON_1_2_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex to match pytest test result lines
         # Example: tests/unit/test_ballot_box.py::TestBallotBox::test_ballot_box_cast_ballot PASSED [  1%]
-        test_line_re = re.compile(r'^(\S.*?)(?:\s+)(PASSED|FAILED|SKIPPED)(?:\s+\[.*)?$')
+        test_line_re = re.compile(
+            r"^(\S.*?)(?:\s+)(PASSED|FAILED|SKIPPED)(?:\s+\[.*)?$"
+        )
         for line in log.splitlines():
             m = test_line_re.match(line)
             if m:
@@ -206,11 +197,6 @@ class ELECTIONGUARD_PYTHON_1_2_2(Instance):
                     failed_tests.add(test_name)
                 elif status == "SKIPPED":
                     skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

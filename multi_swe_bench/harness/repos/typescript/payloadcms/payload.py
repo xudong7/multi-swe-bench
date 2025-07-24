@@ -185,9 +185,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -207,9 +205,7 @@ nvm install || true
 nvm use || true
 pnpm install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -223,9 +219,7 @@ cd /home/{pr.repo}
 nvm use || true
 pnpm install || true
 pnpm test:unit
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -240,9 +234,7 @@ git apply --whitespace=nowarn /home/test.patch
 nvm use || true
 pnpm install || true
 pnpm test:unit
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -257,9 +249,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 nvm use || true
 pnpm install || true
 pnpm test:unit
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -367,15 +357,13 @@ class payload(Instance):
         failed_res = [
             re.compile(r"^\[FAIL\]:?\s+(.+?)(?:\s+\(\d+(?:\.\d+)?\s*(?:ms|s)\))?$"),
             re.compile(r"\s*[×✗]\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
-            re.compile(r"\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$")
+            re.compile(r"\s*\d+\)\s+(.*?)(?:\s*\(\d+(?:\.\d+)?\s*(?:ms|s)\))?\s*$"),
         ]
 
-        skipped_res = [
-            re.compile(r"SKIP:?\s?(.+?)\s")
-        ]
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        skipped_res = [re.compile(r"SKIP:?\s?(.+?)\s")]
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
         for line in test_log.splitlines():
-            line = ansi_escape.sub('', line).strip()
+            line = ansi_escape.sub("", line).strip()
             for passed_re in passed_res:
                 m = passed_re.match(line)
                 if m and m.group(1).strip() not in failed_tests:

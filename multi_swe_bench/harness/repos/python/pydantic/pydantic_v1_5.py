@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.10-bullseye"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -69,7 +68,7 @@ python3.9 -m pytest --cov=pydantic --disable-warnings -rA
 python3.9 -m pytest --cov=pydantic --disable-warnings -p no:warnings
 ###ACTION_DELIMITER###
 echo 'python3.9 -m pytest --cov=pydantic --disable-warnings -p no:warnings
-python3.9 tests/try_assert.py' > /home/pydantic/test_commands.sh"""
+python3.9 tests/try_assert.py' > /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -79,9 +78,7 @@ cd /home/{pr.repo}
 python3.9 -m pytest --cov=pydantic --disable-warnings -p no:warnings
 python3.9 tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -95,9 +92,7 @@ fi
 python3.9 -m pytest --cov=pydantic --disable-warnings -p no:warnings
 python3.9 tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -111,9 +106,7 @@ fi
 python3.9 -m pytest --cov=pydantic --disable-warnings -p no:warnings
 python3.9 tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -176,7 +169,7 @@ class PYDANTIC_V1_5(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -190,11 +183,8 @@ class PYDANTIC_V1_5(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Improved parser for pytest logs
-        import re
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
@@ -202,20 +192,20 @@ class PYDANTIC_V1_5(Instance):
         file_status = []  # List of (filename, status_string)
         lines = log.splitlines()
         current_file = None
-        current_status = ''
+        current_status = ""
         for line in lines:
-            if line.startswith('tests/') and '[' in line:
+            if line.startswith("tests/") and "[" in line:
                 # Save previous file's status
                 if current_file is not None:
                     file_status.append((current_file, current_status))
                 current_file = line.split()[0]
                 # Find the part before the [xx%]
-                if '[' in line:
-                    status_part = line[:line.rfind('[')].split()[-1]
+                if "[" in line:
+                    status_part = line[: line.rfind("[")].split()[-1]
                     current_status = status_part
                 else:
-                    current_status = ''
-            elif re.match(r'^[.FEs]+\s*$', line):
+                    current_status = ""
+            elif re.match(r"^[.FEs]+\s*$", line):
                 if current_file is not None:
                     current_status += line.strip()
             else:
@@ -225,9 +215,9 @@ class PYDANTIC_V1_5(Instance):
         if current_file is not None:
             file_status.append((current_file, current_status))
         # 2. Parse failed test names from separator lines
-        fail_sep_re = re.compile(r'^_{5,}\s+([\w\[\]\-.,: =]+)\s+_{5,}$', re.MULTILINE)
+        fail_sep_re = re.compile(r"^_{5,}\s+([\w\[\]\-.,: =]+)\s+_{5,}$", re.MULTILINE)
         failed_names = [m.group(1).strip() for m in fail_sep_re.finditer(log)]
-        failed_names_set = set(failed_names)
+        set(failed_names)
         # 3. Try to map test names to status for each file
         #    We don't have the full list of test names, so we can only assign failed names to F's,
         #    and infer passed/skipped by position (best effort)
@@ -241,22 +231,17 @@ class PYDANTIC_V1_5(Instance):
         for filename, status_string in file_status:
             idx = 0
             for c in status_string:
-                if c == '.':
+                if c == ".":
                     passed_tests.add(f"{filename}::test_passed_{idx}")
-                elif c in 'F':
+                elif c in "F":
                     # Already handled by failed_names
                     pass
-                elif c in 'sS':
+                elif c in "sS":
                     skipped_tests.add(f"{filename}::test_skipped_{idx}")
                 idx += 1
         # Debug: print total number of status characters
         total_status_chars = sum(len(status) for _, status in file_status)
         print(f"DEBUG: total status chars: {total_status_chars}")
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

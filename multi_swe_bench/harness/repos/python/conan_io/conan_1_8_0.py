@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -113,7 +112,7 @@ nosetests --verbosity=2 conans.test -x
 ###ACTION_DELIMITER###
 echo 'nosetests --verbosity=2 conans.test' > /home/conan/test_commands.sh
 ###ACTION_DELIMITER###
-"""
+""",
             ),
             File(
                 ".",
@@ -122,9 +121,7 @@ echo 'nosetests --verbosity=2 conans.test' > /home/conan/test_commands.sh
 cd /home/{pr.repo}
 nosetests --verbosity=2 conans.test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -137,9 +134,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests --verbosity=2 conans.test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -152,9 +147,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests --verbosity=2 conans.test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -217,7 +210,7 @@ class CONAN_1_8_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -231,18 +224,17 @@ class CONAN_1_8_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
         test_results = {}
-        pattern = re.compile(r'^(.*?)\s*(?:\((.*?)\))?\s+\.\.\.\s+(ok|SKIP|ERROR|FAIL|fatal:.*)$')
+        pattern = re.compile(
+            r"^(.*?)\s*(?:\((.*?)\))?\s+\.\.\.\s+(ok|SKIP|ERROR|FAIL|fatal:.*)$"
+        )
         for line in log.splitlines():
-            line = re.sub(r'^\d+:', '', line).strip()
+            line = re.sub(r"^\d+:", "", line).strip()
             match = pattern.match(line)
             if match:
                 test_name = match.group(1).strip()
@@ -250,24 +242,21 @@ class CONAN_1_8_0(Instance):
                 status = match.group(3).strip()
                 if suite:
                     test_name = f"{test_name} ({suite})"
-                if 'Ran' in test_name:
+                if "Ran" in test_name:
                     continue
                 if test_name not in test_results:
                     test_results[test_name] = set()
                 test_results[test_name].add(status)
         for test_name, statuses in test_results.items():
-            if any(s in statuses for s in ["ERROR", "FAIL"]) or any(s.startswith("fatal:") for s in statuses):
+            if any(s in statuses for s in ["ERROR", "FAIL"]) or any(
+                s.startswith("fatal:") for s in statuses
+            ):
                 failed_tests.add(test_name)
             elif "ok" in statuses:
                 passed_tests.add(test_name)
             elif "SKIP" in statuses:
                 skipped_tests.add(test_name)
         passed_tests -= failed_tests
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

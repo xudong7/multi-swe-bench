@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.12-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -54,7 +53,7 @@ python3 -m pip install -r conans/requirements.txt && python3 -m pip install -r c
 echo 'export PYTHONPATH=$PYTHONPATH:$(pwd)
 python3 -m pytest --no-header -rA --tb=no -p no:cacheprovider .' > /home/conan/test_commands.sh && chmod +x /home/conan/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/conan/test_commands.sh"""
+bash /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -64,9 +63,7 @@ cd /home/{pr.repo}
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 python3 -m pytest --no-header -rA --tb=no -p no:cacheprovider .
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -80,9 +77,7 @@ fi
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 python3 -m pytest --no-header -rA --tb=no -p no:cacheprovider .
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -96,9 +91,7 @@ fi
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 python3 -m pytest --no-header -rA --tb=no -p no:cacheprovider .
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -161,7 +154,7 @@ class CONAN_2_7_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -175,33 +168,26 @@ class CONAN_2_7_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Extract PASSED, FAILED, ERROR lines with full test names
-        status_pattern = re.compile(r'^(PASSED|FAILED|ERROR)\s+([\w/_.:-]+)$', re.MULTILINE)
+        status_pattern = re.compile(
+            r"^(PASSED|FAILED|ERROR)\s+([\w/_.:-]+)$", re.MULTILINE
+        )
         for match in status_pattern.finditer(log):
             status, test_name = match.groups()
-            if status == 'PASSED':
+            if status == "PASSED":
                 passed_tests.add(test_name)
-            elif status in ('FAILED', 'ERROR'):
+            elif status in ("FAILED", "ERROR"):
                 failed_tests.add(test_name)
         # Extract SKIPPED lines (file and line number only)
-        skipped_pattern = re.compile(r'^SKIPPED \[\d+\] ([^:]+):(\d+):', re.MULTILINE)
+        skipped_pattern = re.compile(r"^SKIPPED \[\d+\] ([^:]+):(\d+):", re.MULTILINE)
         for match in skipped_pattern.finditer(log):
             file_name, line_number = match.groups()
             skipped_tests.add(f"{file_name}:{line_number}")
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

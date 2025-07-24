@@ -339,9 +339,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(),
                 ),
                 File(
                     ".",
@@ -355,9 +353,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -370,9 +366,7 @@ cd /home/{pr.repo}
 ./configure
 make check -j 4
 test/functional/test_runner.py --extended
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -387,9 +381,7 @@ git apply --whitespace=nowarn /home/test.patch
 make check -j 4
 test/functional/test_runner.py --extended
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -404,9 +396,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 make check -j 4
 test/functional/test_runner.py --extended
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
             ]
         elif self.pr.number <= 24104:
@@ -440,9 +430,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(),
                 ),
                 File(
                     ".",
@@ -456,9 +444,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -471,9 +457,7 @@ cd /home/{pr.repo}
 ./configure --with-incompatible-bdb
 make check -j 4
 test/functional/test_runner.py --extended
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -488,9 +472,7 @@ git apply --whitespace=nowarn /home/test.patch
 make check -j 4
 test/functional/test_runner.py --extended
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -505,9 +487,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 make check -j 4
 test/functional/test_runner.py --extended
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
             ]
         return [
@@ -540,9 +520,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -557,9 +535,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 mkdir build
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -573,9 +549,7 @@ cmake ..
 make -j 4
 ctest -j 4
 test/functional/test_runner.py --extended
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -591,9 +565,7 @@ make -j 4
 ctest -j 4
 test/functional/test_runner.py --extended
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -609,9 +581,7 @@ make -j 4
 ctest -j 4
 test/functional/test_runner.py --extended
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

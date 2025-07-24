@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -69,7 +68,7 @@ bash /home/repobee/test_commands.sh
 ###ACTION_DELIMITER###
 pip install -r requirements/app.txt
 ###ACTION_DELIMITER###
-bash /home/repobee/test_commands.sh"""
+bash /home/repobee/test_commands.sh""",
             ),
             File(
                 ".",
@@ -80,9 +79,7 @@ PYTHONPATH=src pytest tests/unit_tests --no-header -rA --tb=no -p no:cacheprovid
 PYTHONPATH=src pytest tests/new_integration_tests --no-header -rA --tb=no -p no:cacheprovider
 cd system_tests && PYTHONPATH=../src REPOBEE_NO_VERIFY_SSL="true" PYTHONWARNINGS="ignore:Unverified HTTPS request" pytest test_gitlab_system.py --no-header -rA --tb=no -p no:cacheprovider && cd ..
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -97,9 +94,7 @@ PYTHONPATH=src pytest tests/unit_tests --no-header -rA --tb=no -p no:cacheprovid
 PYTHONPATH=src pytest tests/new_integration_tests --no-header -rA --tb=no -p no:cacheprovider
 cd system_tests && PYTHONPATH=../src REPOBEE_NO_VERIFY_SSL="true" PYTHONWARNINGS="ignore:Unverified HTTPS request" pytest test_gitlab_system.py --no-header -rA --tb=no -p no:cacheprovider && cd ..
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -114,9 +109,7 @@ PYTHONPATH=src pytest tests/unit_tests --no-header -rA --tb=no -p no:cacheprovid
 PYTHONPATH=src pytest tests/new_integration_tests --no-header -rA --tb=no -p no:cacheprovider
 cd system_tests && PYTHONPATH=../src REPOBEE_NO_VERIFY_SSL="true" PYTHONWARNINGS="ignore:Unverified HTTPS request" pytest test_gitlab_system.py --no-header -rA --tb=no -p no:cacheprovider && cd ..
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -178,7 +171,7 @@ class REPOBEE_V3_4_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -192,14 +185,11 @@ class REPOBEE_V3_4_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
         # Regex to match lines like: PASSED <test_name>, FAILED <test_name>, SKIPPED <test_name>
         pattern = re.compile(r"^(PASSED|FAILED|SKIPPED) (.+)$", re.MULTILINE)
         for match in pattern.finditer(log):
@@ -210,11 +200,6 @@ class REPOBEE_V3_4_0(Instance):
                 failed_tests.add(test_name.strip())
             elif status == "SKIPPED":
                 skipped_tests.add(test_name.strip())
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

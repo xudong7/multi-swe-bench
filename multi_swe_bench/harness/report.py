@@ -94,17 +94,14 @@ class Report(PullRequestBase):
         # 1. Exist valid fix patch result
         if self.fix_patch_result.all_count == 0:
             self.valid = False
-            self.error_msg = (
-                f"There is no valid fix patch result: {self.short_report()}"
-            )
+            self.error_msg = f"After applying the fix patch, no test results were captured when executing the test command. A brief summary is as follows: {self.short_report()}"
             return (self.valid, self.error_msg)
 
         # 2. No new failures
         for name, test in self._tests.items():
             if test.test == TestStatus.PASS and test.fix == TestStatus.FAIL:
                 self.valid = False
-                # self._error_msg = f"Test passed but not fixed: {self.short_report()}"
-                self.error_msg = f"Test passed in test patch but failed in fix patch: {self.short_report()}. `{name}`: {test}"
+                self.error_msg = f"Before applying the fix patch, the test passed; however, after applying the fix patch, the test failed. A brief summary is as follows: {self.short_report()}. `{name}`: {test}"
                 return (self.valid, self.error_msg)
 
         # 3. Fix something
@@ -116,7 +113,7 @@ class Report(PullRequestBase):
 
         if not fix_something:
             self.valid = False
-            self.error_msg = f"No fix for failed test: {self.short_report()}"
+            self.error_msg = f"After applying the fix patch, no test cases transitioned from failed to passed. A brief summary is as follows: {self.short_report()}"
             return (self.valid, self.error_msg)
 
         # 4. Anomalous Pattern
@@ -127,9 +124,7 @@ class Report(PullRequestBase):
                 and test.run == TestStatus.PASS
             ):
                 self.valid = False
-                self.error_msg = (
-                    f"Anomalous pattern: {self.short_report()}. `{name}`: {test}"
-                )
+                self.error_msg = f"By comparing the test results before and after applying the fix patch, an anomalous pattern was detected. A brief summary is as follows: {self.short_report()}. `{name}`: {test}"
                 return (self.valid, self.error_msg)
 
         for name, test in self._tests.items():
@@ -147,7 +142,18 @@ class Report(PullRequestBase):
         return (self.valid, self.error_msg)
 
     def short_report(self) -> str:
-        return f"run=({self.run_result.passed_count}, {self.run_result.failed_count}, {self.run_result.skipped_count}), test=({self.test_patch_result.passed_count}, {self.test_patch_result.failed_count}, {self.test_patch_result.skipped_count}), fix=({self.fix_patch_result.passed_count}, {self.fix_patch_result.failed_count}, {self.fix_patch_result.skipped_count})"
+        return (
+            "Test Result Summary:\n"
+            "Stage Descriptions:\n"
+            "  run  : Execute the test command without any patches applied.\n"
+            "  test : Execute the test command after applying the test patch.\n"
+            "  fix  : Execute the test command after applying both the test patch and the fix patch.\n"
+            "Each stage is reported as (pass, fail, skip), representing the number of tests that passed, failed, or were skipped, respectively.\n\n"
+            f"Results:\n"
+            f"  run  = ({self.run_result.passed_count}, {self.run_result.failed_count}, {self.run_result.skipped_count})\n"
+            f"  test = ({self.test_patch_result.passed_count}, {self.test_patch_result.failed_count}, {self.test_patch_result.skipped_count})\n"
+            f"  fix  = ({self.fix_patch_result.passed_count}, {self.fix_patch_result.failed_count}, {self.fix_patch_result.skipped_count})"
+        )
 
 
 def generate_report(

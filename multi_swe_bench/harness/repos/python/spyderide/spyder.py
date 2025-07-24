@@ -1,11 +1,11 @@
 import re
 from typing import Optional, Union
-import textwrap
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
 from multi_swe_bench.harness.pull_request import PullRequest
 from multi_swe_bench.utils.python_test import python_test_command
 from multi_swe_bench.harness.test_result import TestStatus, mapping_to_testresult
+
 
 class spyderImageBase(Image):
     def __init__(self, pr: PullRequest, config: Config):
@@ -187,9 +187,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -208,9 +206,7 @@ conda create -n testenv python=3.8 -y
 conda activate testenv
 pip install -e .[test] || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",

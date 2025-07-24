@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -59,7 +58,7 @@ grep -v '^\-e git://github.com/python-attrs/attrs.git#egg=attrs' requirements.tx
 ###ACTION_DELIMITER###
 echo 'python3 -m pytest --ignore tests/visualization/ --ignore tests/experiment_test.py tests' > /home/adam/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/adam/test_commands.sh"""
+bash /home/adam/test_commands.sh""",
             ),
             File(
                 ".",
@@ -68,9 +67,7 @@ bash /home/adam/test_commands.sh"""
 cd /home/{pr.repo}
 python3 -m pytest --ignore tests/visualization/ --ignore tests/experiment_test.py tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -83,9 +80,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python3 -m pytest --ignore tests/visualization/ --ignore tests/experiment_test.py tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -98,9 +93,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python3 -m pytest --ignore tests/visualization/ --ignore tests/experiment_test.py tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -162,7 +155,7 @@ class ADAM_M13(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -176,18 +169,14 @@ class ADAM_M13(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
-            # Regex to match lines like:
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
+        # Regex to match lines like:
         # tests/filename.py ..sF [  1%]
-        test_line_re = re.compile(r'^(tests/\S+\.py)\s+([.sF]+)')
+        test_line_re = re.compile(r"^(tests/\S+\.py)\s+([.sF]+)")
         # Regex to match error sections (collection errors)
         error_file_re = re.compile(r"_ ERROR collecting (tests/\S+\.py) _")
         for line in log.splitlines():
@@ -197,7 +186,7 @@ class ADAM_M13(Instance):
                 test_file = m.group(1)
                 results = m.group(2)
                 for idx, ch in enumerate(results):
-                    test_name = f"{test_file}::{idx+1}"
+                    test_name = f"{test_file}::{idx + 1}"
                     if ch == ".":
                         passed_tests.add(test_name)
                     elif ch == "s":
@@ -210,11 +199,6 @@ class ADAM_M13(Instance):
             if m:
                 failed_tests.add(m.group(1))
                 continue
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

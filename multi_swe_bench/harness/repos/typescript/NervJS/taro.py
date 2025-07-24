@@ -110,9 +110,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -127,9 +125,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 pnpm install --no-frozen-lockfile  || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -141,9 +137,7 @@ cd /home/{pr.repo}
 pnpm test:binding
 pnpm test -- --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -156,9 +150,7 @@ git apply /home/test.patch
 pnpm test:binding
 pnpm test -- --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -171,9 +163,7 @@ git apply /home/test.patch /home/fix.patch
 pnpm test:binding
 pnpm test -- --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -213,7 +203,6 @@ class Taro(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-
         return PuppeteerImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:

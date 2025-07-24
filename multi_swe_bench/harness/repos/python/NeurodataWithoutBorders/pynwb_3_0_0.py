@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -61,7 +60,7 @@ bash /home/pynwb/test_commands.sh
 ###ACTION_DELIMITER###
 pip install -e .
 ###ACTION_DELIMITER###
-bash /home/pynwb/test_commands.sh"""
+bash /home/pynwb/test_commands.sh""",
             ),
             File(
                 ".",
@@ -70,9 +69,7 @@ bash /home/pynwb/test_commands.sh"""
 cd /home/{pr.repo}
 python test.py -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -85,9 +82,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python test.py -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -100,9 +95,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python test.py -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -164,7 +157,7 @@ class PYNWB_3_0_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -178,19 +171,18 @@ class PYNWB_3_0_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        test_name_pat = re.compile(r'([a-zA-Z0-9_]+ \([a-zA-Z0-9_.]+\))')
-        error_fail_pat = re.compile(r'^(ERROR|FAIL): ([a-zA-Z0-9_]+ \([a-zA-Z0-9_.]+\))', re.MULTILINE)
+        test_name_pat = re.compile(r"([a-zA-Z0-9_]+ \([a-zA-Z0-9_.]+\))")
+        error_fail_pat = re.compile(
+            r"^(ERROR|FAIL): ([a-zA-Z0-9_]+ \([a-zA-Z0-9_.]+\))", re.MULTILINE
+        )
         lines = log.splitlines()
         n = len(lines)
         i = 0
@@ -198,21 +190,21 @@ class PYNWB_3_0_0(Instance):
             line = lines[i]
             for match in test_name_pat.finditer(line):
                 test_name = match.group(1)
-                after = line[match.end():]
-                if 'skipped' in after:
+                after = line[match.end() :]
+                if "skipped" in after:
                     skipped_tests.add(test_name)
-                elif 'ERROR' in after or 'FAIL' in after:
+                elif "ERROR" in after or "FAIL" in after:
                     failed_tests.add(test_name)
-                elif 'ok' in after:
+                elif "ok" in after:
                     passed_tests.add(test_name)
                 else:
                     if i + 1 < n:
                         next_line = lines[i + 1]
-                        if 'skipped' in next_line:
+                        if "skipped" in next_line:
                             skipped_tests.add(test_name)
-                        elif 'ERROR' in next_line or 'FAIL' in next_line:
+                        elif "ERROR" in next_line or "FAIL" in next_line:
                             failed_tests.add(test_name)
-                        elif 'ok' in next_line:
+                        elif "ok" in next_line:
                             passed_tests.add(test_name)
                         else:
                             passed_tests.add(test_name)
@@ -223,11 +215,6 @@ class PYNWB_3_0_0(Instance):
             failed_tests.add(match.group(2))
         passed_tests -= failed_tests
         passed_tests -= skipped_tests
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

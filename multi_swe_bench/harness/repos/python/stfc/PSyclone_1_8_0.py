@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -65,7 +64,7 @@ pytest src/psyclone/tests/
 ###ACTION_DELIMITER###
 pip install pytest-cov
 ###ACTION_DELIMITER###
-echo "pytest --cov=src/psyclone src/psyclone/tests/" > /home/PSyclone/test_commands.sh"""
+echo "pytest --cov=src/psyclone src/psyclone/tests/" > /home/PSyclone/test_commands.sh""",
             ),
             File(
                 ".",
@@ -74,9 +73,7 @@ echo "pytest --cov=src/psyclone src/psyclone/tests/" > /home/PSyclone/test_comma
 cd /home/{pr.repo}
 pytest --cov=src/psyclone src/psyclone/tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -89,9 +86,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --cov=src/psyclone src/psyclone/tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -104,9 +99,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --cov=src/psyclone src/psyclone/tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -168,7 +161,7 @@ class PSYCLONE_1_8_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -182,32 +175,33 @@ class PSYCLONE_1_8_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # TODO: Implement the parse_log function
         # Implement the log parsing logic here
         # Regular expression to find test status lines
         failures_regex = re.compile(r"^FAILED (.*)", re.MULTILINE)
         failed_tests.update(failures_regex.findall(log))
         # Regex for the session
-        session_regex = re.compile(r"=+ test session starts =+([\s\S]*?)===+", re.MULTILINE)
+        session_regex = re.compile(
+            r"=+ test session starts =+([\s\S]*?)===+", re.MULTILINE
+        )
         session_match = session_regex.search(log)
         if not session_match:
             return {
                 "passed_tests": passed_tests,
                 "failed_tests": failed_tests,
-                "skipped_tests": skipped_tests
+                "skipped_tests": skipped_tests,
             }
         session = session_match.group(1)
         # Regex for each file block
-        file_block_regex = re.compile(r"(src/psyclone/tests/.*?\.py)([\s\S]*?)(?=src/psyclone/tests/|\Z)", re.MULTILINE)
+        file_block_regex = re.compile(
+            r"(src/psyclone/tests/.*?\.py)([\s\S]*?)(?=src/psyclone/tests/|\Z)",
+            re.MULTILINE,
+        )
         test_index = 0
         for match in file_block_regex.finditer(session):
             file_path = match.group(1).strip()
@@ -227,7 +221,9 @@ class PSYCLONE_1_8_0(Instance):
                         passed_tests.add(test_name)
                 # 'F' are handled by the failed_tests regex.
         # Regex for failures summary
-        failures_regex = re.compile(r"^=+ FAILURES =+$\n^_{2,} (\w+) _{2,}\n", re.MULTILINE)
+        failures_regex = re.compile(
+            r"^=+ FAILURES =+$\n^_{2,} (\w+) _{2,}\n", re.MULTILINE
+        )
         failures = failures_regex.findall(log)
         for failure in failures:
             # This is a bit of a hack, but it's hard to get the full test name from the summary
@@ -236,11 +232,6 @@ class PSYCLONE_1_8_0(Instance):
                     failed_tests.add(test)
                     passed_tests.remove(test)
                     break
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

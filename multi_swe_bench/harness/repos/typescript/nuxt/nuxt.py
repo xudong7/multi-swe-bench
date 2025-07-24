@@ -110,9 +110,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -127,9 +125,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 pnpm install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -142,9 +138,7 @@ pnpm dev:prepare
 pnpm test:unit -- --verbose
 pnpm test:runtime  --no-watch
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -158,9 +152,7 @@ pnpm dev:prepare
 pnpm test:unit -- --verbose
 pnpm test:runtime  --no-watch
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -174,9 +166,7 @@ pnpm dev:prepare
 pnpm test:unit -- --verbose
 pnpm test:runtime  --no-watch
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -257,9 +247,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -274,9 +262,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 pnpm install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -289,9 +275,7 @@ pnpm build:stub
 pnpm test:unit -- --verbose
 pnpm test:runtime  --no-watch
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -305,9 +289,7 @@ pnpm build:stub
 pnpm test:unit -- --verbose
 pnpm test:runtime  --no-watch
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -321,9 +303,7 @@ pnpm build:stub
 pnpm test:unit -- --verbose
 pnpm test:runtime  --no-watch
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

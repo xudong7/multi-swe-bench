@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -71,7 +70,7 @@ pytest conans/test/unittests/
 ###ACTION_DELIMITER###
 echo 'pytest --no-header -rA --tb=no -p no:cacheprovider conans/test' > /home/conan/test_commands.sh
 ###ACTION_DELIMITER###
-"""
+""",
             ),
             File(
                 ".",
@@ -80,9 +79,7 @@ echo 'pytest --no-header -rA --tb=no -p no:cacheprovider conans/test' > /home/co
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider conans/test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -95,9 +92,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider conans/test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -110,9 +105,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider conans/test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -175,7 +168,7 @@ class CONAN_1_35_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -189,21 +182,22 @@ class CONAN_1_35_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
-        summary_match = re.search(r"=========================== short test summary info ============================", log)
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
+        summary_match = re.search(
+            r"=========================== short test summary info ============================",
+            log,
+        )
         if not summary_match:
             return parsed_results
-        summary_section = log[summary_match.end():]
+        summary_section = log[summary_match.end() :]
         # Regex to find test results in the summary
-        test_result_pattern = re.compile(r"^(FAILED|SKIPPED|ERROR)\s+(.*?)(\s+-\s+.*)?$", re.MULTILINE)
+        test_result_pattern = re.compile(
+            r"^(FAILED|SKIPPED|ERROR)\s+(.*?)(\s+-\s+.*)?$", re.MULTILINE
+        )
         for match in test_result_pattern.finditer(summary_section):
             status, test_name = match.group(1), match.group(2).strip()
             if status == "FAILED" or status == "ERROR":
@@ -211,14 +205,16 @@ class CONAN_1_35_1(Instance):
             elif status == "SKIPPED":
                 skipped_tests.add(test_name)
         # Regex to find all collected tests at the beginning of the log
-        collected_tests_pattern = re.compile(r"^(conans/test/.*?\.py)\s+([.sEF]+)", re.MULTILINE)
-        # This part is tricky as test names are not fully listed. 
+        re.compile(r"^(conans/test/.*?\.py)\s+([.sEF]+)", re.MULTILINE)
+        # This part is tricky as test names are not fully listed.
         # Let's assume for now that all tests not in failed or skipped are passed.
         # We will get the full list of tests from another section of the log.
-        full_test_list_pattern = re.compile(r"collected \d+ items\n\n(.*?)\n\n=", re.DOTALL)
+        full_test_list_pattern = re.compile(
+            r"collected \d+ items\n\n(.*?)\n\n=", re.DOTALL
+        )
         full_test_list_match = re.search(full_test_list_pattern, log)
         if full_test_list_match:
-            test_list_section = full_test_list_match.group(1)
+            full_test_list_match.group(1)
             # This is still not giving the full test names.
             # The test names are only fully listed in the failure/error reports.
         # Let's try to get all tests from the lines like:
@@ -226,7 +222,7 @@ class CONAN_1_35_1(Instance):
         # It doesn't contain the full test name.
         # Let's parse the final summary line
         summary_line_pattern = re.compile(r"=.* (\\d+) passed.*=")
-        summary_line_match = re.search(summary_line_pattern, log)
+        re.search(summary_line_pattern, log)
         # The passed tests are not explicitly named, so we have to get them from the full list
         # of tests and subtract the failed and skipped ones.
         # For now, let's stick to the failed and skipped tests which are clearly identifiable.
@@ -235,10 +231,10 @@ class CONAN_1_35_1(Instance):
         start_session_match = re.search(r"=+ test session starts =+", log)
         if not start_session_match:
             return parsed_results
-        all_tests_section = log[start_session_match.end():summary_match.start()]
-        test_name_pattern = re.compile(r"^(conans/test/.*?\.py)::(\\w+::\\w+)", re.MULTILINE)
+        log[start_session_match.end() : summary_match.start()]
+        re.compile(r"^(conans/test/.*?\.py)::(\\w+::\\w+)", re.MULTILINE)
         # The above pattern is too specific. Let's use a more general one for test names
-        test_name_pattern = re.compile(r"(conans/test/.*?\.py::.*?)(?:\\s|$)")
+        re.compile(r"(conans/test/.*?\.py::.*?)(?:\\s|$)")
         # Since it is hard to get all tests, and passed tests, let's try a different strategy.
         # Get failed and skipped from summary.
         # Get all tests from the PASSED keyword in the summary, if available.
@@ -247,13 +243,12 @@ class CONAN_1_35_1(Instance):
         # Passed tests are marked with a ".".
         # I need to find the test name for each ".".
         lines = log.splitlines()
-        test_file = ""
         for line in lines:
             if line.startswith("conans/test/"):
                 match = re.match(r"^(conans/test/.*?\.py)\s+([.sEF]+)", line)
                 if match:
-                    test_file = match.group(1)
-                    statuses = match.group(2)
+                    match.group(1)
+                    match.group(2)
                     # This is still not giving full test name.
                     pass
             if line.startswith("PASSED"):
@@ -264,15 +259,15 @@ class CONAN_1_35_1(Instance):
         # I can find all lines that start with FAILED, SKIPPED, or ERROR and parse them.
         # For passed, I'll have to find all tests and subtract the rest.
         # Let's find all tests using the 'collected X items' and the following lines.
-        test_pattern = re.compile(r'^(.*?\.py) ([\.sFE]+)')
+        re.compile(r"^(.*?\.py) ([\.sFE]+)")
         # It seems I'm overcomplicating things. Let's go back to the summary and use the final count.
         # And for test names, I will try to get them from the summary for failed/skipped/error
         # and for passed tests, since names are not available, I will leave it empty.
         # Based on the problem description, I need to extract test names. So empty is not an option.
         # Let's try to find test names in the final summary for all statuses
         final_summary_pattern = re.compile(r"=(.*)=")
-        final_summary_match = re.search(final_summary_pattern, log)
-        log_lines = log.split('\\n')
+        re.search(final_summary_pattern, log)
+        log_lines = log.split("\\n")
         capture_passed = False
         for line in log_lines:
             if "short test summary info" in line:
@@ -281,14 +276,14 @@ class CONAN_1_35_1(Instance):
                 test_name = line.split("]")[0].strip()
                 # This is not right.
         # I'll stick to regex on the summary.
-        for line in summary_section.split('\\n'):
+        for line in summary_section.split("\\n"):
             if line.startswith("PASSED"):
-                 # This will not happen as per the log file.
-                 pass
+                # This will not happen as per the log file.
+                pass
         # I will get all test files from the initial listing.
         # and then assume all tests in that file are passed, unless they are in the failed/skipped list.
         # Let's try to parse the test execution lines.
-        test_execution_pattern = re.compile(r"^(conans\\/test\\/.*?\\.py)\\s+([\\.sEF]+)")
+        re.compile(r"^(conans\\/test\\/.*?\\.py)\\s+([\\.sEF]+)")
         # It is not possible to get the test names for passed tests from the log.
         # The passed tests are only represented by dots.
         # The only place where passed test names could be is in a verbose output, which is not available.
@@ -325,7 +320,7 @@ class CONAN_1_35_1(Instance):
         all_tests = set()
         test_run_section_end = log.find("= short test summary info =")
         if test_run_section_end != -1:
-            test_run_section = log[:test_run_section_end]
+            log[:test_run_section_end]
             # This is not giving the full test name.
         # I will use pytest to list all tests.
         # But I can't run commands here, only parse logs.
@@ -342,7 +337,7 @@ class CONAN_1_35_1(Instance):
         # Let's assume there is another way to get passed tests.
         # What if I look for lines that contain "PASSED" but are not in the summary?
         # I will search for "PASSED" in the whole log file.
-        passed_tests_pattern = re.compile(r"^(?!SKIPPED|FAILED|ERROR|WARNINGS)(.*?)PASSED", re.MULTILINE)
+        re.compile(r"^(?!SKIPPED|FAILED|ERROR|WARNINGS)(.*?)PASSED", re.MULTILINE)
         # The above is not working.
         # The only way is to get all tests and remove failed and skipped.
         # How to get all tests?
@@ -353,12 +348,11 @@ class CONAN_1_35_1(Instance):
         # This is not correct, as a file can have multiple tests.
         # I'll try a different approach. I'll parse the log line by line.
         lines = log.splitlines()
-        current_test_file = None
         for line in lines:
             if line.startswith("conans/test"):
                 match = re.match(r"(^conans/test/.*?\\.py)", line)
                 if match:
-                    current_test_file = match.group(1)
+                    match.group(1)
             if "::" in line and (line.endswith("PASS") or line.endswith("OK")):
                 # this is a guess
                 test_name = line.split(" ")[0]
@@ -367,11 +361,6 @@ class CONAN_1_35_1(Instance):
         all_tests_pattern = re.compile(r"(conans/test/.*?\\.py::\\w+::\\w+)")
         all_tests = set(re.findall(all_tests_pattern, log))
         passed_tests.update(all_tests - failed_tests - skipped_tests)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.6"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -57,7 +56,7 @@ bash /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
 echo 'pytest -rA --tb=no -p no:cacheprovider --cov=pydantic' > /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -66,9 +65,7 @@ bash /home/pydantic/test_commands.sh"""
 cd /home/{pr.repo}
 pytest -rA --tb=no -p no:cacheprovider --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -81,9 +78,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest -rA --tb=no -p no:cacheprovider --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -96,9 +91,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest -rA --tb=no -p no:cacheprovider --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -161,7 +154,7 @@ class PYDANTIC_V0_27(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -175,32 +168,29 @@ class PYDANTIC_V0_27(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Extract PASSED tests
-        for match in re.finditer(r"^PASSED\s+([\w./-]+)::([\w\[\]-]+)", log, re.MULTILINE):
+        for match in re.finditer(
+            r"^PASSED\s+([\w./-]+)::([\w\[\]-]+)", log, re.MULTILINE
+        ):
             test_file, test_name = match.groups()
             passed_tests.add(f"{test_file}::{test_name}")
         # Extract FAILED tests
-        for match in re.finditer(r"^FAILED\s+([\w./-]+)::([\w\[\]-]+)", log, re.MULTILINE):
+        for match in re.finditer(
+            r"^FAILED\s+([\w./-]+)::([\w\[\]-]+)", log, re.MULTILINE
+        ):
             test_file, test_name = match.groups()
             failed_tests.add(f"{test_file}::{test_name}")
         # Extract SKIPPED tests (file and line number, since function name is not present)
-        for match in re.finditer(r"^SKIPPED \[\d+\] ([\w./-]+):(\d+):", log, re.MULTILINE):
+        for match in re.finditer(
+            r"^SKIPPED \[\d+\] ([\w./-]+):(\d+):", log, re.MULTILINE
+        ):
             test_file, line_number = match.groups()
             skipped_tests.add(f"{test_file}:{line_number}")
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

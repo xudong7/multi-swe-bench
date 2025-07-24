@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.5"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -67,7 +66,7 @@ nosetests
 ###ACTION_DELIMITER###
 ls -F .ci/appveyor/
 ###ACTION_DELIMITER###
-echo 'nosetests --with-coverage --verbosity=2 conans.test' > /home/conan/test_commands.sh"""
+echo 'nosetests --with-coverage --verbosity=2 conans.test' > /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -76,9 +75,7 @@ echo 'nosetests --with-coverage --verbosity=2 conans.test' > /home/conan/test_co
 cd /home/{pr.repo}
 nosetests --with-coverage --verbosity=2 conans.test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -91,9 +88,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests --with-coverage --verbosity=2 conans.test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -106,9 +101,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests --with-coverage --verbosity=2 conans.test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -171,7 +164,7 @@ class CONAN_1_12_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -185,13 +178,13 @@ class CONAN_1_12_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
-        import re
         from collections import defaultdict
+
         test_statuses = defaultdict(set)
-        test_pattern = re.compile(r"^(.*?)(?:\s\(.+?\))?\s+\.\.\.\s+(ok|FAIL|ERROR|skipped.*)$")
+        test_pattern = re.compile(
+            r"^(.*?)(?:\s\(.+?\))?\s+\.\.\.\s+(ok|FAIL|ERROR|skipped.*)$"
+        )
         for line in log.splitlines():
             match = test_pattern.match(line)
             if not match:

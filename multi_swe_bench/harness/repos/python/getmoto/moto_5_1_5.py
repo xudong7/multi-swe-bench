@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -53,7 +52,7 @@ pip install -e . && pip install -r requirements-dev.txt
 ###ACTION_DELIMITER###
 echo 'pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --ignore tests/test_ec2 --ignore tests/test_sqs
 pytest -sv -rs ./tests/test_xray
-MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope' > test_commands.sh"""
+MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope' > test_commands.sh""",
             ),
             File(
                 ".",
@@ -64,9 +63,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -81,9 +78,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -98,9 +93,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -163,7 +156,7 @@ class MOTO_5_1_5(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -177,9 +170,7 @@ class MOTO_5_1_5(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
@@ -189,22 +180,25 @@ class MOTO_5_1_5(Instance):
         # Define precedence: higher index = higher precedence
         status_precedence = ["PASSED", "SKIPPED", "XFAIL", "XPASS", "FAILED", "ERROR"]
         precedence_map = {s: i for i, s in enumerate(status_precedence)}
-        import re
-        import json
         # Regular expression to match test result lines
         # Example: tests/test_core/test_docker.py::test_docker_package_is_available PASSED
         #          tests/test_core/test_proxy.py::test_real_request_errors SKIPPED (Can...)
         #          tests/test_awslambda/test_lambda_invoke.py::test_invoke_function_large_response XFAIL
-        test_result_re = re.compile(r"(tests/.*?::[^ ]+) (PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)(?: |$)")
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        test_result_re = re.compile(
+            r"(tests/.*?::[^ ]+) (PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR)(?: |$)"
+        )
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
         for line in log.splitlines():
-            clean_line = ansi_escape.sub('', line)
+            clean_line = ansi_escape.sub("", line)
             match = test_result_re.search(clean_line)
             if match:
                 test_name, status = match.group(1), match.group(2)
                 # Only update if this status has higher precedence
                 prev_status = test_status.get(test_name)
-                if prev_status is None or precedence_map[status] > precedence_map[prev_status]:
+                if (
+                    prev_status is None
+                    or precedence_map[status] > precedence_map[prev_status]
+                ):
                     test_status[test_name] = status
         # Now assign to the correct set
         for test_name, status in test_status.items():
@@ -214,11 +208,6 @@ class MOTO_5_1_5(Instance):
                 skipped_tests.add(test_name)
             elif status in ("PASSED", "XPASS"):
                 passed_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

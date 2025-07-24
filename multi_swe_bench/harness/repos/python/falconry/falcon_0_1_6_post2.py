@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:2.7"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -55,7 +54,7 @@ pip install .
 ###ACTION_DELIMITER###
 nosetests
 ###ACTION_DELIMITER###
-echo "nosetests -v" > /home/falcon/test_commands.sh"""
+echo "nosetests -v" > /home/falcon/test_commands.sh""",
             ),
             File(
                 ".",
@@ -64,9 +63,7 @@ echo "nosetests -v" > /home/falcon/test_commands.sh"""
 cd /home/{pr.repo}
 nosetests -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -79,9 +76,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -94,9 +89,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -158,7 +151,7 @@ class FALCON_0_1_6_POST2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -172,16 +165,16 @@ class FALCON_0_1_6_POST2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Extended regex to capture ERROR and FAIL statuses, including those with tracebacks
-        test_pattern = re.compile(r"^(falcon\.tests\..*?) \.+ (ok|FAIL|ERROR|SKIP)(?:\s|\n|\r)*?", re.MULTILINE)
+        test_pattern = re.compile(
+            r"^(falcon\.tests\..*?) \.+ (ok|FAIL|ERROR|SKIP)(?:\s|\n|\r)*?",
+            re.MULTILINE,
+        )
         for match in test_pattern.finditer(log):
             test_name = match.group(1).strip()
             status = match.group(2)
@@ -194,15 +187,10 @@ class FALCON_0_1_6_POST2(Instance):
         # Post-process to correctly categorize tests that are marked as failed but have trailing 'ok's
         failed_but_ok = set()
         for test in failed_tests:
-            if f'{test} ... ok' in log:
+            if f"{test} ... ok" in log:
                 failed_but_ok.add(test)
         passed_tests.update(failed_but_ok)
         failed_tests.difference_update(failed_but_ok)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

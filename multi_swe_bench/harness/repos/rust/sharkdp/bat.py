@@ -107,9 +107,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -125,9 +123,7 @@ bash /home/check_git_changes.sh
 
 cargo test || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -138,9 +134,7 @@ set -e
 cd /home/{pr.repo}
 cargo test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -152,9 +146,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 cargo test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -166,9 +158,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 cargo test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

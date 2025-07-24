@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.5"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -113,7 +112,7 @@ python setup.py test
 ###ACTION_DELIMITER###
 pip uninstall -y pytest-astropy-header pytest-astropy pytest-doctestplus pytest-openfiles
 ###ACTION_DELIMITER###
-python setup.py test"""
+python setup.py test""",
             ),
             File(
                 ".",
@@ -122,9 +121,7 @@ python setup.py test"""
 cd /home/{pr.repo}
 python setup.py test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -137,9 +134,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python setup.py test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -152,9 +147,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python setup.py test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -216,7 +209,7 @@ class CCDPROC_V1_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -230,23 +223,18 @@ class CCDPROC_V1_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # Implementation: parse pytest log output
         # 1. Find summary lines (e.g. ccdproc/tests/test_ccddata.py ..........FFF..)
         # 2. Map dots (.) to pass, F to fail, s/S to skip
         # 3. Extract failed test names from FAILURES section
-        import re
-        summary_re = re.compile(r'^(\S+\.py)\s+([.F sS]+)$')
-        failure_header_re = re.compile(r'^=+ FAILURES =+$')
-        fail_name_re = re.compile(r'^_{2,}\s*([\w\d_]+)\s*_{2,}$')
+        summary_re = re.compile(r"^(\S+\.py)\s+([.F sS]+)$")
+        failure_header_re = re.compile(r"^=+ FAILURES =+$")
+        fail_name_re = re.compile(r"^_{2,}\s*([\w\d_]+)\s*_{2,}$")
         lines = log.splitlines()
         in_failures = False
         failed_test_names = set()
@@ -256,12 +244,12 @@ class CCDPROC_V1_0(Instance):
             if m:
                 filename, results = m.groups()
                 for idx, ch in enumerate(results):
-                    test_id = f"{filename}::{idx+1}"
-                    if ch == '.':
+                    test_id = f"{filename}::{idx + 1}"
+                    if ch == ".":
                         passed_tests.add(test_id)
-                    elif ch in 'F':
+                    elif ch in "F":
                         failed_tests.add(test_id)
-                    elif ch in 'sS':
+                    elif ch in "sS":
                         skipped_tests.add(test_id)
             # Check for start of failures section
             if failure_header_re.match(line):
@@ -273,7 +261,7 @@ class CCDPROC_V1_0(Instance):
                 if m2:
                     failed_test_names.add(m2.group(1))
                 # End of failures section
-                if line.strip().startswith('=') and 'FAILURES' not in line:
+                if line.strip().startswith("=") and "FAILURES" not in line:
                     in_failures = False
         # Try to match failed test names to summary test ids
         for fail_name in failed_test_names:
@@ -287,11 +275,6 @@ class CCDPROC_V1_0(Instance):
         skipped_tests -= failed_tests
         # TODO: Implement the parse_log function
         # Implement the log parsing logic here
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

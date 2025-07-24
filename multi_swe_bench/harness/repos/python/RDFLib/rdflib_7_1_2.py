@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.10-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -57,7 +56,7 @@ poetry install
 ###ACTION_DELIMITER###
 echo 'poetry run pytest --no-header -rA --tb=no -p no:cacheprovider' > test_commands.sh && chmod +x test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/rdflib/test_commands.sh"""
+bash /home/rdflib/test_commands.sh""",
             ),
             File(
                 ".",
@@ -66,9 +65,7 @@ bash /home/rdflib/test_commands.sh"""
 cd /home/{pr.repo}
 poetry run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -81,9 +78,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 poetry run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -96,9 +91,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 poetry run pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -160,7 +153,7 @@ class RDFLIB_7_1_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -174,41 +167,42 @@ class RDFLIB_7_1_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         """
         Robustly parse the log content and extract test execution results from the summary section only.
         """
-        import re
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
         # Find the summary section
-        summary_match = re.search(r'^=+ short test summary info =+[\r\n]+(.*?)(?:\n\s*\n|\Z)', log, re.DOTALL | re.MULTILINE)
+        summary_match = re.search(
+            r"^=+ short test summary info =+[\r\n]+(.*?)(?:\n\s*\n|\Z)",
+            log,
+            re.DOTALL | re.MULTILINE,
+        )
         if not summary_match:
             # Fallback: no summary section found, return empty sets
             return {
                 "passed_tests": set(),
                 "failed_tests": set(),
-                "skipped_tests": set()
+                "skipped_tests": set(),
             }
         summary = summary_match.group(1)
         # Parse each line in the summary
         for line in summary.splitlines():
             line = line.strip()
-            if line.startswith('PASSED '):
-                test_name = line[len('PASSED '):].split(' ', 1)[0]
+            if line.startswith("PASSED "):
+                test_name = line[len("PASSED ") :].split(" ", 1)[0]
                 passed_tests.add(test_name)
-            elif line.startswith('FAILED '):
-                test_name = line[len('FAILED '):].split(' ', 1)[0]
+            elif line.startswith("FAILED "):
+                test_name = line[len("FAILED ") :].split(" ", 1)[0]
                 failed_tests.add(test_name)
-            elif line.startswith('SKIPPED '):
-                test_name = line[len('SKIPPED '):].split(' ', 1)[0]
+            elif line.startswith("SKIPPED "):
+                test_name = line[len("SKIPPED ") :].split(" ", 1)[0]
                 skipped_tests.add(test_name)
             # Optionally handle XFAIL, XPASS, etc.
         # Remove any overlap: a test can only be in one set, with precedence FAILED > SKIPPED > PASSED
-        passed_tests -= (failed_tests | skipped_tests)
+        passed_tests -= failed_tests | skipped_tests
         skipped_tests -= failed_tests
 
         return TestResult(

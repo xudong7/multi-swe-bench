@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -81,7 +80,7 @@ sed -i "s/'true'/true/g" tests/fixtures/templates/vpc.yaml
 ###ACTION_DELIMITER###
 pytest tests/ --ignore=env/ --ignore=venv/ --junitxml=build/pytest/junit-py36.xml -s
 ###ACTION_DELIMITER###
-echo "pytest tests/ --ignore=env/ --ignore=venv/ --junitxml=build/pytest/junit-py36.xml -s" > test_commands.sh"""
+echo "pytest tests/ --ignore=env/ --ignore=venv/ --junitxml=build/pytest/junit-py36.xml -s" > test_commands.sh""",
             ),
             File(
                 ".",
@@ -90,9 +89,7 @@ echo "pytest tests/ --ignore=env/ --ignore=venv/ --junitxml=build/pytest/junit-p
 cd /home/{pr.repo}
 pytest tests/ --ignore=env/ --ignore=venv/ --junitxml=build/pytest/junit-py36.xml -s
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -105,9 +102,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest tests/ --ignore=env/ --ignore=venv/ --junitxml=build/pytest/junit-py36.xml -s
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -120,9 +115,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest tests/ --ignore=env/ --ignore=venv/ --junitxml=build/pytest/junit-py36.xml -s
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -184,7 +177,7 @@ class SCEPTRE_V1_4_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -198,10 +191,7 @@ class SCEPTRE_V1_4_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
-        import re
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
@@ -215,13 +205,13 @@ class SCEPTRE_V1_4_2(Instance):
             match = test_line_re.match(line)
             if match:
                 test_file, results = match.groups()
-                if 'F' in results:
+                if "F" in results:
                     # Will be captured by the failed_test_re
                     continue
-                if 's' in results:
+                if "s" in results:
                     skipped_tests.add(test_file)
                     continue
-                if all(c == '.' for c in results.strip()):
+                if all(c == "." for c in results.strip()):
                     passed_tests.add(test_file)
             # Check for the failed test summary
             match = failed_test_re.match(line)
@@ -232,11 +222,6 @@ class SCEPTRE_V1_4_2(Instance):
                 test_file = failed_test.split("::")[0]
                 if test_file in passed_tests:
                     passed_tests.remove(test_file)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

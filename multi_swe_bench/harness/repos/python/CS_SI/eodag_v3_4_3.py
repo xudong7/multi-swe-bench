@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -57,7 +56,7 @@ pytest -v --instafail -n auto --dist loadscope --cov=eodag --cov-report term-mis
 ###ACTION_DELIMITER###
 python -c "import os; os.makedirs('test-reports', exist_ok=True)"
 ###ACTION_DELIMITER###
-echo 'pytest --no-header -rA --tb=no -p no:cacheprovider' > test_commands.sh"""
+echo 'pytest --no-header -rA --tb=no -p no:cacheprovider' > test_commands.sh""",
             ),
             File(
                 ".",
@@ -66,9 +65,7 @@ echo 'pytest --no-header -rA --tb=no -p no:cacheprovider' > test_commands.sh"""
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -81,9 +78,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -96,9 +91,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -160,7 +153,7 @@ class EODAG_V3_4_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -174,32 +167,28 @@ class EODAG_V3_4_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        import re
         tests_status = {}
         for line in log.splitlines():
             match = re.match(r"^(PASSED|FAILED|SKIPPED|ERROR)\s+(.*)", line)
             if match:
                 status, test_name_raw = match.groups()
                 test_file = test_name_raw.split("::")[0].split(":")[0]
-                if ']' in test_file:
-                    test_file = test_file.split(']')[1].lstrip()
+                if "]" in test_file:
+                    test_file = test_file.split("]")[1].lstrip()
                 if status == "ERROR":
                     status = "FAILED"
                 current_status = tests_status.get(test_file)
-                if not current_status or status == "FAILED" or (status == "SKIPPED" and current_status == "PASSED"):
+                if (
+                    not current_status
+                    or status == "FAILED"
+                    or (status == "SKIPPED" and current_status == "PASSED")
+                ):
                     tests_status[test_file] = status
         passed_tests = {t for t, s in tests_status.items() if s == "PASSED"}
         failed_tests = {t for t, s in tests_status.items() if s == "FAILED"}
         skipped_tests = {t for t, s in tests_status.items() if s == "SKIPPED"}
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

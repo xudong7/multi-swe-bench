@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.6-buster"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -61,7 +60,7 @@ bash test_commands.sh
 ###ACTION_DELIMITER###
 pip uninstall -y ujson email-validator
 ###ACTION_DELIMITER###
-pytest --cov=pydantic -v"""
+pytest --cov=pydantic -v""",
             ),
             File(
                 ".",
@@ -72,9 +71,7 @@ pytest --cov=pydantic -v
 pip uninstall -y ujson email-validator
 pytest --cov=pydantic -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -89,9 +86,7 @@ pytest --cov=pydantic -v
 pip uninstall -y ujson email-validator
 pytest --cov=pydantic -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -106,9 +101,7 @@ pytest --cov=pydantic -v
 pip uninstall -y ujson email-validator
 pytest --cov=pydantic -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -171,7 +164,7 @@ class PYDANTIC_V0_10(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -185,33 +178,24 @@ class PYDANTIC_V0_10(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Implement the log parsing logic here
         # Passed tests: lines like 'tests/test_file.py::test_name PASSED'
-        for match in re.finditer(r'^(.*?::.*?) PASSED', log, re.MULTILINE):
+        for match in re.finditer(r"^(.*?::.*?) PASSED", log, re.MULTILINE):
             test_name = match.group(1).strip()
             passed_tests.add(test_name)
         # Skipped tests: lines like 'tests/test_file.py SKIPPED'
-        for match in re.finditer(r'^(.*?) SKIPPED', log, re.MULTILINE):
+        for match in re.finditer(r"^(.*?) SKIPPED", log, re.MULTILINE):
             test_name = match.group(1).strip()
             skipped_tests.add(test_name)
         # Collection errors: lines like 'ERROR collecting tests/test_file.py'
-        for match in re.finditer(r'ERROR collecting (\S+)', log):
+        for match in re.finditer(r"ERROR collecting (\S+)", log):
             test_name = match.group(1).strip()
             failed_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -18,7 +18,7 @@ import argparse
 import shutil
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import List, Tuple, Dict, Any, Union
+from typing import List, Tuple, Dict, Union
 
 from multi_swe_bench.collect.util import get_tokens, optional_int
 from multi_swe_bench.collect.get_pipeline import run_pipeline
@@ -106,10 +106,12 @@ def _distribute_chunk(
     position = 0
     for i in range(num_tokens):
         chunk_size = base_chunk_size + (1 if i < remainder else 0)
-        distributed.append({
-            "token": tokens[i],
-            "repos": repositories[position:position + chunk_size],
-        })
+        distributed.append(
+            {
+                "token": tokens[i],
+                "repos": repositories[position : position + chunk_size],
+            }
+        )
         position += chunk_size
     return distributed
 
@@ -139,10 +141,17 @@ def process_token_group(
     """Process repos of a token group"""
     results: List[bool] = []
     for org, repo in repos:
-        results.append(process_repository(
-            out_dir, org, repo, token,
-            delay_on_error, retry_attempts, skip_commit_message
-        ))
+        results.append(
+            process_repository(
+                out_dir,
+                org,
+                repo,
+                token,
+                delay_on_error,
+                retry_attempts,
+                skip_commit_message,
+            )
+        )
     return results
 
 
@@ -234,7 +243,9 @@ def main() -> None:
             for future in tasks:
                 future.result()
                 completed += 1
-                print(f"Progress: {completed}/{len(tasks)} ({completed / len(tasks):.1%})")
+                print(
+                    f"Progress: {completed}/{len(tasks)} ({completed / len(tasks):.1%})"
+                )
 
         print("🎉 All repositories processed!")
     except Exception as e:

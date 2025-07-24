@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -61,7 +60,7 @@ echo 'test.pyomo -v pyomo' > /home/pyomo/test_commands.sh
 ###ACTION_DELIMITER###
 bash /home/pyomo/test_commands.sh
 ###ACTION_DELIMITER###
-"""
+""",
             ),
             File(
                 ".",
@@ -70,9 +69,7 @@ bash /home/pyomo/test_commands.sh
 cd /home/{pr.repo}
 test.pyomo -v pyomo
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -85,9 +82,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 test.pyomo -v pyomo
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -100,9 +95,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 test.pyomo -v pyomo
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -164,7 +157,7 @@ class PYOMO_5_6_5(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -178,34 +171,27 @@ class PYOMO_5_6_5(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regular expression to match test result lines
-        test_line_re = re.compile(r'^(?P<name>\S+) \((?P<class>[^)]+)\) \.\.\. (?P<status>\w+)(: .*)?$')
+        test_line_re = re.compile(
+            r"^(?P<name>\S+) \((?P<class>[^)]+)\) \.\.\. (?P<status>\w+)(: .*)?$"
+        )
         for line in log.splitlines():
             m = test_line_re.match(line)
             if m:
                 test_id = f"{m.group('name')} ({m.group('class')})"
-                status = m.group('status')
-                if status == 'ok':
+                status = m.group("status")
+                if status == "ok":
                     passed_tests.add(test_id)
-                elif status in ('FAIL', 'ERROR'):
+                elif status in ("FAIL", "ERROR"):
                     failed_tests.add(test_id)
-                elif status == 'SKIP':
+                elif status == "SKIP":
                     skipped_tests.add(test_id)
         # End of parsing logic
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

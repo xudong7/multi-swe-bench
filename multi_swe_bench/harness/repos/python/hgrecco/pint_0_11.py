@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -61,7 +60,7 @@ bash /home/pint/test_commands.sh
 ###ACTION_DELIMITER###
 pip uninstall -y matplotlib contourpy && pip install matplotlib==3.1.3
 ###ACTION_DELIMITER###
-bash /home/pint/test_commands.sh"""
+bash /home/pint/test_commands.sh""",
             ),
             File(
                 ".",
@@ -70,9 +69,7 @@ bash /home/pint/test_commands.sh"""
 cd /home/{pr.repo}
 python -bb -m pytest -rfsxEX -s --cov=pint --cov-config=.coveragerc
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -85,9 +82,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python -bb -m pytest -rfsxEX -s --cov=pint --cov-config=.coveragerc
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -100,9 +95,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python -bb -m pytest -rfsxEX -s --cov=pint --cov-config=.coveragerc
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -164,7 +157,7 @@ class PINT_0_11(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -178,38 +171,37 @@ class PINT_0_11(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Improved parser: extract real test names and statuses
-        import re
         all_tests = set()
         failed_tests = set()
         skipped_tests = set()
         xfailed_tests = set()
         errored_tests = set()
         # 1. Collect all real test names (lines with ::test_)
-        for match in re.finditer(r'^(\S+::test_[^\s\[]+[^\s]*)', log, re.MULTILINE):
+        for match in re.finditer(r"^(\S+::test_[^\s\[]+[^\s]*)", log, re.MULTILINE):
             all_tests.add(match.group(1))
         # 2. Extract skipped tests from SKIPPED lines
-        for match in re.finditer(r'SKIPPED \[\d+\] (\S+::test_[^:]+)', log):
+        for match in re.finditer(r"SKIPPED \[\d+\] (\S+::test_[^:]+)", log):
             skipped_tests.add(match.group(1))
         # 3. Extract xfailed tests from XFAIL lines
-        for match in re.finditer(r'XFAIL (\S+::test_[^ ]+)', log):
+        for match in re.finditer(r"XFAIL (\S+::test_[^ ]+)", log):
             xfailed_tests.add(match.group(1))
         # 4. Extract failed tests from FAILURES/ERRORS sections
-        for match in re.finditer(r'^_{2,} (\S+::test_[^\s]+) _*$', log, re.MULTILINE):
+        for match in re.finditer(r"^_{2,} (\S+::test_[^\s]+) _*$", log, re.MULTILINE):
             failed_tests.add(match.group(1))
         # Also catch lines like 'FAILED <testname>'
-        for match in re.finditer(r'FAILED (\S+::test_[^ ]+)', log):
+        for match in re.finditer(r"FAILED (\S+::test_[^ ]+)", log):
             failed_tests.add(match.group(1))
         # 5. Extract errored tests from ERROR lines
-        for match in re.finditer(r'ERROR (\S+::test_[^ ]+)', log):
+        for match in re.finditer(r"ERROR (\S+::test_[^ ]+)", log):
             errored_tests.add(match.group(1))
         # Combine all failed/errored
-        all_failed = failed_tests | errored_tests | xfailed_tests
+        failed_tests | errored_tests | xfailed_tests
         # Passed = all_tests - (failed + skipped + xfailed + errored)
-        passed_tests = all_tests - (failed_tests | skipped_tests | xfailed_tests | errored_tests)
+        passed_tests = all_tests - (
+            failed_tests | skipped_tests | xfailed_tests | errored_tests
+        )
         # Add errored tests to failed
         failed_tests |= errored_tests
 

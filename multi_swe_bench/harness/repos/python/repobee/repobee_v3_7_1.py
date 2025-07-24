@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-alpine"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -83,7 +82,7 @@ bash /home/repobee/test_commands.sh
 ###ACTION_DELIMITER###
 echo 'PYTHONPATH=src pytest --import-mode=importlib -v --no-header -rA -p no:cacheprovider tests/unit_tests' > /home/repobee/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/repobee/test_commands.sh"""
+bash /home/repobee/test_commands.sh""",
             ),
             File(
                 ".",
@@ -92,9 +91,7 @@ bash /home/repobee/test_commands.sh"""
 cd /home/{pr.repo}
 PYTHONPATH=src pytest --import-mode=importlib -v --no-header -rA -p no:cacheprovider tests/unit_tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -107,9 +104,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 PYTHONPATH=src pytest --import-mode=importlib -v --no-header -rA -p no:cacheprovider tests/unit_tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -122,9 +117,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 PYTHONPATH=src pytest --import-mode=importlib -v --no-header -rA -p no:cacheprovider tests/unit_tests
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -186,7 +179,7 @@ class REPOBEE_V3_7_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -200,15 +193,11 @@ class REPOBEE_V3_7_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Implement the log parsing logic here
         # Regex patterns for test results
         # Example lines:
@@ -217,9 +206,13 @@ class REPOBEE_V3_7_1(Instance):
         # PASSED tests/unit_tests/repobee_plug/test_pluginmeta.py::TestDeclarativeExtensionCommand::test_generated_parser
         # SKIPPED ... (not seen, but handled)
         # Pattern for lines ending with PASSED, FAILED, or SKIPPED
-        result_line_re = re.compile(r"^(?P<test>.+?) (?P<status>PASSED|FAILED|SKIPPED) ?(?:\[.*\])?$")
+        result_line_re = re.compile(
+            r"^(?P<test>.+?) (?P<status>PASSED|FAILED|SKIPPED) ?(?:\[.*\])?$"
+        )
         # Pattern for lines starting with PASSED, FAILED, or SKIPPED
-        result_line_start_re = re.compile(r"^(?P<status>PASSED|FAILED|SKIPPED) (?P<test>.+)$")
+        result_line_start_re = re.compile(
+            r"^(?P<status>PASSED|FAILED|SKIPPED) (?P<test>.+)$"
+        )
         for line in log.splitlines():
             m = result_line_re.match(line)
             if m:
@@ -242,11 +235,6 @@ class REPOBEE_V3_7_1(Instance):
                     failed_tests.add(test)
                 elif status == "SKIPPED":
                     skipped_tests.add(test)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

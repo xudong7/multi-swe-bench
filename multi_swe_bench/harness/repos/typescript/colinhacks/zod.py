@@ -108,9 +108,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -125,9 +123,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 yarn install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -139,9 +135,7 @@ cd /home/{pr.repo}
 yarn build
 yarn test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -154,9 +148,7 @@ git apply /home/test.patch
 yarn build
 yarn test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -169,9 +161,7 @@ git apply /home/test.patch /home/fix.patch
 yarn build
 yarn test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -211,7 +201,6 @@ class Zod(Instance):
         return self._pr
 
     def dependency(self) -> Optional[Image]:
-
         return ImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:

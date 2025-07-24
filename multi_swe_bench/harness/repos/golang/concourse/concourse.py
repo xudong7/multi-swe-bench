@@ -102,7 +102,6 @@ WORKDIR /home/
 """
 
 
-
 class concourseImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -158,9 +157,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -176,9 +173,7 @@ bash /home/check_git_changes.sh
 
 go test -v -count=1 ./... || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -189,9 +184,7 @@ set -e
 cd /home/{pr.repo}
 go test -v -count=1 ./...
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -203,9 +196,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 go test -v -count=1 ./...
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -217,9 +208,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 go test -v -count=1 ./...
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

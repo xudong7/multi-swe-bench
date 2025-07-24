@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -111,7 +110,7 @@ wget https://bootstrap.pypa.io/get-pip.py -O get-pip.py && /home/pydantic/.venv/
 ###ACTION_DELIMITER###
 .venv/bin/python -m pytest --durations=10
 ###ACTION_DELIMITER###
-echo '.venv/bin/python -m pytest --durations=10' > /home/pydantic/test_commands.sh && chmod +x /home/pydantic/test_commands.sh"""
+echo '.venv/bin/python -m pytest --durations=10' > /home/pydantic/test_commands.sh && chmod +x /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -120,9 +119,7 @@ echo '.venv/bin/python -m pytest --durations=10' > /home/pydantic/test_commands.
 cd /home/{pr.repo}
 .venv/bin/python -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -135,9 +132,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 .venv/bin/python -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -150,9 +145,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 .venv/bin/python -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -215,7 +208,7 @@ class PYDANTIC_V2_0_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -229,17 +222,15 @@ class PYDANTIC_V2_0_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Extract all test names from timing lines (with 'call' and '::')
-        timing_pattern = re.compile(r"^.*call\s+([\w./\-]+::[\w\[\]_.-]+)", re.MULTILINE)
+        timing_pattern = re.compile(
+            r"^.*call\s+([\w./\-]+::[\w\[\]_.-]+)", re.MULTILINE
+        )
         all_tests = set(timing_pattern.findall(log))
         # Extract failed and error test names from 'FAILED ...' and 'ERROR ...' lines
         failed_pattern = re.compile(r"^FAILED ([\w./\-]+::[\w\[\]_.-]+)", re.MULTILINE)
@@ -250,11 +241,6 @@ class PYDANTIC_V2_0_3(Instance):
         passed_tests = all_tests - failed_tests
         # Skipped tests: not extractable by name from these logs
         # (left empty)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

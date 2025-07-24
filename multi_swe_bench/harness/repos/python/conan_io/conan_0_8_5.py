@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:2.7"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -84,7 +83,7 @@ bash /home/conan/test_commands.sh
 ###ACTION_DELIMITER###
 pip install bottle
 ###ACTION_DELIMITER###
-bash /home/conan/test_commands.sh"""
+bash /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -94,9 +93,7 @@ cd /home/{pr.repo}
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 nosetests -v .
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -110,9 +107,7 @@ fi
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 nosetests -v .
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -126,9 +121,7 @@ fi
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 nosetests -v .
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -191,7 +184,7 @@ class CONAN_0_8_5(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -205,13 +198,11 @@ class CONAN_0_8_5(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
-        import re
         # Only match lines that look like test results
         test_line_re = re.compile(
-            r"^(.+?)(?:\s+\([^)]+\))?\s*\.\.\.\s*(ok|FAIL|ERROR|skipped|SKIPPED)$", re.IGNORECASE
+            r"^(.+?)(?:\s+\([^)]+\))?\s*\.\.\.\s*(ok|FAIL|ERROR|skipped|SKIPPED)$",
+            re.IGNORECASE,
         )
         # Map test name to its last seen status
         test_status = {}
@@ -222,11 +213,17 @@ class CONAN_0_8_5(Instance):
                 status = m.group(2).lower()
                 test_status[test_name] = status
         passed_tests = {name for name, status in test_status.items() if status == "ok"}
-        failed_tests = {name for name, status in test_status.items() if status in ("fail", "error")}
-        skipped_tests = {name for name, status in test_status.items() if status == "skipped"}
+        failed_tests = {
+            name for name, status in test_status.items() if status in ("fail", "error")
+        }
+        skipped_tests = {
+            name for name, status in test_status.items() if status == "skipped"
+        }
         # Ensure no overlap
         all_tests = passed_tests | failed_tests | skipped_tests
-        assert len(all_tests) == len(test_status), "Test names overlap between result sets!"
+        assert len(all_tests) == len(test_status), (
+            "Test names overlap between result sets!"
+        )
 
         return TestResult(
             passed_count=len(passed_tests),

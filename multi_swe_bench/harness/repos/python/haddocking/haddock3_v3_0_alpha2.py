@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -77,7 +76,7 @@ python setup.py develop --no-deps
 ###ACTION_DELIMITER###
 bash /home/haddock3/test_commands.sh
 ###ACTION_DELIMITER###
-"""
+""",
             ),
             File(
                 ".",
@@ -86,9 +85,7 @@ bash /home/haddock3/test_commands.sh
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider -vv
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -101,9 +98,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider -vv
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -116,9 +111,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider -vv
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -180,7 +173,7 @@ class HADDOCK3_V3_0_ALPHA2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -194,33 +187,29 @@ class HADDOCK3_V3_0_ALPHA2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Implement the log parsing logic here
         # Regex patterns for different test result lines
-        passed_pattern = re.compile(r'^(?:tests/.*?::.*?) PASSED')
-        failed_pattern = re.compile(r'^(?:tests/.*?::.*?) FAILED')
-        skipped_pattern = re.compile(r'^SKIPPED.*? (tests/.*?)(?::|\s)')
-        error_pattern = re.compile(r'^(?:ERROR|FAILED) (tests/.*?::.*?)\b')
-        error_file_pattern = re.compile(r'^ERROR (tests/.*?\.py)')
+        passed_pattern = re.compile(r"^(?:tests/.*?::.*?) PASSED")
+        failed_pattern = re.compile(r"^(?:tests/.*?::.*?) FAILED")
+        skipped_pattern = re.compile(r"^SKIPPED.*? (tests/.*?)(?::|\s)")
+        error_pattern = re.compile(r"^(?:ERROR|FAILED) (tests/.*?::.*?)\b")
+        error_file_pattern = re.compile(r"^ERROR (tests/.*?\.py)")
         for line in log.splitlines():
             # PASSED
             m = passed_pattern.match(line)
             if m:
-                test_name = line.split(' PASSED')[0].strip()
+                test_name = line.split(" PASSED")[0].strip()
                 passed_tests.add(test_name)
                 continue
             # FAILED
             m = failed_pattern.match(line)
             if m:
-                test_name = line.split(' FAILED')[0].strip()
+                test_name = line.split(" FAILED")[0].strip()
                 failed_tests.add(test_name)
                 continue
             # SKIPPED
@@ -241,11 +230,6 @@ class HADDOCK3_V3_0_ALPHA2(Instance):
                 test_name = m.group(1).strip()
                 failed_tests.add(test_name)
                 continue
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

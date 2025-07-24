@@ -110,9 +110,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -126,9 +124,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 dotnet restore
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -141,9 +137,7 @@ dotnet build --configuration Debug --no-restore
 dotnet test Tests/UnitTests --no-build --verbosity normal
 dotnet test Tests/UnitTestsParallelizable --no-build --verbosity normal
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -158,9 +152,7 @@ dotnet test Tests/UnitTests --no-build --verbosity normal
 dotnet test Tests/UnitTestsParallelizable --no-build --verbosity normal
 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -175,9 +167,7 @@ dotnet test Tests/UnitTests --no-build --verbosity normal
 dotnet test Tests/UnitTestsParallelizable --no-build --verbosity normal
 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -203,6 +193,8 @@ dotnet test Tests/UnitTestsParallelizable --no-build --verbosity normal
 {self.clear_env}
 
 """
+
+
 class ImageDefault3954(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -256,9 +248,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -272,9 +262,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 dotnet restore
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -286,9 +274,7 @@ cd /home/{pr.repo}
 dotnet build --configuration Debug --no-restore
 dotnet test UnitTests --no-build --verbosity normal
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -302,9 +288,7 @@ dotnet build --configuration Debug --no-restore
 dotnet test UnitTests --no-build --verbosity normal
 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -318,9 +302,7 @@ dotnet build --configuration Debug --no-restore
 dotnet test UnitTests --no-build --verbosity normal
 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -346,6 +328,7 @@ dotnet test UnitTests --no-build --verbosity normal
 {self.clear_env}
 
 """
+
 
 @Instance.register("gui-cs", "Terminal.Gui")
 class rector(Instance):
@@ -382,23 +365,24 @@ class rector(Instance):
         return "bash /home/fix-run.sh"
 
     def parse_log(self, test_log: str) -> TestResult:
-            passed_tests = set()
-            failed_tests = set()
-            skipped_tests = set()
+        passed_tests = set()
+        failed_tests = set()
+        skipped_tests = set()
 
-            passed_re  = re.compile(r'^\s*Passed\s+(.+?)(?=\s+\[[^\]]+\]\s*$)',  re.MULTILINE)
-            failed_re  = re.compile(r'^\s*Failed\s+(.+?)(?=\s+\[[^\]]+\]\s*$)',  re.MULTILINE)
-            skipped_re = re.compile(r'^\s*Skipped\s+(.+?)(?=\s+\[[^\]]+\]\s*$)', re.MULTILINE)
+        passed_re = re.compile(r"^\s*Passed\s+(.+?)(?=\s+\[[^\]]+\]\s*$)", re.MULTILINE)
+        failed_re = re.compile(r"^\s*Failed\s+(.+?)(?=\s+\[[^\]]+\]\s*$)", re.MULTILINE)
+        skipped_re = re.compile(
+            r"^\s*Skipped\s+(.+?)(?=\s+\[[^\]]+\]\s*$)", re.MULTILINE
+        )
 
-            passed_tests.update(m.group(1).strip() for m in passed_re.finditer(test_log))
-            failed_tests.update(m.group(1).strip() for m in failed_re.finditer(test_log))
-            skipped_tests.update(m.group(1).strip() for m in skipped_re.finditer(test_log))
-            return TestResult(
-                passed_count=len(passed_tests),
-                failed_count=len(failed_tests),
-                skipped_count=len(skipped_tests),
-                passed_tests=passed_tests,
-                failed_tests=failed_tests,
-                skipped_tests=skipped_tests,
-            )
-
+        passed_tests.update(m.group(1).strip() for m in passed_re.finditer(test_log))
+        failed_tests.update(m.group(1).strip() for m in failed_re.finditer(test_log))
+        skipped_tests.update(m.group(1).strip() for m in skipped_re.finditer(test_log))
+        return TestResult(
+            passed_count=len(passed_tests),
+            failed_count=len(failed_tests),
+            skipped_count=len(skipped_tests),
+            passed_tests=passed_tests,
+            failed_tests=failed_tests,
+            skipped_tests=skipped_tests,
+        )

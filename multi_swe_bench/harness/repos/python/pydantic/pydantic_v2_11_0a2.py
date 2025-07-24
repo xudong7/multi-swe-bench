@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.10-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -57,7 +56,7 @@ uv sync --frozen --group all --all-extras
 ###ACTION_DELIMITER###
 echo 'uv run coverage run -m pytest --durations=10' > /home/pydantic/test_commands.sh && chmod +x /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -66,9 +65,7 @@ bash /home/pydantic/test_commands.sh"""
 cd /home/{pr.repo}
 uv run coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -81,9 +78,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 uv run coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -96,9 +91,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 uv run coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -161,7 +154,7 @@ class PYDANTIC_V2_11_0A2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -175,9 +168,7 @@ class PYDANTIC_V2_11_0A2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         # Strategy:
         # 1. Extract failed test names from the 'FAILURES' section and summary.
@@ -187,11 +178,9 @@ class PYDANTIC_V2_11_0A2(Instance):
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Extract failed test names from traceback and summary
         # Pattern: tests/<path>.py:<line> <test_function_name> - ...
-        fail_pattern = re.compile(r'^(tests/\S+\.py):(\d+)\s+([\w\[\]\-]+)')
+        fail_pattern = re.compile(r"^(tests/\S+\.py):(\d+)\s+([\w\[\]\-]+)")
         for line in log.splitlines():
             m = fail_pattern.match(line)
             if m:
@@ -200,7 +189,9 @@ class PYDANTIC_V2_11_0A2(Instance):
                 failed_tests.add(test_name)
             # Extract test names from duration lines (slowest durations, etc.)
             # Example: '3.78s call     tests/benchmarks/test_model_schema_generation.py::test_lots_of_models_with_lots_of_fields'
-            dur_pattern = re.compile(r'\d+\.\d+s\s+(call|setup|teardown)\s+(tests/\S+\.py::\S+)')
+            dur_pattern = re.compile(
+                r"\d+\.\d+s\s+(call|setup|teardown)\s+(tests/\S+\.py::\S+)"
+            )
             m2 = dur_pattern.match(line)
             if m2:
                 test_name = m2.group(2)
@@ -209,21 +200,16 @@ class PYDANTIC_V2_11_0A2(Instance):
                     passed_tests.add(test_name)
             # Extract skipped tests from per-file lines with symbols
             # Example: tests/test_abc.py .s [  3%]
-            fileline_pattern = re.compile(r'^(tests/\S+\.py)\s+([.sxF]+)')
+            fileline_pattern = re.compile(r"^(tests/\S+\.py)\s+([.sxF]+)")
             m3 = fileline_pattern.match(line)
             if m3:
                 testfile = m3.group(1)
                 symbols = m3.group(2)
                 # Try to reconstruct test names for skipped tests
                 for idx, sym in enumerate(symbols):
-                    if sym == 's':
+                    if sym == "s":
                         # Name as testfile::SKIPPED_TEST_{idx+1}
-                        skipped_tests.add(f"{testfile}::SKIPPED_TEST_{idx+1}")
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
+                        skipped_tests.add(f"{testfile}::SKIPPED_TEST_{idx + 1}")
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -69,7 +68,7 @@ bash /home/dask/test_commands.sh
 ###ACTION_DELIMITER###
 pip install fastavro requests s3fs graphviz pyarrow
 ###ACTION_DELIMITER###
-bash /home/dask/test_commands.sh"""
+bash /home/dask/test_commands.sh""",
             ),
             File(
                 ".",
@@ -78,9 +77,7 @@ bash /home/dask/test_commands.sh"""
 cd /home/{pr.repo}
 pytest -v dask --runslow --doctest-modules -n 3
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -93,9 +90,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest -v dask --runslow --doctest-modules -n 3
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -108,9 +103,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest -v dask --runslow --doctest-modules -n 3
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -172,7 +165,7 @@ class DASK_1_1_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -186,17 +179,13 @@ class DASK_1_1_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex pattern to match test result lines
-        # Example: [gw0] [  1%] PASSED dask/bag/core.py::dask.bag.core.Bag.filter 
+        # Example: [gw0] [  1%] PASSED dask/bag/core.py::dask.bag.core.Bag.filter
         pattern = re.compile(r"\[gw\d+\] \[ *\d+%\] (PASSED|FAILED|SKIPPED|ERROR) (.+)")
         for line in log.splitlines():
             match = pattern.match(line)
@@ -209,11 +198,6 @@ class DASK_1_1_3(Instance):
                     failed_tests.add(test_name)
                 elif status == "SKIPPED":
                     skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6-buster"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -54,7 +53,7 @@ make install
 echo 'pytest --cov=pydantic
 python tests/try_assert.py' > /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -64,9 +63,7 @@ cd /home/{pr.repo}
 pytest --cov=pydantic
 python tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -80,9 +77,7 @@ fi
 pytest --cov=pydantic
 python tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -96,9 +91,7 @@ fi
 pytest --cov=pydantic
 python tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -161,7 +154,7 @@ class PYDANTIC_V0_32(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -175,35 +168,26 @@ class PYDANTIC_V0_32(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex to match test file lines with result characters
-        test_line_re = re.compile(r'^(tests/[^\s]+\.py)\s+([.sF]+)')
+        test_line_re = re.compile(r"^(tests/[^\s]+\.py)\s+([.sF]+)")
         for line in log.splitlines():
             m = test_line_re.match(line)
             if m:
                 test_file = m.group(1)
                 results = m.group(2)
                 for idx, ch in enumerate(results):
-                    test_name = f"{test_file}::test_{idx+1}"
-                    if ch == '.':
+                    test_name = f"{test_file}::test_{idx + 1}"
+                    if ch == ".":
                         passed_tests.add(test_name)
-                    elif ch == 'F':
+                    elif ch == "F":
                         failed_tests.add(test_name)
-                    elif ch == 's':
+                    elif ch == "s":
                         skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

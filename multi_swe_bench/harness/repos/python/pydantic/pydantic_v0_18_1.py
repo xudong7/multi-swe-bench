@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -71,7 +70,7 @@ echo 'pytest -rA --tb=no --cov=pydantic' > /home/pydantic/test_commands.sh && ch
 ###ACTION_DELIMITER###
 bash /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
-"""
+""",
             ),
             File(
                 ".",
@@ -80,9 +79,7 @@ bash /home/pydantic/test_commands.sh
 cd /home/{pr.repo}
 pytest -rA --tb=no --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -95,9 +92,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest -rA --tb=no --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -110,9 +105,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest -rA --tb=no --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -175,7 +168,7 @@ class PYDANTIC_V0_18_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -189,18 +182,14 @@ class PYDANTIC_V0_18_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Pattern: test file, then result chars, then optional percent
-        test_line_re = re.compile(r'^(tests/[^\s]+\.py)\s+([.sF]+)')
-        result_line_re = re.compile(r'^([.sF]+)')
+        test_line_re = re.compile(r"^(tests/[^\s]+\.py)\s+([.sF]+)")
+        result_line_re = re.compile(r"^([.sF]+)")
         current_file = None
         test_idx = {}
         for line in log.splitlines():
@@ -220,17 +209,12 @@ class PYDANTIC_V0_18_1(Instance):
             for ch in results:
                 test_idx[current_file] += 1
                 test_name = f"{current_file}::test_{test_idx[current_file]}"
-                if ch == '.':
+                if ch == ".":
                     passed_tests.add(test_name)
-                elif ch == 'F':
+                elif ch == "F":
                     failed_tests.add(test_name)
-                elif ch == 's':
+                elif ch == "s":
                     skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

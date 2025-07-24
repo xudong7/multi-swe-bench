@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -56,7 +55,7 @@ pip install .[test]
 echo 'python -m pytest ./tests/unit --cov=sdmetrics --cov-report=xml -v
 python -m pytest ./tests/integration --reruns 5 --disable-warnings -v' > test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/SDMetrics/test_commands.sh"""
+bash /home/SDMetrics/test_commands.sh""",
             ),
             File(
                 ".",
@@ -66,9 +65,7 @@ cd /home/{pr.repo}
 python -m pytest ./tests/unit --cov=sdmetrics --cov-report=xml -v
 python -m pytest ./tests/integration --reruns 5 --disable-warnings -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -82,9 +79,7 @@ fi
 python -m pytest ./tests/unit --cov=sdmetrics --cov-report=xml -v
 python -m pytest ./tests/integration --reruns 5 --disable-warnings -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -98,9 +93,7 @@ fi
 python -m pytest ./tests/unit --cov=sdmetrics --cov-report=xml -v
 python -m pytest ./tests/integration --reruns 5 --disable-warnings -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -162,7 +155,7 @@ class SDMETRICS_V0_12_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -176,30 +169,26 @@ class SDMETRICS_V0_12_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex for test result lines (e.g., ... PASSED, ... FAILED, ... SKIPPED)
-        result_line_re = re.compile(r'^(.*?)\s+(PASSED|FAILED|SKIPPED)\b')
+        result_line_re = re.compile(r"^(.*?)\s+(PASSED|FAILED|SKIPPED)\b")
         # Regex for summary lines (e.g., FAILED ...)
-        summary_failed_re = re.compile(r'^FAILED\s+(.*?)$')
-        summary_skipped_re = re.compile(r'^SKIPPED\s+(.*?)$')
-        summary_passed_re = re.compile(r'^PASSED\s+(.*?)$')
+        summary_failed_re = re.compile(r"^FAILED\s+(.*?)$")
+        summary_skipped_re = re.compile(r"^SKIPPED\s+(.*?)$")
+        summary_passed_re = re.compile(r"^PASSED\s+(.*?)$")
         for line in log.splitlines():
             m = result_line_re.match(line)
             if m:
                 test_name, status = m.group(1).strip(), m.group(2)
-                if status == 'PASSED':
+                if status == "PASSED":
                     passed_tests.add(test_name)
-                elif status == 'FAILED':
+                elif status == "FAILED":
                     failed_tests.add(test_name)
-                elif status == 'SKIPPED':
+                elif status == "SKIPPED":
                     skipped_tests.add(test_name)
                 continue
             m = summary_failed_re.match(line)
@@ -214,11 +203,6 @@ class SDMETRICS_V0_12_1(Instance):
             if m:
                 passed_tests.add(m.group(1).strip())
                 continue
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

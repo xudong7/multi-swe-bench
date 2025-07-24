@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -63,7 +62,7 @@ make test-only
 ###ACTION_DELIMITER###
 echo -e '#!/bin/bash\nset -e\npytest -sv -rA --tb=short ./tests/ --ignore tests/test_batch --ignore tests/test_ec2 --ignore tests/test_sqs\npytest -sv -rA --tb=short ./tests/test_xray\nMOTO_CALL_RESET_API=false pytest -sv -rA --tb=short -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope' > test_commands.sh
 ###ACTION_DELIMITER###
-chmod +x test_commands.sh"""
+chmod +x test_commands.sh""",
             ),
             File(
                 ".",
@@ -76,9 +75,7 @@ pytest -sv -rA --tb=short ./tests/ --ignore tests/test_batch --ignore tests/test
 pytest -sv -rA --tb=short ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv -rA --tb=short -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -95,9 +92,7 @@ pytest -sv -rA --tb=short ./tests/ --ignore tests/test_batch --ignore tests/test
 pytest -sv -rA --tb=short ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv -rA --tb=short -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -114,9 +109,7 @@ pytest -sv -rA --tb=short ./tests/ --ignore tests/test_batch --ignore tests/test
 pytest -sv -rA --tb=short ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv -rA --tb=short -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -179,7 +172,7 @@ class MOTO_4_2_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -193,15 +186,11 @@ class MOTO_4_2_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # TODO: Implement the parse_log function
         # Implement the log parsing logic here
         test_pattern = re.compile(r"^(tests/.*::.*) (PASSED|FAILED|SKIPPED)")
@@ -216,11 +205,6 @@ class MOTO_4_2_2(Instance):
                     failed_tests.add(test_name)
                 elif status == "SKIPPED":
                     skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

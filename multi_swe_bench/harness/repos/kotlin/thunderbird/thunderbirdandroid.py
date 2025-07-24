@@ -161,9 +161,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -177,9 +175,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 ./gradlew clean test --max-workers 8 --continue || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -190,9 +186,7 @@ set -e
 cd /home/{pr.repo}
 ./gradlew clean test --max-workers 8 --continue
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -204,9 +198,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 ./gradlew clean test --max-workers 8 --continue
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -218,9 +210,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 ./gradlew clean test --max-workers 8 --continue
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

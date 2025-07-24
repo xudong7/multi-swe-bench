@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:2"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -55,7 +54,7 @@ python setup.py develop
 ###ACTION_DELIMITER###
 echo 'nosetests -sv --with-coverage --cover-html ./tests/' > test_commands.sh
 ###ACTION_DELIMITER###
-cat test_commands.sh"""
+cat test_commands.sh""",
             ),
             File(
                 ".",
@@ -64,9 +63,7 @@ cat test_commands.sh"""
 cd /home/{pr.repo}
 nosetests -sv --with-coverage --cover-html ./tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -79,9 +76,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests -sv --with-coverage --cover-html ./tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -94,9 +89,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests -sv --with-coverage --cover-html ./tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -159,7 +152,7 @@ class MOTO_0_4_25(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -173,36 +166,29 @@ class MOTO_0_4_25(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Implement the log parsing logic here
         # Pattern: test_name ... STATUS (where STATUS is ok, FAIL, ERROR)
         # Only extract test names that look like valid Python test names (e.g., test_foo.bar)
-        test_line_re = re.compile(r'^(?P<name>[\w\.]+)\s+\.\.\.\s+(?P<status>ok|FAIL|ERROR)$')
+        test_line_re = re.compile(
+            r"^(?P<name>[\w\.]+)\s+\.\.\.\s+(?P<status>ok|FAIL|ERROR)$"
+        )
         for line in log.splitlines():
             m = test_line_re.match(line.strip())
             if m:
-                name = m.group('name')
-                status = m.group('status')
-                if status == 'ok':
+                name = m.group("name")
+                status = m.group("status")
+                if status == "ok":
                     passed_tests.add(name)
-                elif status == 'FAIL':
+                elif status == "FAIL":
                     failed_tests.add(name)
-                elif status == 'ERROR':
+                elif status == "ERROR":
                     failed_tests.add(name)
             # Skipped tests not observed in logs, but can add logic if needed
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

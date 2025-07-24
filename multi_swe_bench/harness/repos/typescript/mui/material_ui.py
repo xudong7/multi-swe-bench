@@ -166,9 +166,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -186,9 +184,7 @@ sed -i 's/packageManager": ".*"/packageManager": "pnpm@^9"/' package.json
 jq '.packageManager = "pnpm@^9" | del(.engines)' package.json > temp.json && mv temp.json package.json
 pnpm install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -199,9 +195,7 @@ set -e
 cd /home/{pr.repo}
 pnpm test:unit -- --reporter json
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -212,9 +206,7 @@ set -e
 cd /home/{pr.repo}
 git apply /home/test.patch
 pnpm test:unit -- --reporter json
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -225,9 +217,7 @@ set -e
 cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 pnpm test:unit -- --reporter json
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -308,9 +298,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -326,9 +314,7 @@ bash /home/check_git_changes.sh
 
 yarn install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -339,9 +325,7 @@ set -e
 cd /home/{pr.repo}
 yarn run test:unit --reporter json 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -353,9 +337,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 yarn run test:unit --reporter json 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -367,9 +349,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 yarn run test:unit --reporter json 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -450,9 +430,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -468,9 +446,7 @@ bash /home/check_git_changes.sh
 
 yarn install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -481,9 +457,7 @@ set -e
 cd /home/{pr.repo}
 yarn run test:unit --reporter json  --exit
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -495,9 +469,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 yarn run test:unit --reporter json  --exit
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -509,9 +481,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 yarn run test:unit --reporter json  --exit
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

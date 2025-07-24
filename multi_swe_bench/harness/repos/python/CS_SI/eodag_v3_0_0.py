@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -55,7 +54,7 @@ pytest -v
 ###ACTION_DELIMITER###
 ls -F eodag/
 ###ACTION_DELIMITER###
-echo 'pytest -v --junitxml=test-reports/junit-report.xml' > test_commands.sh"""
+echo 'pytest -v --junitxml=test-reports/junit-report.xml' > test_commands.sh""",
             ),
             File(
                 ".",
@@ -64,9 +63,7 @@ echo 'pytest -v --junitxml=test-reports/junit-report.xml' > test_commands.sh"""
 cd /home/{pr.repo}
 pytest -v --junitxml=test-reports/junit-report.xml
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -79,9 +76,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest -v --junitxml=test-reports/junit-report.xml
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -94,9 +89,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest -v --junitxml=test-reports/junit-report.xml
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -158,7 +151,7 @@ class EODAG_V3_0_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -172,36 +165,27 @@ class EODAG_V3_0_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # TODO: Implement the parse_log function
         # Implement the log parsing logic here
-        lines = log.split('\n')
+        lines = log.split("\n")
         for line in lines:
             if "SKIPPED" in line:
-                match = re.search(r'(tests.*\.py::[^\s]+)', line)
+                match = re.search(r"(tests.*\.py::[^\s]+)", line)
                 if match:
                     skipped_tests.add(match.group(1).strip())
             elif "PASSED" in line:
-                match = re.search(r'(eodag/.*\.py::[^\s]+|tests/.*\.py::[^\s]+)', line)
+                match = re.search(r"(eodag/.*\.py::[^\s]+|tests/.*\.py::[^\s]+)", line)
                 if match:
                     passed_tests.add(match.group(1).strip())
             elif "FAILED" in line:
-                match = re.search(r'(tests.*\.py::[^\s]+)', line)
+                match = re.search(r"(tests.*\.py::[^\s]+)", line)
                 if match:
                     failed_tests.add(match.group(1).strip())
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

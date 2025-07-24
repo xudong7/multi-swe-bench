@@ -118,9 +118,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -142,9 +140,7 @@ corepack enable || true
 yes | yarn -v || true
 yarn install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -159,9 +155,7 @@ nvm use || true
 corepack enable || true
 yarn install || true
 yarn test --silent
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -178,9 +172,7 @@ corepack enable || true
 yarn install || true
 yarn test --silent
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -197,9 +189,7 @@ corepack enable || true
 yarn install || true
 yarn test --silent
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -299,17 +289,11 @@ class wpcalypso(Instance):
         failed_tests = set()
         skipped_tests = set()
 
-        passed_res = [
-            re.compile(r"PASS:?\s?(.+?)\s")
-        ]
+        passed_res = [re.compile(r"PASS:?\s?(.+?)\s")]
 
-        failed_res = [
-            re.compile(r"FAIL:?\s?(.+?)\s")
-        ]
+        failed_res = [re.compile(r"FAIL:?\s?(.+?)\s")]
 
-        skipped_res = [
-            re.compile(r"SKIP:?\s?(.+?)\s")
-        ]
+        skipped_res = [re.compile(r"SKIP:?\s?(.+?)\s")]
 
         for line in test_log.splitlines():
             for passed_re in passed_res:

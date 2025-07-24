@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -55,7 +54,7 @@ echo "pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_ba
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope" > test_commands.sh && chmod +x test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/moto/test_commands.sh"""
+bash /home/moto/test_commands.sh""",
             ),
             File(
                 ".",
@@ -66,9 +65,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -83,9 +80,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -100,9 +95,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -165,7 +158,7 @@ class MOTO_5_1_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -179,37 +172,28 @@ class MOTO_5_1_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Remove ANSI codes
-        log = re.sub(r'\x1b\[[0-9;]*m', '', log)
+        log = re.sub(r"\x1b\[[0-9;]*m", "", log)
         # Regex: start of line, path ending in .py, ::, test name, optional [::param], whitespace, STATUS at end of line
         test_line_re = re.compile(
-            r'^(?P<test>[\w./-]+\.py::[\w\[\]<>.,:=-]+)\s+(?P<status>PASSED|FAILED|SKIPPED)\s*$',
-            re.MULTILINE
+            r"^(?P<test>[\w./-]+\.py::[\w\[\]<>.,:=-]+)\s+(?P<status>PASSED|FAILED|SKIPPED)\s*$",
+            re.MULTILINE,
         )
-            # Track the last status for each test
+        # Track the last status for each test
         test_status = {}
         for match in test_line_re.finditer(log):
-            test_name = match.group('test').strip()
-            status = match.group('status')
+            test_name = match.group("test").strip()
+            status = match.group("status")
             test_status[test_name] = status  # Only the last status will remain
         # Build sets based on final status
         passed_tests = {t for t, s in test_status.items() if s == "PASSED"}
         failed_tests = {t for t, s in test_status.items() if s == "FAILED"}
         skipped_tests = {t for t, s in test_status.items() if s == "SKIPPED"}
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

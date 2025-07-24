@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -57,7 +56,7 @@ pip install -e .
 ###ACTION_DELIMITER###
 echo 'PYTHONPATH=$PYTHONPATH:$(pwd) python -m pytest --no-header -rA --tb=no -p no:cacheprovider .' > /home/conan/test_commands.sh && chmod +x /home/conan/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/conan/test_commands.sh"""
+bash /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -66,9 +65,7 @@ bash /home/conan/test_commands.sh"""
 cd /home/{pr.repo}
 PYTHONPATH=$PYTHONPATH:$(pwd) python -m pytest --no-header -rA --tb=no -p no:cacheprovider .
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -81,9 +78,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 PYTHONPATH=$PYTHONPATH:$(pwd) python -m pytest --no-header -rA --tb=no -p no:cacheprovider .
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -96,9 +91,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 PYTHONPATH=$PYTHONPATH:$(pwd) python -m pytest --no-header -rA --tb=no -p no:cacheprovider .
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -161,7 +154,7 @@ class CONAN_2_0_14(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -175,15 +168,11 @@ class CONAN_2_0_14(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex patterns for test result lines
         # Example: PASSED conans/test/functional/only_source_test.py::OnlySourceTest::test_build_policies_in_conanfile
         passed_pattern = re.compile(r"^PASSED\s+(.+)$", re.MULTILINE)
@@ -202,11 +191,6 @@ class CONAN_2_0_14(Instance):
         # Find all skipped tests
         for match in skipped_pattern.finditer(log):
             skipped_tests.add(match.group(1).strip())
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

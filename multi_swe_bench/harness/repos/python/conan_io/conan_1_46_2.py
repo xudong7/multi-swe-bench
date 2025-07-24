@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -77,7 +76,7 @@ apt-get install -y autotools-dev
 ###ACTION_DELIMITER###
 pytest -n 4 -m "not slow and not tool_svn and not bazel"
 ###ACTION_DELIMITER###
-echo 'pytest --no-header -rA --tb=no -p no:cacheprovider -m "not slow and not tool_svn and not bazel"' > /home/conan/test_commands.sh"""
+echo 'pytest --no-header -rA --tb=no -p no:cacheprovider -m "not slow and not tool_svn and not bazel"' > /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -86,9 +85,7 @@ echo 'pytest --no-header -rA --tb=no -p no:cacheprovider -m "not slow and not to
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider -m "not slow and not tool_svn and not bazel"
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -101,9 +98,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider -m "not slow and not tool_svn and not bazel"
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -116,9 +111,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider -m "not slow and not tool_svn and not bazel"
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -181,7 +174,7 @@ class CONAN_1_46_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -195,23 +188,21 @@ class CONAN_1_46_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Implement the log parsing logic here
         failed_regex = re.compile(r"^FAILED (.*)$", re.MULTILINE)
         for match in failed_regex.finditer(log):
             test_name = match.group(1).strip()
-            if ' - ' in test_name:
-                test_name = test_name.split(' - ')[0]
+            if " - " in test_name:
+                test_name = test_name.split(" - ")[0]
             failed_tests.add(test_name)
-        skipped_regex = re.compile(r"^SKIPPED(?: \[[^]]+\])? (.*?):\d+:.*$", re.MULTILINE)
+        skipped_regex = re.compile(
+            r"^SKIPPED(?: \[[^]]+\])? (.*?):\d+:.*$", re.MULTILINE
+        )
         for match in skipped_regex.finditer(log):
             skipped_tests.add(match.group(1).strip())
         # Look for passed tests in the summary, which is not always present
@@ -221,7 +212,9 @@ class CONAN_1_46_2(Instance):
         if not passed_tests:
             # If no explicit PASSED summary, we need to get creative.
             # Let's find all tests and remove the failed and skipped ones.
-            all_tests_regex = re.compile(r"^(conans/test/.*?\.py::.*?)(?: |$)", re.MULTILINE)
+            all_tests_regex = re.compile(
+                r"^(conans/test/.*?\.py::.*?)(?: |$)", re.MULTILINE
+            )
             all_tests = set()
             for match in all_tests_regex.finditer(log):
                 all_tests.add(match.group(1).strip())
@@ -230,11 +223,6 @@ class CONAN_1_46_2(Instance):
             for match in progress_tests_regex.finditer(log):
                 all_tests.add(match.group(1).strip())
             passed_tests.update(all_tests - failed_tests - skipped_tests)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

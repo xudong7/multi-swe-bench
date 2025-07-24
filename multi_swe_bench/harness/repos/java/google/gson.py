@@ -113,9 +113,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -130,9 +128,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 
 mvn clean test -Dmaven.test.skip=false -DfailIfNoTests=false || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -142,9 +138,7 @@ set -e
 
 cd /home/{pr.repo}
 mvn clean test -Dmaven.test.skip=false -DfailIfNoTests=false
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -156,9 +150,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 mvn clean test -Dmaven.test.skip=false -DfailIfNoTests=false
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -170,9 +162,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 mvn clean test -Dmaven.test.skip=false -DfailIfNoTests=false
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -293,7 +283,9 @@ class Gson(Instance):
             # re.compile(
             #     r"Running (.+?)\nTests run: (\d+), Failures: (\d+), Errors: (\d+), Skipped: (\d+), Time elapsed: [\d\.]+ sec",
             # ),
-            re.compile(r"Running\s+(.+?)\s*\n(?:(?!Tests run:).*\n)*Tests run:\s*(\d+),\s*Failures:\s*(\d+),\s*Errors:\s*(\d+),\s*Skipped:\s*(\d+),\s*Time elapsed:\s*[\d.]+\s*sec")
+            re.compile(
+                r"Running\s+(.+?)\s*\n(?:(?!Tests run:).*\n)*Tests run:\s*(\d+),\s*Failures:\s*(\d+),\s*Errors:\s*(\d+),\s*Skipped:\s*(\d+),\s*Time elapsed:\s*[\d.]+\s*sec"
+            )
         ]
         re_fail_tests = [
             re.compile(

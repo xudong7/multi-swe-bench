@@ -161,9 +161,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -178,9 +176,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 pnpm install  || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -191,9 +187,7 @@ set -e
 cd /home/{pr.repo}
 pnpm test 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -205,9 +199,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 pnpm test 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -219,9 +211,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 pnpm test 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -302,9 +292,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -319,9 +307,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 pnpm install  || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -332,9 +318,7 @@ set -e
 cd /home/{pr.repo}
 pnpm test -- --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -346,9 +330,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 pnpm test -- --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -360,9 +342,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 pnpm test -- --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

@@ -298,9 +298,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -315,9 +313,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 mkdir build
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -330,9 +326,7 @@ cd build
 cmake -DWITH_TESTS=ON -DTARGET_WEBASSEMBLY=OFF ..
 make -j 4
 ctest -j 4
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -347,9 +341,7 @@ cmake -DWITH_TESTS=ON -DTARGET_WEBASSEMBLY=OFF ..
 make -j 4
 ctest -j 4
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -364,9 +356,7 @@ cmake -DWITH_TESTS=ON -DTARGET_WEBASSEMBLY=OFF ..
 make -j 4
 ctest -j 4
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

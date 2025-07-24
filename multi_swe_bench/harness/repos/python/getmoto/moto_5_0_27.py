@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -55,7 +54,7 @@ echo "pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_ba
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope" > test_commands.sh && chmod +x test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/moto/test_commands.sh"""
+bash /home/moto/test_commands.sh""",
             ),
             File(
                 ".",
@@ -66,9 +65,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -83,9 +80,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -100,9 +95,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -165,7 +158,7 @@ class MOTO_5_0_27(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -179,41 +172,34 @@ class MOTO_5_0_27(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         test_status = {}
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex pattern to match test result lines
         # Handles optional [gwX] prefix, test name, and status
         pattern = re.compile(r"^(?:\[gw\d+\]\s*)?(.+?)\s+(PASSED|FAILED|SKIPPED)\s*$")
-        ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+        ansi_escape = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
         for line in log.splitlines():
-            clean_line = ansi_escape.sub('', line)
+            clean_line = ansi_escape.sub("", line)
             match = pattern.match(clean_line)
             if match:
                 test_name = match.group(1).strip()
                 status = match.group(2)
                 test_status[test_name] = status
-        passed_tests = {t for t, s in test_status.items() if s == 'PASSED'}
-        failed_tests = {t for t, s in test_status.items() if s == 'FAILED'}
-        skipped_tests = {t for t, s in test_status.items() if s == 'SKIPPED'}
+        passed_tests = {t for t, s in test_status.items() if s == "PASSED"}
+        failed_tests = {t for t, s in test_status.items() if s == "FAILED"}
+        skipped_tests = {t for t, s in test_status.items() if s == "SKIPPED"}
         # Check for overlaps
         overlap_pf = passed_tests & failed_tests
         overlap_ps = passed_tests & skipped_tests
         overlap_fs = failed_tests & skipped_tests
         if overlap_pf or overlap_ps or overlap_fs:
-            print(f"WARNING: Overlap detected! pf={overlap_pf} ps={overlap_ps} fs={overlap_fs}")
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
+            print(
+                f"WARNING: Overlap detected! pf={overlap_pf} ps={overlap_ps} fs={overlap_fs}"
+            )
 
         return TestResult(
             passed_count=len(passed_tests),

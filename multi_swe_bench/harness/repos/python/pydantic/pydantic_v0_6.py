@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.6"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -59,7 +58,7 @@ bash /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
 pip uninstall -y msgpack-python ujson
 ###ACTION_DELIMITER###
-pytest --cov=pydantic -v"""
+pytest --cov=pydantic -v""",
             ),
             File(
                 ".",
@@ -70,9 +69,7 @@ pytest --cov=pydantic -v
 pip uninstall -y msgpack-python ujson
 pytest --cov=pydantic -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -87,9 +84,7 @@ pytest --cov=pydantic -v
 pip uninstall -y msgpack-python ujson
 pytest --cov=pydantic -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -104,9 +99,7 @@ pytest --cov=pydantic -v
 pip uninstall -y msgpack-python ujson
 pytest --cov=pydantic -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -169,7 +162,7 @@ class PYDANTIC_V0_6(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -183,34 +176,27 @@ class PYDANTIC_V0_6(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex to match test result lines
         # Example: tests/test_complex.py::test_str_bytes PASSED
-        test_result_pattern = re.compile(r'^(.*?) (PASSED|FAILED|SKIPPED)$', re.MULTILINE)
+        test_result_pattern = re.compile(
+            r"^(.*?) (PASSED|FAILED|SKIPPED)$", re.MULTILINE
+        )
         for match in test_result_pattern.finditer(log):
             test_name, status = match.group(1), match.group(2)
-            is_function_level = '::' in test_name
-            if status == 'PASSED' and is_function_level:
+            is_function_level = "::" in test_name
+            if status == "PASSED" and is_function_level:
                 passed_tests.add(test_name)
-            elif status == 'FAILED' and is_function_level:
+            elif status == "FAILED" and is_function_level:
                 failed_tests.add(test_name)
-            elif status == 'SKIPPED':
+            elif status == "SKIPPED":
                 skipped_tests.add(test_name)
         # Remove any skipped tests that are also in passed or failed
-        skipped_tests -= (passed_tests | failed_tests)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
+        skipped_tests -= passed_tests | failed_tests
 
         return TestResult(
             passed_count=len(passed_tests),

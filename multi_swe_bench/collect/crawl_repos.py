@@ -23,6 +23,7 @@ from typing import Optional, List, Dict, Any
 import random
 from multi_swe_bench.collect.util import get_tokens
 
+
 class GitHubScraper:
     def __init__(self) -> None:
         self.max_retries: int = 3
@@ -34,9 +35,9 @@ class GitHubScraper:
         language: str,
         min_stars: int = 0,
         max_results: int = 1000000,
-        output_format: str = 'console',
+        output_format: str = "console",
         token: Optional[str] = None,
-        output_dir: str = '.'
+        output_dir: str = ".",
     ) -> None:
         """
         Fetch GitHub repositories sorted by stars
@@ -70,8 +71,8 @@ class GitHubScraper:
                             "sort": "stars",
                             "order": "desc",
                             "per_page": min(100, remaining_results),
-                            "page": page
-                        }
+                            "page": page,
+                        },
                     )
 
                     data: Dict[str, Any] = response.json()
@@ -100,30 +101,31 @@ class GitHubScraper:
 
         all_repositories = all_repositories[:max_results]
 
-        if output_format == 'console':
+        if output_format == "console":
             self._print_results(all_repositories, language)
-        elif output_format == 'csv':
+        elif output_format == "csv":
             self._save_to_csv(all_repositories, language, output_dir)
         else:
             self._print_results(all_repositories, language)
 
     def _make_request_with_retry(
-        self,
-        url: str,
-        headers: Dict[str, str],
-        params: Dict[str, Any]
+        self, url: str, headers: Dict[str, str], params: Dict[str, Any]
     ) -> requests.Response:
         """Make HTTP request with retry logic"""
         last_error: Optional[Exception] = None
         for attempt in range(self.max_retries):
             try:
-                response: requests.Response = requests.get(url, headers=headers, params=params)
+                response: requests.Response = requests.get(
+                    url, headers=headers, params=params
+                )
                 response.raise_for_status()
 
-                if int(response.headers.get('X-RateLimit-Remaining', 1)) <= 1:
-                    reset_time = int(response.headers.get('X-RateLimit-Reset', 0))
+                if int(response.headers.get("X-RateLimit-Remaining", 1)) <= 1:
+                    reset_time = int(response.headers.get("X-RateLimit-Reset", 0))
                     sleep_time = max(reset_time - time.time(), 0) + 5
-                    print(f"\nApproaching rate limit, waiting {sleep_time:.1f} seconds...")
+                    print(
+                        f"\nApproaching rate limit, waiting {sleep_time:.1f} seconds..."
+                    )
                     time.sleep(sleep_time)
                     continue
 
@@ -132,7 +134,9 @@ class GitHubScraper:
             except requests.exceptions.RequestException as e:
                 last_error = e
                 if attempt < self.max_retries - 1:
-                    print(f"\nRetry {attempt + 1}/{self.max_retries} in {self.retry_delay} seconds...")
+                    print(
+                        f"\nRetry {attempt + 1}/{self.max_retries} in {self.retry_delay} seconds..."
+                    )
                     time.sleep(self.retry_delay)
 
         raise last_error if last_error else Exception("Request failed after retries")
@@ -153,10 +157,7 @@ class GitHubScraper:
             print("-" * 60)
 
     def _save_to_csv(
-        self,
-        repositories: List[Dict[str, Any]],
-        language: str,
-        output_dir: str
+        self, repositories: List[Dict[str, Any]], language: str, output_dir: str
     ) -> None:
         """Save results to CSV in specified directory"""
         timestamp: str = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -164,22 +165,34 @@ class GitHubScraper:
         filepath: str = os.path.join(output_dir, filename)
 
         try:
-            with open(filepath, mode='w', newline='', encoding='utf-8-sig') as file:
+            with open(filepath, mode="w", newline="", encoding="utf-8-sig") as file:
                 writer = csv.writer(file)
-                writer.writerow(['Rank', 'Name', 'Stars', 'Forks', 'Description', 'URL', 'Last Updated'])
+                writer.writerow(
+                    [
+                        "Rank",
+                        "Name",
+                        "Stars",
+                        "Forks",
+                        "Description",
+                        "URL",
+                        "Last Updated",
+                    ]
+                )
 
                 for i, repo in enumerate(repositories, 1):
-                    description: str = repo['description'] or 'No description'
-                    description = description.encode('utf-8', 'ignore').decode('utf-8')
-                    writer.writerow([
-                        i,
-                        repo['full_name'],
-                        repo['stargazers_count'],
-                        repo['forks_count'],
-                        description,
-                        repo['html_url'],
-                        repo['updated_at']
-                    ])
+                    description: str = repo["description"] or "No description"
+                    description = description.encode("utf-8", "ignore").decode("utf-8")
+                    writer.writerow(
+                        [
+                            i,
+                            repo["full_name"],
+                            repo["stargazers_count"],
+                            repo["forks_count"],
+                            description,
+                            repo["html_url"],
+                            repo["updated_at"],
+                        ]
+                    )
 
             print(f"\nData successfully saved to: {os.path.abspath(filepath)}")
             print(f"Total repositories saved: {len(repositories)}")
@@ -189,15 +202,40 @@ class GitHubScraper:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Fetch GitHub repositories sorted by stars')
-    parser.add_argument('--language', required=True, type=str, help='Programming language to search')
-    parser.add_argument('--min_stars', type=int, default=0, help='Minimum star count (default: 0)')
-    parser.add_argument('--max_results', type=int, default=100, help='Maximum results to return (default: 100)')
-    parser.add_argument('--output', type=str, choices=['console', 'csv'], default='csv',
-                        help='Output format: console (default) or csv')
-    parser.add_argument('--token', type=str, default=None, help='GitHub personal access token for higher rate limits')
-    parser.add_argument('--output_dir', type=str, default='.',
-                        help='Directory to save CSV files (will be created if doesn\'t exist)')
+    parser = argparse.ArgumentParser(
+        description="Fetch GitHub repositories sorted by stars"
+    )
+    parser.add_argument(
+        "--language", required=True, type=str, help="Programming language to search"
+    )
+    parser.add_argument(
+        "--min_stars", type=int, default=0, help="Minimum star count (default: 0)"
+    )
+    parser.add_argument(
+        "--max_results",
+        type=int,
+        default=100,
+        help="Maximum results to return (default: 100)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        choices=["console", "csv"],
+        default="csv",
+        help="Output format: console (default) or csv",
+    )
+    parser.add_argument(
+        "--token",
+        type=str,
+        default=None,
+        help="GitHub personal access token for higher rate limits",
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default=".",
+        help="Directory to save CSV files (will be created if doesn't exist)",
+    )
 
     args = parser.parse_args()
 
@@ -209,7 +247,7 @@ def main() -> None:
         max_results=args.max_results,
         output_format=args.output,
         token=token,
-        output_dir=args.output_dir
+        output_dir=args.output_dir,
     )
 
 

@@ -14,59 +14,59 @@ def parse_env_output(env_output: str) -> List[Tuple[str, str]]:
     Support multi-line env vars (continuation lines, quoted values, etc.)
     """
     env_vars = []
-    lines = env_output.strip().split('\n')
+    lines = env_output.strip().split("\n")
     i = 0
-    
+
     while i < len(lines):
         line = lines[i].strip()
-        
+
         # Skip empty lines
         if not line:
             i += 1
             continue
-        
+
         # Check if it's an env var definition (contains '=')
-        if '=' in line:
+        if "=" in line:
             # Split var name and value
-            var_name, var_value = line.split('=', 1)
+            var_name, var_value = line.split("=", 1)
             # Filter out empty env vars
             if not var_name or not var_name.strip():
                 i += 1
                 continue
-            
+
             # Check if value starts with quotes
             if var_value.startswith('"') or var_value.startswith("'"):
                 quote_char = var_value[0]
                 # Find matching closing quote
                 full_value = var_value
                 i += 1
-                
+
                 while i < len(lines):
                     next_line = lines[i].strip()
-                    full_value += '\n' + next_line
-                    
+                    full_value += "\n" + next_line
+
                     # Check if closing quote is found
                     if next_line.endswith(quote_char):
                         # Remove start and end quotes
                         full_value = full_value[1:-1]
                         break
                     i += 1
-                
+
                 env_vars.append((var_name, full_value))
             else:
                 # Check if there's a continuation line
-                if line.endswith('\\'):
+                if line.endswith("\\"):
                     # Collect continuation lines
-                    full_value = var_value.rstrip('\\')
+                    full_value = var_value.rstrip("\\")
                     i += 1
-                    
+
                     while i < len(lines):
                         next_line = lines[i].strip()
-                        if not next_line.endswith('\\'):
+                        if not next_line.endswith("\\"):
                             full_value += next_line
                             break
                         else:
-                            full_value += next_line.rstrip('\\')
+                            full_value += next_line.rstrip("\\")
                         i += 1
 
                     env_vars.append((var_name, full_value))
@@ -74,11 +74,13 @@ def parse_env_output(env_output: str) -> List[Tuple[str, str]]:
                     # Single line env var
                     env_vars.append((var_name, var_value))
         i += 1
-    
+
     return env_vars
 
 
-def generate_dockerfile(env_vars: List[Tuple[str, str]], base_image: str = "ubuntu:latest") -> str:
+def generate_dockerfile(
+    env_vars: List[Tuple[str, str]], base_image: str = "ubuntu:latest"
+) -> str:
     """
     Generate Dockerfile content
     """
@@ -86,35 +88,36 @@ def generate_dockerfile(env_vars: List[Tuple[str, str]], base_image: str = "ubun
         f"FROM {base_image}",
         "",
     ]
-    
+
     for var_name, var_value in env_vars:
         # Filter out empty env vars
         if var_name and var_name.strip():
             # Escape double quotes
             escaped_value = var_value.replace('"', '\\"')
             dockerfile_lines.append(f'ENV {var_name}="{escaped_value}"')
-    
-    return '\n'.join(dockerfile_lines)
+
+    return "\n".join(dockerfile_lines)
+
 
 def generate_dockerfile_from_env_vars(
-        delete_env_vars: List[Tuple[str, str]], 
-        add_and_change_env_vars: List[Tuple[str, str]],
-        base_image: str = "ubuntu:latest") -> str:
-    
+    delete_env_vars: List[Tuple[str, str]],
+    add_and_change_env_vars: List[Tuple[str, str]],
+    base_image: str = "ubuntu:latest",
+) -> str:
     dockerfile_lines = [
         f"FROM {base_image}",
         "",
     ]
-    
+
     # Delete env vars
     for var_name, _ in delete_env_vars:
         # Filter out empty env vars
         if var_name and var_name.strip():
             dockerfile_lines.append(f'ENV {var_name}=""')
-    
+
     if delete_env_vars:
         dockerfile_lines.append("")
-    
+
     # Add and change env vars
     for var_name, var_value in add_and_change_env_vars:
         # Filter out empty env vars
@@ -122,11 +125,11 @@ def generate_dockerfile_from_env_vars(
             # Escape double quotes
             escaped_value = var_value.replace('"', '\\"')
             dockerfile_lines.append(f'ENV {var_name}="{escaped_value}"')
-    
-    return '\n'.join(dockerfile_lines)
+
+    return "\n".join(dockerfile_lines)
 
 
-def diff_env_vars(pre_env_output: str, post_env_output: str, image_name: str):    
+def diff_env_vars(pre_env_output: str, post_env_output: str, image_name: str):
     # Parse env vars
     pre_env_vars = parse_env_output(pre_env_output)
     post_env_vars = parse_env_output(post_env_output)
@@ -147,9 +150,10 @@ def diff_env_vars(pre_env_output: str, post_env_output: str, image_name: str):
     for var_name, var_value in post_env_vars:
         if var_name not in [name for name, _ in pre_env_vars]:
             add_and_change_env_vars.append((var_name, var_value))
-    
+
     return generate_dockerfile_from_env_vars(
-        delete_env_vars, add_and_change_env_vars, image_name)
+        delete_env_vars, add_and_change_env_vars, image_name
+    )
 
 
 def validate_dockerfile(df_content: str) -> bool:
@@ -158,13 +162,16 @@ def validate_dockerfile(df_content: str) -> bool:
     """
     try:
         import dockerfile
+
         result = dockerfile.parse_string(df_content)
-        has_from = any(cmd.cmd.lower() == 'from' for cmd in result)
+        has_from = any(cmd.cmd.lower() == "from" for cmd in result)
         if not has_from:
             raise ValueError("Dockerfile must contain at least one FROM instruction")
         return True
     except ImportError:
-        raise RuntimeError("dockerfile library is not installed. Please install it with: pip install dockerfile")
+        raise RuntimeError(
+            "dockerfile library is not installed. Please install it with: pip install dockerfile"
+        )
     except dockerfile.GoParseError as e:
         raise RuntimeError(f"Dockerfile syntax error: {e}")
     except Exception as e:
@@ -201,7 +208,9 @@ PS1=
 PATH=/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 DEBIAN_FRONTEND=noninteractive
 _=/usr/bin/env"""
-    df_content = diff_env_vars(pre_env_output, post_env_output, "ubuntu:latest\nexport xxx")
+    df_content = diff_env_vars(
+        pre_env_output, post_env_output, "ubuntu:latest\nexport xxx"
+    )
     print(df_content)
     is_valid = validate_dockerfile(df_content)
     print(is_valid)

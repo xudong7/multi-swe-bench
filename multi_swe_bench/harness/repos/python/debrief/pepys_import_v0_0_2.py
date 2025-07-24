@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-bullseye"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -87,7 +86,7 @@ ls /usr/lib/x86_64-linux-gnu/mod_spatialite.so
 ###ACTION_DELIMITER###
 ls tests/
 ###ACTION_DELIMITER###
-echo "python setup.py test" > /home/pepys-import/test_commands.sh"""
+echo "python setup.py test" > /home/pepys-import/test_commands.sh""",
             ),
             File(
                 ".",
@@ -96,9 +95,7 @@ echo "python setup.py test" > /home/pepys-import/test_commands.sh"""
 cd /home/{pr.repo}
 python setup.py test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -111,9 +108,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python setup.py test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -126,9 +121,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python setup.py test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -190,7 +183,7 @@ class PEPYS_IMPORT_V0_0_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -204,17 +197,15 @@ class PEPYS_IMPORT_V0_0_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # TODO: Implement the parse_log function
-        test_pattern = re.compile(r"^(\w+\s\(.*\)|test_\w+)\s\.\.\.\s(ok|FAIL|ERROR|skipped.*|expected failure)")
+        test_pattern = re.compile(
+            r"^(\w+\s\(.*\)|test_\w+)\s\.\.\.\s(ok|FAIL|ERROR|skipped.*|expected failure)"
+        )
         for line in log.splitlines():
             match = test_pattern.match(line)
             if match:
@@ -226,11 +217,6 @@ class PEPYS_IMPORT_V0_0_2(Instance):
                     failed_tests.add(test_name)
                 elif status.startswith("skipped"):
                     skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

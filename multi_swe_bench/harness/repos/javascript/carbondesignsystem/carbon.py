@@ -123,9 +123,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -145,9 +143,7 @@ nvm install || true
 nvm use || true
 corepack enable || true
 yes | yarn -v || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -163,9 +159,7 @@ corepack enable || true
 yarn || true
 yarn build || true
 yarn test
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -183,9 +177,7 @@ yarn || true
 yarn build || true
 yarn test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -203,9 +195,7 @@ yarn || true
 yarn build || true
 yarn test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -316,9 +306,9 @@ class carbon(Instance):
         skipped_res = [
             re.compile(r"SKIP:?\s+([^\(]+)"),
         ]
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
         for line in test_log.splitlines():
-            line = ansi_escape.sub('', line)
+            line = ansi_escape.sub("", line)
             if len(line) >= 300:
                 continue
 

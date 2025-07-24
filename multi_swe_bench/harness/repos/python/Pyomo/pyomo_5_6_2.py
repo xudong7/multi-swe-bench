@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -65,7 +64,7 @@ pyomo build-extensions
 ###ACTION_DELIMITER###
 echo 'test.pyomo -v --cat=nightly pyomo $(pwd)/pyomo-model-libraries' > /home/pyomo/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/pyomo/test_commands.sh"""
+bash /home/pyomo/test_commands.sh""",
             ),
             File(
                 ".",
@@ -74,9 +73,7 @@ bash /home/pyomo/test_commands.sh"""
 cd /home/{pr.repo}
 test.pyomo -v --cat=nightly pyomo $(pwd)/pyomo-model-libraries
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -89,9 +86,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 test.pyomo -v --cat=nightly pyomo $(pwd)/pyomo-model-libraries
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -104,9 +99,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 test.pyomo -v --cat=nightly pyomo $(pwd)/pyomo-model-libraries
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -168,7 +161,7 @@ class PYOMO_5_6_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -182,31 +175,25 @@ class PYOMO_5_6_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
         # Regex to match test result lines
         # Example: test_name (module.class) ... ok
-        test_line_re = re.compile(r'^(.*?) \((.*?)\) \.\.\. (ok|FAIL|ERROR|SKIP:.*?)$', re.MULTILINE)
+        test_line_re = re.compile(
+            r"^(.*?) \((.*?)\) \.\.\. (ok|FAIL|ERROR|SKIP:.*?)$", re.MULTILINE
+        )
         for match in test_line_re.finditer(log):
-            test_name = match.group(1).strip() + ' (' + match.group(2).strip() + ')'
+            test_name = match.group(1).strip() + " (" + match.group(2).strip() + ")"
             status = match.group(3)
-            if status.startswith('ok'):
+            if status.startswith("ok"):
                 passed_tests.add(test_name)
-            elif status.startswith('SKIP'):
+            elif status.startswith("SKIP"):
                 skipped_tests.add(test_name)
-            elif status.startswith('FAIL') or status.startswith('ERROR'):
+            elif status.startswith("FAIL") or status.startswith("ERROR"):
                 failed_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

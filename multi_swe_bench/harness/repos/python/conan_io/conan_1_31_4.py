@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -91,7 +90,7 @@ pytest -v conans/test/unittests/model/conanfile_test.py
 ###ACTION_DELIMITER###
 pip install 'markupsafe<2.1.0'
 ###ACTION_DELIMITER###
-bash /home/conan/test_commands.sh"""
+bash /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -100,9 +99,7 @@ bash /home/conan/test_commands.sh"""
 cd /home/{pr.repo}
 pytest -m "not slow and not tool_svn" -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -115,9 +112,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest -m "not slow and not tool_svn" -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -130,9 +125,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest -m "not slow and not tool_svn" -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -195,7 +188,7 @@ class CONAN_1_31_4(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -209,18 +202,16 @@ class CONAN_1_31_4(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex to match test result lines
         # Example: conans/test/functional/system_reqs_test.py::SystemReqsTest::test_permission_denied_remove_system_reqs FAILED [  6%]
-        test_line_re = re.compile(r"^(.*?)\s+(PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR|xfail|xpass|skipped|passed|failed)\b")
+        test_line_re = re.compile(
+            r"^(.*?)\s+(PASSED|FAILED|SKIPPED|XFAIL|XPASS|ERROR|xfail|xpass|skipped|passed|failed)\b"
+        )
         for line in log.splitlines():
             m = test_line_re.match(line)
             if m:
@@ -235,11 +226,6 @@ class CONAN_1_31_4(Instance):
                     skipped_tests.add(test_name)
                 # XFAIL/XPASS are expected fail/pass, not counted as regular pass/fail/skip
                 # If needed, can be added as separate sets
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

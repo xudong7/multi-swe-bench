@@ -1,11 +1,11 @@
 import re
 from typing import Optional, Union
-import textwrap
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
 from multi_swe_bench.harness.pull_request import PullRequest
-from multi_swe_bench.utils.python_test import python_test_command, python_test_command_only_py
+from multi_swe_bench.utils.python_test import python_test_command_only_py
 from multi_swe_bench.harness.test_result import TestStatus, mapping_to_testresult
+
 
 class mnepythonImageBase(Image):
     def __init__(self, pr: PullRequest, config: Config):
@@ -140,9 +140,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -165,9 +163,7 @@ pip install pytest
 pip install "numpy<2.0" --force-reinstall
 . tools/github_actions_download.sh || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -237,7 +233,6 @@ pip install -e ".[test]" || true
         prepare_commands = "RUN bash /home/prepare.sh"
         proxy_setup = ""
         proxy_cleanup = ""
-
 
         return f"""FROM {name}:{tag}
 

@@ -114,9 +114,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(),
                 ),
                 File(
                     ".",
@@ -138,9 +136,7 @@ corepack enable || true
 yes | yarn -v || true
 yarn install || true
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -154,9 +150,7 @@ cd /home/{pr.repo}
 nvm use 12
 yarn install || true
 yarn test
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -172,9 +166,7 @@ nvm use 12
 yarn install || true
 yarn test
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -190,9 +182,7 @@ nvm use 12
 yarn install || true
 yarn test
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
             ]
         return [
@@ -225,9 +215,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -246,9 +234,7 @@ corepack enable || true
 yes | yarn -v || true
 yarn install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -261,9 +247,7 @@ export NVM_DIR="$HOME/.nvm"
 cd /home/{pr.repo}
 yarn install || true
 yarn test
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -278,9 +262,7 @@ git apply --whitespace=nowarn /home/test.patch
 yarn install || true
 yarn test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -295,9 +277,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 yarn install || true
 yarn test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -400,18 +380,16 @@ class KaTeX(Instance):
         passed_res = [
             re.compile(r"^PASS:?\s+(.+?)(?:\s+\(\d+(?:\.\d+)?\s*(?:ms|s)\))?$"),
             re.compile(r"✓\s+(\d+.*?)\s+\(\d+ms\)"),
-            re.compile(r"^\s*[✓✔]\s+(.+)$")
+            re.compile(r"^\s*[✓✔]\s+(.+)$"),
         ]
 
         failed_res = [
             re.compile(r"^FAIL:?\s+(.+?)(?:\s+\(\d+(?:\.\d+)?\s*(?:ms|s)\))?$"),
             re.compile(r"✕\s+(\d+.*?)\s+\(\d+ms\)"),
-            re.compile(r"^\s*[×✗]\s+(.+)$")
+            re.compile(r"^\s*[×✗]\s+(.+)$"),
         ]
 
-        skipped_res = [
-            re.compile(r"SKIP:?\s?(.+?)\s")
-        ]
+        skipped_res = [re.compile(r"SKIP:?\s?(.+?)\s")]
 
         for line in test_log.splitlines():
             for passed_re in passed_res:

@@ -67,7 +67,6 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | b
 """
 
 
-
 class openmctImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -124,9 +123,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -147,9 +144,7 @@ npm install || true
 apt-get update --fix-missing || true
 npx playwright install-deps chromium || true
 npx playwright install chromium || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -172,9 +167,7 @@ CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test:e2e:ci || true
 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -196,9 +189,7 @@ npx playwright install-deps chromium || true
 npx playwright install chromium || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test:e2e:ci || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -220,9 +211,7 @@ npx playwright install-deps chromium || true
 npx playwright install chromium || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test || true
 CHROME_BIN=$(mktemp) && echo '#!/bin/bash' > $CHROME_BIN && echo 'exec /usr/bin/google-chrome --no-sandbox "$@"' >> $CHROME_BIN && chmod +x $CHROME_BIN && CHROME_BIN=$CHROME_BIN npm run test:e2e:ci || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -322,23 +311,23 @@ class openmct(Instance):
         failed_tests = set()
         skipped_tests = set()
 
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
 
         pass_patterns = [
-            re.compile(r'^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$'),
+            re.compile(r"^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$"),
         ]
 
         fail_patterns = [
-            re.compile(r'^[\s]*✖\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$'),
-            re.compile(r'^\s*\d+\)\s*(.+)$')
+            re.compile(r"^[\s]*✖\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$"),
+            re.compile(r"^\s*\d+\)\s*(.+)$"),
         ]
 
         skip_patterns = [
-            re.compile(r'^\s*-\s+(.*)$'),  # - skipped
+            re.compile(r"^\s*-\s+(.*)$"),  # - skipped
         ]
 
         for line in test_log.splitlines():
-            line = ansi_escape.sub('', line).strip()
+            line = ansi_escape.sub("", line).strip()
             if not line:
                 continue
 

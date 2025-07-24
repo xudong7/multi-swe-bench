@@ -146,7 +146,7 @@ class metamaskextensionImageDefault(Image):
         return f"pr-{self.pr.number}"
 
     def files(self) -> list[File]:
-        if self.pr.number <=26695:
+        if self.pr.number <= 26695:
             return [
                 File(
                     ".",
@@ -177,9 +177,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(),
                 ),
                 File(
                     ".",
@@ -200,9 +198,7 @@ corepack enable || true
 yes | yarn -v || true
 yarn install || true
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -218,9 +214,7 @@ yarn install || true
 yarn test:unit || true
 yarn test:integration || true
 FORCE_COLOR=0 yarn test:e2e:global || true
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -238,9 +232,7 @@ yarn test:unit || true
 yarn test:integration || true
 FORCE_COLOR=0 yarn test:e2e:global || true
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -258,9 +250,7 @@ yarn test:unit || true
 yarn test:integration || true
 FORCE_COLOR=0 yarn test:e2e:global || true
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
             ]
         return [
@@ -293,9 +283,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -316,9 +304,7 @@ corepack enable || true
 yes | yarn -v || true
 yarn install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -334,9 +320,7 @@ yarn install || true
 yarn test:unit --silent || true
 yarn test:integration --silent || true
 FORCE_COLOR=0 yarn test:e2e:global || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -354,9 +338,7 @@ yarn test:unit --silent || true
 yarn test:integration --silent || true
 FORCE_COLOR=0 yarn test:e2e:global || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -374,9 +356,7 @@ yarn test:unit --silent || true
 yarn test:integration --silent || true
 FORCE_COLOR=0 yarn test:e2e:global || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -479,18 +459,16 @@ class metamaskextension(Instance):
         passed_res = [
             re.compile(r"^PASS:?\s+([^\(]+)"),
             re.compile(r"^\s*[✓✔]\s+\d+\s+\[.*?\]\s+›\s+(.+?)\s+\(\d+ms\)$"),
-            re.compile(r"^\s*[✓✔]\s+(.+?)(?:\s+\d+ms)?$")
+            re.compile(r"^\s*[✓✔]\s+(.+?)(?:\s+\d+ms)?$"),
         ]
 
         failed_res = [
             re.compile(r"^FAIL:?\s+([^\(]+)"),
             re.compile(r"^\s*[×✗✘]\s+\d+\s+\[.*?\]\s+›\s+(.+?)\s+\(\d+ms\)$"),
-            re.compile(r"^\s*[×✗]\s+(.+?)(?:\s+\d+ms)?$")
+            re.compile(r"^\s*[×✗]\s+(.+?)(?:\s+\d+ms)?$"),
         ]
 
-        skipped_res = [
-            re.compile(r"SKIP:?\s?(.+?)\s")
-        ]
+        skipped_res = [re.compile(r"SKIP:?\s?(.+?)\s")]
 
         for line in test_log.splitlines():
             for passed_re in passed_res:

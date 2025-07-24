@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -69,7 +68,7 @@ bash /home/pyomo/test_commands.sh
 ###ACTION_DELIMITER###
 pip uninstall -y PyUtilib && pip install 'PyUtilib<6.0'
 ###ACTION_DELIMITER###
-bash /home/pyomo/test_commands.sh"""
+bash /home/pyomo/test_commands.sh""",
             ),
             File(
                 ".",
@@ -78,9 +77,7 @@ bash /home/pyomo/test_commands.sh"""
 cd /home/{pr.repo}
 test.pyomo -v pyomo
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -93,9 +90,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 test.pyomo -v pyomo
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -108,9 +103,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 test.pyomo -v pyomo
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -172,7 +165,7 @@ class PYOMO_5_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -186,15 +179,15 @@ class PYOMO_5_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Improved parser: Only the last status for each test counts, and use full identifier for uniqueness.
         from collections import OrderedDict
-        import re
+
         # Regex to match test result lines
         # Example: test_name (module.path.ClassName) ... ok
-        test_line_re = re.compile(r'^(.*?) \((.*?)\) \.\.\. (ok|SKIP:.*|ERROR|FAIL)', re.MULTILINE)
+        test_line_re = re.compile(
+            r"^(.*?) \((.*?)\) \.\.\. (ok|SKIP:.*|ERROR|FAIL)", re.MULTILINE
+        )
         test_status = OrderedDict()  # key: full test id, value: status
         for match in test_line_re.finditer(log):
             test_func = match.group(1).strip()
@@ -202,28 +195,23 @@ class PYOMO_5_3(Instance):
             status = match.group(3)
             # Use full identifier for uniqueness
             test_id = f"{test_func} ({test_class})"
-            if status == 'ok':
-                test_status[test_id] = 'passed'
-            elif status.startswith('SKIP'):
-                test_status[test_id] = 'skipped'
-            elif status in ('ERROR', 'FAIL'):
-                test_status[test_id] = 'failed'
+            if status == "ok":
+                test_status[test_id] = "passed"
+            elif status.startswith("SKIP"):
+                test_status[test_id] = "skipped"
+            elif status in ("ERROR", "FAIL"):
+                test_status[test_id] = "failed"
         # Now split into sets
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
         for test_id, status in test_status.items():
-            if status == 'passed':
+            if status == "passed":
                 passed_tests.add(test_id)
-            elif status == 'failed':
+            elif status == "failed":
                 failed_tests.add(test_id)
-            elif status == 'skipped':
+            elif status == "skipped":
                 skipped_tests.add(test_id)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

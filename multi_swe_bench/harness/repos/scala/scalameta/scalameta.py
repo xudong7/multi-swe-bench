@@ -56,7 +56,6 @@ ENV TZ=Etc/UTC
 """
 
 
-
 class scalametaImageBase_JDK11(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -215,9 +214,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(),
                 ),
                 File(
                     ".",
@@ -231,9 +228,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 sbt -Dsbt.log.noformat=true testsJVM/test || true
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -244,9 +239,7 @@ set -e
 cd /home/{pr.repo}
 sbt -Dsbt.log.noformat=true testsJVM/test || true
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -258,9 +251,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch
 sbt -Dsbt.log.noformat=true testsJVM/test || true
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -272,9 +263,7 @@ cd /home/{pr.repo}
 git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 sbt -Dsbt.log.noformat=true testsJVM/test || true
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
             ]
         return [
@@ -307,9 +296,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -323,9 +310,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 sbt -Dsbt.log.noformat=true testsJVM/test || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -337,9 +322,7 @@ cd /home/{pr.repo}
 sbt -Dsbt.log.noformat=true testsJVM/test || true
 sbt -Dsbt.log.noformat=true testsSemanticdb/test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -352,9 +335,7 @@ git apply --whitespace=nowarn /home/test.patch
 sbt -Dsbt.log.noformat=true testsJVM/test || true
 sbt -Dsbt.log.noformat=true testsSemanticdb/test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -367,9 +348,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 sbt -Dsbt.log.noformat=true testsJVM/test || true
 sbt -Dsbt.log.noformat=true testsSemanticdb/test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -462,18 +441,13 @@ class scalameta(Instance):
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
         metac_sourceroot_re = re.compile(r"^meta[cp] /tmp/[^ ]+_[^ ]+")
         if self.pr.number <= 1936:
-            passed_res = [
-                re.compile(r"^\[info\] [+-] (?!.*\*\*\* FAILED \*\*\*)(.*)$")
-            ]
+            passed_res = [re.compile(r"^\[info\] [+-] (?!.*\*\*\* FAILED \*\*\*)(.*)$")]
 
-            failed_res = [
-                re.compile(r"^\[info\] - (.*) \*\*\* FAILED \*\*\*$")
-            ]
-            skipped_res = [
-            ]
+            failed_res = [re.compile(r"^\[info\] - (.*) \*\*\* FAILED \*\*\*$")]
+            skipped_res = []
         else:
             passed_res = [
                 re.compile(r"^\s*\+\s*(.*?)(?:\s+\d+\.\d+s)?$"),
@@ -483,14 +457,17 @@ class scalameta(Instance):
                 re.compile(r"^-([^\n]*)"),
             ]
 
-            skipped_res = [
-            ]
+            skipped_res = []
 
         for line in test_log.splitlines():
-            line = ansi_escape.sub('', line)
+            line = ansi_escape.sub("", line)
             for passed_re in passed_res:
                 m = passed_re.match(line)
-                if m and m.group(1) not in failed_tests and not metac_sourceroot_re.match(m.group(1)):
+                if (
+                    m
+                    and m.group(1) not in failed_tests
+                    and not metac_sourceroot_re.match(m.group(1))
+                ):
                     passed_tests.add(m.group(1))
 
             for failed_re in failed_res:

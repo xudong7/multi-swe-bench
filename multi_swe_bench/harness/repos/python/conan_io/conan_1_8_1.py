@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.6-slim-buster"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -60,7 +59,7 @@ export CONAN_COMPILER=gcc
 export CONAN_COMPILER_VERSION=4.8
 nosetests . -v' > /home/conan/test_commands.sh
 ###ACTION_DELIMITER###
-chmod +x /home/conan/test_commands.sh && bash /home/conan/test_commands.sh"""
+chmod +x /home/conan/test_commands.sh && bash /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -72,9 +71,7 @@ export CONAN_COMPILER=gcc
 export CONAN_COMPILER_VERSION=4.8
 nosetests . -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -90,9 +87,7 @@ export CONAN_COMPILER=gcc
 export CONAN_COMPILER_VERSION=4.8
 nosetests . -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -108,9 +103,7 @@ export CONAN_COMPILER=gcc
 export CONAN_COMPILER_VERSION=4.8
 nosetests . -v
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -173,7 +166,7 @@ class CONAN_1_8_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -187,33 +180,31 @@ class CONAN_1_8_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
-        import re
         # Improved regex to capture the full test name and status
         test_line_re = re.compile(
-            r'^(?P<name>.+?) \([^)]+\) \.\.\. (?P<status>ok|ERROR|SKIP: .*)$'
+            r"^(?P<name>.+?) \([^)]+\) \.\.\. (?P<status>ok|ERROR|SKIP: .*)$"
         )
         test_status = {}
         for line in log.splitlines():
             m = test_line_re.match(line)
             if m:
-                name = m.group('name').strip()
-                status = m.group('status')
-                if status == 'ok':
-                    test_status[name] = 'passed'
-                elif status.startswith('SKIP:'):
-                    test_status[name] = 'skipped'
-                elif status == 'ERROR':
-                    test_status[name] = 'failed'
-        passed_tests = {name for name, status in test_status.items() if status == 'passed'}
-        failed_tests = {name for name, status in test_status.items() if status == 'failed'}
-        skipped_tests = {name for name, status in test_status.items() if status == 'skipped'}
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
+                name = m.group("name").strip()
+                status = m.group("status")
+                if status == "ok":
+                    test_status[name] = "passed"
+                elif status.startswith("SKIP:"):
+                    test_status[name] = "skipped"
+                elif status == "ERROR":
+                    test_status[name] = "failed"
+        passed_tests = {
+            name for name, status in test_status.items() if status == "passed"
+        }
+        failed_tests = {
+            name for name, status in test_status.items() if status == "failed"
+        }
+        skipped_tests = {
+            name for name, status in test_status.items() if status == "skipped"
         }
 
         return TestResult(

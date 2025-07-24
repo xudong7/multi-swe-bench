@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -51,7 +50,7 @@ class ImageDefault(Image):
 ###ACTION_DELIMITER###
 pip install -r requirements-dev.txt
 ###ACTION_DELIMITER###
-echo 'pytest -v --ignore=tests/test_end_to_end.py' > test_commands.sh"""
+echo 'pytest -v --ignore=tests/test_end_to_end.py' > test_commands.sh""",
             ),
             File(
                 ".",
@@ -60,9 +59,7 @@ echo 'pytest -v --ignore=tests/test_end_to_end.py' > test_commands.sh"""
 cd /home/{pr.repo}
 pytest -v --ignore=tests/test_end_to_end.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -75,9 +72,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest -v --ignore=tests/test_end_to_end.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -90,9 +85,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest -v --ignore=tests/test_end_to_end.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -154,7 +147,7 @@ class EODAG_V3_4_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -168,15 +161,14 @@ class EODAG_V3_4_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        test_regex = re.compile(r"^(eodag\/.*|tests\/.*)::(.*) (PASSED|FAILED|SKIPPED).*")
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
+        test_regex = re.compile(
+            r"^(eodag\/.*|tests\/.*)::(.*) (PASSED|FAILED|SKIPPED).*"
+        )
         for line in log.splitlines():
             match = test_regex.match(line)
             if match:
@@ -189,12 +181,14 @@ class EODAG_V3_4_2(Instance):
                 elif status == "SKIPPED":
                     skipped_tests.add(test_name)
         # Handle the summary line
-        summary_regex = re.compile(r"======= .* (\d+) failed, (\d+) passed, (\d+) skipped, .* =======")
+        summary_regex = re.compile(
+            r"======= .* (\d+) failed, (\d+) passed, (\d+) skipped, .* ======="
+        )
         summary_match = summary_regex.search(log)
         if summary_match:
-            num_failed = int(summary_match.group(1))
-            num_passed = int(summary_match.group(2))
-            num_skipped = int(summary_match.group(3))
+            int(summary_match.group(1))
+            int(summary_match.group(2))
+            int(summary_match.group(3))
             # This is a good place for a sanity check if needed
             # For example, assert len(failed_tests) == num_failed
         # Handle summary lines for failed tests
@@ -203,11 +197,6 @@ class EODAG_V3_4_2(Instance):
             match = failed_summary_regex.match(line)
             if match:
                 failed_tests.add(match.group(1).strip())
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

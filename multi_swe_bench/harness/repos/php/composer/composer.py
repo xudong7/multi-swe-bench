@@ -62,6 +62,8 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 {self.clear_env}
 
 """
+
+
 class ImageBase7_2(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -120,6 +122,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 
 """
 
+
 class ImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -175,9 +178,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -191,9 +192,7 @@ bash /home/check_git_changes.sh
 git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 composer install --prefer-dist --no-progress --no-suggest --ansi  || true
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -203,9 +202,7 @@ set -e
 
 cd /home/{pr.repo}
 php -d memory_limit=256M vendor/bin/simple-phpunit --testdox
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -217,9 +214,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 php -d memory_limit=256M vendor/bin/simple-phpunit --testdox
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -231,9 +226,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 php -d memory_limit=256M vendor/bin/simple-phpunit --testdox
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -301,13 +294,13 @@ class composer(Instance):
         current_class = None
         for line in test_log.splitlines():
             # 情况1：ANSI格式下划线类名
-            class_match_ansi = re.search(r'\x1b\[4m(.+?)\x1b\[0m', line)
+            class_match_ansi = re.search(r"\x1b\[4m(.+?)\x1b\[0m", line)
             if class_match_ansi:
                 current_class = class_match_ansi.group(1).strip()
                 continue
 
             # 情况2：纯文本类名（旧版phpunit输出），没有任何缩进和符号
-            class_match_plain = re.match(r'^[A-Z][\w\\]+$', line.strip())
+            class_match_plain = re.match(r"^[A-Z][\w\\]+$", line.strip())
             if class_match_plain:
                 current_class = line.strip()
                 continue
@@ -316,28 +309,28 @@ class composer(Instance):
                 continue
 
             # ANSI格式结果匹配
-            match_ansi = re.search(r'\x1b\[\d{2}m([✔✘↩])\x1b\[0m\s+(.*)', line)
+            match_ansi = re.search(r"\x1b\[\d{2}m([✔✘↩])\x1b\[0m\s+(.*)", line)
             if match_ansi:
                 symbol, name = match_ansi.groups()
-                name = re.sub(r'\x1b\[[0-9;]*m', '', name).strip()
+                name = re.sub(r"\x1b\[[0-9;]*m", "", name).strip()
                 full_name = f"{current_class}::{name}"
-                if symbol == '✔':
+                if symbol == "✔":
                     passed_tests.add(full_name)
-                elif symbol == '✘':
+                elif symbol == "✘":
                     failed_tests.add(full_name)
-                elif symbol == '↩':
+                elif symbol == "↩":
                     skipped_tests.add(full_name)
                 continue
 
             # 新增：纯文本格式 [x] / [ ] 表示测试状态
-            match_plain = re.match(r'^\s*\[(.)\]\s+(.*)', line)
+            match_plain = re.match(r"^\s*\[(.)\]\s+(.*)", line)
             if match_plain:
                 symbol, name = match_plain.groups()
                 name = name.strip()
                 full_name = f"{current_class}::{name}"
-                if symbol.lower() == 'x':
+                if symbol.lower() == "x":
                     passed_tests.add(full_name)
-                elif symbol == ' ':
+                elif symbol == " ":
                     failed_tests.add(full_name)
                 continue
 

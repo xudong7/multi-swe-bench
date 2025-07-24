@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -78,7 +77,7 @@ bash /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
 SKIP_CYTHON=1 ~/.pyenv/versions/3.7.17/bin/pip install -e .
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -88,9 +87,7 @@ cd /home/{pr.repo}
 ~/.pyenv/versions/3.7.17/bin/pytest --cov=pydantic -rA --tb=no -p no:cacheprovider
 ~/.pyenv/versions/3.7.17/bin/python tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -104,9 +101,7 @@ fi
 ~/.pyenv/versions/3.7.17/bin/pytest --cov=pydantic -rA --tb=no -p no:cacheprovider
 ~/.pyenv/versions/3.7.17/bin/python tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -120,9 +115,7 @@ fi
 ~/.pyenv/versions/3.7.17/bin/pytest --cov=pydantic -rA --tb=no -p no:cacheprovider
 ~/.pyenv/versions/3.7.17/bin/python tests/try_assert.py
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -185,7 +178,7 @@ class PYDANTIC_V1_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -199,32 +192,27 @@ class PYDANTIC_V1_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex for summary section (PASSED/FAILED)
-        summary_pattern = re.compile(r'^(PASSED|FAILED) (tests/[^\s:]+::[^\s]+)', re.MULTILINE)
+        summary_pattern = re.compile(
+            r"^(PASSED|FAILED) (tests/[^\s:]+::[^\s]+)", re.MULTILINE
+        )
         for match in summary_pattern.finditer(log):
             status, test_name = match.groups()
-            if status == 'PASSED':
+            if status == "PASSED":
                 passed_tests.add(test_name)
-            elif status == 'FAILED':
+            elif status == "FAILED":
                 failed_tests.add(test_name)
         # Regex for SKIPPED lines (file:line)
-        skipped_pattern = re.compile(r'^SKIPPED \[\d+\] (tests/[^:]+:\d+):', re.MULTILINE)
+        skipped_pattern = re.compile(
+            r"^SKIPPED \[\d+\] (tests/[^:]+:\d+):", re.MULTILINE
+        )
         for match in skipped_pattern.finditer(log):
             skipped_tests.add(match.group(1))
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

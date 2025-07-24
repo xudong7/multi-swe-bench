@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -58,7 +57,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope' > test_commands.sh && chmod +x test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/moto/test_commands.sh"""
+bash /home/moto/test_commands.sh""",
             ),
             File(
                 ".",
@@ -72,9 +71,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -92,9 +89,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -112,9 +107,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -177,7 +170,7 @@ class MOTO_5_0_23(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -191,23 +184,19 @@ class MOTO_5_0_23(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regular expression to match test result lines
         # Example: tests/test_core/test_docker.py::test_docker_package_is_available PASSED
         #          tests/test_core/test_proxy.py::test_real_request_errors SKIPPED (Can...)
-        test_result_re = re.compile(r'^(\S+::\S+)\s+(PASSED|FAILED|SKIPPED)')
-        ansi_escape = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+        test_result_re = re.compile(r"^(\S+::\S+)\s+(PASSED|FAILED|SKIPPED)")
+        ansi_escape = re.compile(r"\x1B\[[0-?]*[ -/]*[@-~]")
         for line in log.splitlines():
             # Remove ANSI escape sequences
-            clean_line = ansi_escape.sub('', line)
+            clean_line = ansi_escape.sub("", line)
             match = test_result_re.match(clean_line)
             if match:
                 test_name, status = match.groups()
@@ -217,11 +206,6 @@ class MOTO_5_0_23(Instance):
                     failed_tests.add(test_name)
                 elif status == "SKIPPED":
                     skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

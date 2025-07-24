@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -53,7 +52,7 @@ pip install -r .readthedocs_requirements.txt
 ###ACTION_DELIMITER###
 pip install -e .
 ###ACTION_DELIMITER###
-echo 'python -m pyomo.common.unittest pyomo -v --cat=nightly --xunit' > /home/pyomo/test_commands.sh"""
+echo 'python -m pyomo.common.unittest pyomo -v --cat=nightly --xunit' > /home/pyomo/test_commands.sh""",
             ),
             File(
                 ".",
@@ -62,9 +61,7 @@ echo 'python -m pyomo.common.unittest pyomo -v --cat=nightly --xunit' > /home/py
 cd /home/{pr.repo}
 python -m pyomo.common.unittest pyomo -v --cat=nightly --xunit
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -77,9 +74,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 python -m pyomo.common.unittest pyomo -v --cat=nightly --xunit
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -92,9 +87,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 python -m pyomo.common.unittest pyomo -v --cat=nightly --xunit
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -156,7 +149,7 @@ class PYOMO_5_7_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -170,40 +163,33 @@ class PYOMO_5_7_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
-            # Regular expression to match test result lines
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
+        # Regular expression to match test result lines
         # Example: test_name (module.path.ClassName) ... ok/FAIL/ERROR/SKIP: reason
         # Strict regex for canonical result lines only
-        test_line_re = re.compile(r'^(?P<test_id>.+? \([^)]+\)) \.{3} (?P<status>ok|FAIL|ERROR|SKIP: .*)$')
+        test_line_re = re.compile(
+            r"^(?P<test_id>.+? \([^)]+\)) \.{3} (?P<status>ok|FAIL|ERROR|SKIP: .*)$"
+        )
         for line in log.splitlines():
             m = test_line_re.match(line)
             if m:
-                test_id = m.group('test_id').strip()
-                status = m.group('status')
-                if status == 'ok':
+                test_id = m.group("test_id").strip()
+                status = m.group("status")
+                if status == "ok":
                     passed_tests.add(test_id)
-                elif status.startswith('SKIP:'):
+                elif status.startswith("SKIP:"):
                     skipped_tests.add(test_id)
-                elif status in ('FAIL', 'ERROR'):
+                elif status in ("FAIL", "ERROR"):
                     failed_tests.add(test_id)
         # Remove any overlap (should not happen, but for safety)
         failed_tests -= passed_tests
         skipped_tests -= passed_tests
         skipped_tests -= failed_tests
         # End of parsing logic
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

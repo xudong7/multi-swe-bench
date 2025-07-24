@@ -110,9 +110,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -127,9 +125,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 pnpm install  || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -140,9 +136,7 @@ set -e
 cd /home/{pr.repo}
 pnpm test-ci --reporter=verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -154,9 +148,7 @@ cd /home/{pr.repo}
 git apply --exclude pnpm-lock.yaml --whitespace=nowarn /home/test.patch
 pnpm test-ci --reporter=verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -168,9 +160,7 @@ cd /home/{pr.repo}
 git apply --exclude pnpm-lock.yaml  --whitespace=nowarn /home/test.patch /home/fix.patch
 pnpm test-ci --reporter=verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -251,9 +241,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -268,9 +256,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 pnpm install  || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -281,9 +267,7 @@ set -e
 cd /home/{pr.repo}
 pnpm turbo --filter tests test-ci
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -295,9 +279,7 @@ cd /home/{pr.repo}
 git apply --exclude pnpm-lock.yaml --whitespace=nowarn /home/test.patch
 pnpm turbo --filter tests test-ci
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -309,9 +291,7 @@ cd /home/{pr.repo}
 git apply --exclude pnpm-lock.yaml  --whitespace=nowarn /home/test.patch /home/fix.patch
 pnpm turbo --filter tests test-ci
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

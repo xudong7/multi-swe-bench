@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -53,7 +52,7 @@ pip install poetry
 ###ACTION_DELIMITER###
 poetry install
 ###ACTION_DELIMITER###
-echo 'poetry run pytest --no-header -rA --tb=no' > test_commands.sh"""
+echo 'poetry run pytest --no-header -rA --tb=no' > test_commands.sh""",
             ),
             File(
                 ".",
@@ -62,9 +61,7 @@ echo 'poetry run pytest --no-header -rA --tb=no' > test_commands.sh"""
 cd /home/{pr.repo}
 poetry run pytest --no-header -rA --tb=no
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -77,9 +74,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 poetry run pytest --no-header -rA --tb=no
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -92,9 +87,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 poetry run pytest --no-header -rA --tb=no
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -156,7 +149,7 @@ class WEMAKE_PYTHON_STYLEGUIDE_0_15_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -170,15 +163,11 @@ class WEMAKE_PYTHON_STYLEGUIDE_0_15_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         passed_pattern = re.compile(r"PASSED\s+(tests/.*)")
         failed_pattern = re.compile(r"(?:ERROR|FAIL|FAILED)\s+(tests/.*?)(?:\s|\Z)")
         skipped_pattern = re.compile(r"SKIPPED\s+\[\d+\]\s+(tests/.*):.*")
@@ -189,11 +178,6 @@ class WEMAKE_PYTHON_STYLEGUIDE_0_15_3(Instance):
                 failed_tests.add(failed_match.group(1).split("::")[0])
             elif skipped_match := skipped_pattern.match(line):
                 skipped_tests.add(skipped_match.group(1).split("::")[0])
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

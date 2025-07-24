@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -105,7 +104,7 @@ mkdir -p /root/.conan/profiles
 ###ACTION_DELIMITER###
 echo "[settings]\nos=Linux\nos_build=Linux\narch=x86_64\narch_build=x86_64\ncompiler=gcc\ncompiler.version=12\ncompiler.libcxx=libstdc++11\nbuild_type=Release" > /root/.conan/profiles/default
 ###ACTION_DELIMITER###
-bash /home/conan/test_commands.sh"""
+bash /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -114,9 +113,7 @@ bash /home/conan/test_commands.sh"""
 cd /home/{pr.repo}
 nosetests -A "not slow and not svn" --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -129,9 +126,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 nosetests -A "not slow and not svn" --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -144,9 +139,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 nosetests -A "not slow and not svn" --verbose
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -209,7 +202,7 @@ class CONAN_1_19_3(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -223,15 +216,11 @@ class CONAN_1_19_3(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # TODO: Implement the parse_log function
         # Implement the log parsing logic here
         for line in log.splitlines():
@@ -240,28 +229,23 @@ class CONAN_1_19_3(Instance):
                 continue
             # Clean up the line by removing any additional information
             if "(" in line and ")" in line:
-                line = re.sub(r'\s*\(conan\..*\)\s*', '', line)
-            line = re.sub(r'\s*->.*', '', line)
+                line = re.sub(r"\s*\(conan\..*\)\s*", "", line)
+            line = re.sub(r"\s*->.*", "", line)
             if line.endswith("... OK"):
-                test_name = line[:-6].strip().strip('\'')
+                test_name = line[:-6].strip().strip("'")
                 passed_tests.add(test_name)
             elif line.endswith("... ok"):
-                test_name = line[:-6].strip().strip('\'')
+                test_name = line[:-6].strip().strip("'")
                 passed_tests.add(test_name)
             elif line.endswith("... ERROR"):
-                test_name = line[:-7].strip().strip('\'')
+                test_name = line[:-7].strip().strip("'")
                 failed_tests.add(test_name)
             elif line.endswith("... FAILURE"):
-                test_name = line[:-9].strip().strip('\'')
+                test_name = line[:-9].strip().strip("'")
                 failed_tests.add(test_name)
             elif " ... SKIP" in line:
-                test_name = line.split(" ... SKIP")[0].strip().strip('\'')
+                test_name = line.split(" ... SKIP")[0].strip().strip("'")
                 skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

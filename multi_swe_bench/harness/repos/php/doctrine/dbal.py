@@ -120,9 +120,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -138,9 +136,7 @@ bash /home/check_git_changes.sh
 
 composer install  --prefer-dist --no-interaction 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -151,9 +147,7 @@ set -e
 cd /home/{pr.repo}
 php -d memory_limit=512M  vendor/bin/phpunit --testdox
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -165,9 +159,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 php -d memory_limit=512M  vendor/bin/phpunit --testdox 
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -178,9 +170,7 @@ set -e
 cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 php -d memory_limit=512M  vendor/bin/phpunit --testdox 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -244,25 +234,29 @@ class dbal(Instance):
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        
-        lines = test_log.split('\n')
-        
-        passed_pattern = re.compile(r'^\s*✔\s*(.+)$')
-        failed_pattern = re.compile(r'^\s*✘\s*(.+)$')
-        skipped_pattern = re.compile(r'^\s*↩\s*(.+)$')  
-        
+
+        lines = test_log.split("\n")
+
+        passed_pattern = re.compile(r"^\s*✔\s*(.+)$")
+        failed_pattern = re.compile(r"^\s*✘\s*(.+)$")
+        skipped_pattern = re.compile(r"^\s*↩\s*(.+)$")
+
         current_test_class = None
-        
+
         for line in lines:
             line = line.strip()
-            if line and not line.startswith(('✔', '✘', '↩', '∅', '│')) and '(' in line and ')' in line:
-
-                if line.endswith(')'):
+            if (
+                line
+                and not line.startswith(("✔", "✘", "↩", "∅", "│"))
+                and "(" in line
+                and ")" in line
+            ):
+                if line.endswith(")"):
                     current_test_class = line
                     continue
-            
+
             full_test_name = None
-            
+
             passed_match = passed_pattern.match(line)
             if passed_match:
                 test_name = passed_match.group(1).strip()
@@ -270,7 +264,7 @@ class dbal(Instance):
                     full_test_name = f"{current_test_class} : {test_name}"
                     passed_tests.add(full_test_name)
                 continue
-            
+
             failed_match = failed_pattern.match(line)
             if failed_match:
                 test_name = failed_match.group(1).strip()
@@ -278,7 +272,7 @@ class dbal(Instance):
                     full_test_name = f"{current_test_class} : {test_name}"
                     failed_tests.add(full_test_name)
                 continue
-            
+
             skipped_match = skipped_pattern.match(line)
             if skipped_match:
                 test_name = skipped_match.group(1).strip()
@@ -286,8 +280,7 @@ class dbal(Instance):
                     full_test_name = f"{current_test_class} : {test_name}"
                     skipped_tests.add(full_test_name)
                 continue
-                
-        
+
         return TestResult(
             passed_count=len(passed_tests),
             failed_count=len(failed_tests),

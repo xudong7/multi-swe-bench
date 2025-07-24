@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> Image | None:
         return "python:3.7"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -67,7 +66,7 @@ bash /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
 pip install --upgrade pytest-sugar
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -78,9 +77,7 @@ pytest --cov=pydantic
 pip uninstall -y msgpack-python ujson
 pytest --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -95,9 +92,7 @@ pytest --cov=pydantic
 pip uninstall -y msgpack-python ujson
 pytest --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -112,9 +107,7 @@ pytest --cov=pydantic
 pip uninstall -y msgpack-python ujson
 pytest --cov=pydantic
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -177,7 +170,7 @@ class PYDANTIC_V0_5(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -191,16 +184,12 @@ class PYDANTIC_V0_5(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
-            # Find the short test summary info section
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
+        # Find the short test summary info section
         summary_match = re.search(r"=+ short test summary info =+[\s\S]+?=+", log)
         summary = summary_match.group(0) if summary_match else ""
         # Patterns for summary lines
@@ -223,30 +212,25 @@ class PYDANTIC_V0_5(Instance):
                 # Try to get test function name from summary if available
                 # Otherwise, use file name with index
                 test_id = None
-                if ch == '.':
+                if ch == ".":
                     # Passed test, but not listed in summary, so infer name
                     # Try to find matching test name in summary or fallback
-                    test_id = f"{fname}::test_{idx+1}"
+                    test_id = f"{fname}::test_{idx + 1}"
                     passed_tests.add(test_id)
-                elif ch == 's':
-                    test_id = f"{fname}::test_{idx+1}"
+                elif ch == "s":
+                    test_id = f"{fname}::test_{idx + 1}"
                     skipped_tests.add(test_id)
-                elif ch == 'F':
-                    test_id = f"{fname}::test_{idx+1}"
+                elif ch == "F":
+                    test_id = f"{fname}::test_{idx + 1}"
                     failed_tests.add(test_id)
         # Remove any overlap (e.g., if a test is both in failed and passed, keep failed)
         passed_tests -= failed_tests
         passed_tests -= skipped_tests
         skipped_tests -= failed_tests
         # If no summary and only error, try to extract error from summary
-        if not summary and 'ERROR' in log:
+        if not summary and "ERROR" in log:
             for m in error_pat.finditer(log):
                 failed_tests.add(m.group(1))
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

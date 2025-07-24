@@ -13,8 +13,9 @@ setup(
         "pyyaml",
         "PyGithub",
         "unidiff",
-        "swe-rex"
+        "swe-rex",
     ],
+    extras_require={"dev": ["pre-commit", "ruff", "typos", "prettier"]},
     author="Daoguang Zan",
     author_email="zandaoguang@bytedance.com",
     description="Multi-SWE-bench: A Multilingual Benchmark for Issue Resolving",

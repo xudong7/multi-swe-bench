@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.7-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -97,7 +96,7 @@ echo 'export FALCON_ASGI_WRAP_NON_COROUTINES=Y; export FALCON_TESTING_SESSION=Y;
 ###ACTION_DELIMITER###
 export FALCON_ASGI_WRAP_NON_COROUTINES=Y; export FALCON_TESTING_SESSION=Y; pytest --ignore=examples --ignore=falcon/bench --ignore=tests/test_deps.py --ignore=tests/asgi --no-header -rA --tb=no -p no:cacheprovider
 ###ACTION_DELIMITER###
-echo 'export FALCON_ASGI_WRAP_NON_COROUTINES=Y; export FALCON_TESTING_SESSION=Y; pytest --ignore=examples --ignore=falcon/bench --ignore=tests/test_deps.py --ignore=tests/asgi --no-header -rA --tb=no -p no:cacheprovider' > test_commands.sh"""
+echo 'export FALCON_ASGI_WRAP_NON_COROUTINES=Y; export FALCON_TESTING_SESSION=Y; pytest --ignore=examples --ignore=falcon/bench --ignore=tests/test_deps.py --ignore=tests/asgi --no-header -rA --tb=no -p no:cacheprovider' > test_commands.sh""",
             ),
             File(
                 ".",
@@ -106,9 +105,7 @@ echo 'export FALCON_ASGI_WRAP_NON_COROUTINES=Y; export FALCON_TESTING_SESSION=Y;
 cd /home/{pr.repo}
 export FALCON_ASGI_WRAP_NON_COROUTINES=Y; export FALCON_TESTING_SESSION=Y; pytest --ignore=examples --ignore=falcon/bench --ignore=tests/test_deps.py --ignore=tests/asgi --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -121,9 +118,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 export FALCON_ASGI_WRAP_NON_COROUTINES=Y; export FALCON_TESTING_SESSION=Y; pytest --ignore=examples --ignore=falcon/bench --ignore=tests/test_deps.py --ignore=tests/asgi --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -136,9 +131,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 export FALCON_ASGI_WRAP_NON_COROUTINES=Y; export FALCON_TESTING_SESSION=Y; pytest --ignore=examples --ignore=falcon/bench --ignore=tests/test_deps.py --ignore=tests/asgi --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -200,7 +193,7 @@ class FALCON_3_0_0A2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -214,17 +207,13 @@ class FALCON_3_0_0A2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
-        test_pattern = re.compile(r'^(tests\/test_.*?\.py)(?:::[^\s]+)?\s+([\.sF]+)')
-        error_pattern = re.compile(r'^ERROR (.*)')
+        test_pattern = re.compile(r"^(tests\/test_.*?\.py)(?:::[^\s]+)?\s+([\.sF]+)")
+        error_pattern = re.compile(r"^ERROR (.*)")
         for line in log.splitlines():
             match = test_pattern.match(line)
             if match:
@@ -234,20 +223,15 @@ class FALCON_3_0_0A2(Instance):
                 # A more robust solution would handle multiple tests on one line from the file name.
                 # However, the logs only show one test file per line.
                 test_name = test_file
-                if 'F' in statuses:
+                if "F" in statuses:
                     failed_tests.add(test_name)
-                elif 's' in statuses:
+                elif "s" in statuses:
                     skipped_tests.add(test_name)
-                elif '.' in statuses:
+                elif "." in statuses:
                     passed_tests.add(test_name)
             match = error_pattern.match(line)
             if match:
                 failed_tests.add(match.group(1))
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

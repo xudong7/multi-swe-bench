@@ -173,9 +173,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -191,9 +189,7 @@ bash /home/check_git_changes.sh
 
 mkdir build
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -206,9 +202,7 @@ cd build
 cmake -DSIMDJSON_DEVELOPER_MODE=ON ..
 cmake --build .
 ctest
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -223,9 +217,7 @@ cmake -DSIMDJSON_DEVELOPER_MODE=ON ..
 cmake --build .
 ctest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -240,9 +232,7 @@ cmake -DSIMDJSON_DEVELOPER_MODE=ON ..
 cmake --build .
 ctest
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 

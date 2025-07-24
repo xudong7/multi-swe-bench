@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -55,7 +54,7 @@ pip install -e .[dev]
 ###ACTION_DELIMITER###
 echo 'make test' > /home/SDMetrics/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/SDMetrics/test_commands.sh"""
+bash /home/SDMetrics/test_commands.sh""",
             ),
             File(
                 ".",
@@ -64,9 +63,7 @@ bash /home/SDMetrics/test_commands.sh"""
 cd /home/{pr.repo}
 make test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -79,9 +76,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 make test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -94,9 +89,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 make test
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -158,7 +151,7 @@ class SDMETRICS_V0_18_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -172,48 +165,39 @@ class SDMETRICS_V0_18_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # TODO: Implement the parse_log function
         # Implement the log parsing logic here
         # 1. Extract failed tests from lines starting with 'FAILED <test_path>::<...>'
-        failed_pattern = re.compile(r'^FAILED (\S+)$', re.MULTILINE)
+        failed_pattern = re.compile(r"^FAILED (\S+)$", re.MULTILINE)
         for match in failed_pattern.finditer(log):
             failed_tests.add(match.group(1))
         # 2. Extract failed tests from summary info (sometimes listed at the end)
-        summary_failed_pattern = re.compile(r'^FAILED (\S+)', re.MULTILINE)
+        summary_failed_pattern = re.compile(r"^FAILED (\S+)", re.MULTILINE)
         for match in summary_failed_pattern.finditer(log):
             failed_tests.add(match.group(1))
         # 3. Parse summary lines for passed/skipped/failed tests
         # Example: tests/unit/test_utils.py ........... [  6%]
-        summary_line_pattern = re.compile(r'^(tests/\S+\.py)\s+([.sF]+)', re.MULTILINE)
+        summary_line_pattern = re.compile(r"^(tests/\S+\.py)\s+([.sF]+)", re.MULTILINE)
         for match in summary_line_pattern.finditer(log):
             test_file = match.group(1)
             results = match.group(2)
             for idx, ch in enumerate(results):
-                test_name = f"{test_file}::{idx+1}"
-                if ch == '.':
+                test_name = f"{test_file}::{idx + 1}"
+                if ch == ".":
                     passed_tests.add(test_name)
-                elif ch == 'F':
+                elif ch == "F":
                     # We already collect failed test names from the summary, but add here for completeness
                     failed_tests.add(test_name)
-                elif ch == 's':
+                elif ch == "s":
                     skipped_tests.add(test_name)
         # 4. Remove any test from passed/skipped if it is in failed (failed takes precedence)
         passed_tests -= failed_tests
         skipped_tests -= failed_tests
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

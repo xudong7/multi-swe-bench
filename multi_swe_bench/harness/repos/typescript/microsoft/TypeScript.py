@@ -173,9 +173,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -191,9 +189,7 @@ bash /home/check_git_changes.sh
 
 npm ci || npm install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -204,9 +200,7 @@ set -e
 cd /home/{pr.repo}
 npm ci || npm install || true
 hereby runtests -r list || gulp runtests --reporter=list
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -219,9 +213,7 @@ git apply --whitespace=nowarn /home/test.patch
 npm ci || npm install || true
 hereby runtests -r list || gulp runtests --reporter=list
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -234,9 +226,7 @@ git apply --whitespace=nowarn /home/test.patch /home/fix.patch
 npm ci || npm install || true
 hereby runtests -r list || gulp runtests --reporter=list
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -301,15 +291,11 @@ class TypeScript(Instance):
         failed_tests = set()
         skipped_tests = set()
 
-        re_pass_tests = [
-            re.compile(r"^\s*[✔✓]\s+(.*?)(?::\s*\d+ms)?$")
-        ]
-        re_fail_tests = [
-            re.compile(r"^\s*[✘×𐄂]\s+(.*?)(?::\s*\d+ms)?$")
-        ]
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        re_pass_tests = [re.compile(r"^\s*[✔✓]\s+(.*?)(?::\s*\d+ms)?$")]
+        re_fail_tests = [re.compile(r"^\s*[✘×𐄂]\s+(.*?)(?::\s*\d+ms)?$")]
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
         for line in test_log.splitlines():
-            line = ansi_escape.sub('', line)
+            line = ansi_escape.sub("", line)
             if not line:
                 continue
 

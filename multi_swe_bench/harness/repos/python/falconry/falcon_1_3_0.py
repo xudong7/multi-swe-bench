@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -67,7 +66,7 @@ pip install PyYAML==5.4.1
 ###ACTION_DELIMITER###
 pytest tests/
 ###ACTION_DELIMITER###
-echo 'pytest -v --junitxml=test-results.xml tests/' > /home/falcon/test_commands.sh"""
+echo 'pytest -v --junitxml=test-results.xml tests/' > /home/falcon/test_commands.sh""",
             ),
             File(
                 ".",
@@ -76,9 +75,7 @@ echo 'pytest -v --junitxml=test-results.xml tests/' > /home/falcon/test_commands
 cd /home/{pr.repo}
 pytest -v --junitxml=test-results.xml tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -91,9 +88,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest -v --junitxml=test-results.xml tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -106,9 +101,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest -v --junitxml=test-results.xml tests/
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -170,7 +163,7 @@ class FALCON_1_3_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -184,21 +177,17 @@ class FALCON_1_3_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # TODO: Implement the parse_log function
         # Implement the log parsing logic here
         # Regular expressions for different test statuses
-        passed_pattern = re.compile(r"(.+?)::(.+?)\s+PASSED")
-        failed_pattern = re.compile(r"(.+?)::(.+?)\s+FAILED")
-        skipped_pattern = re.compile(r"(.+?)::(.+?)\s+SKIPPED")
+        re.compile(r"(.+?)::(.+?)\s+PASSED")
+        re.compile(r"(.+?)::(.+?)\s+FAILED")
+        re.compile(r"(.+?)::(.+?)\s+SKIPPED")
         for line in log.splitlines():
             if "PASSED" in line:
                 match = re.search(r"(.+?)::(.+?)\s+PASSED", line)
@@ -213,15 +202,10 @@ class FALCON_1_3_0(Instance):
                 if match:
                     skipped_tests.add(match.group(2).strip())
         # Handle collection errors
-        if 'ERRORS' in log:
+        if "ERRORS" in log:
             collection_error_pattern = re.compile(r"ERROR collecting (.+?_hooks\.py)")
             for match in collection_error_pattern.finditer(log):
                 failed_tests.add(match.group(1).strip())
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

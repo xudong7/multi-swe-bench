@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:2.7"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -74,7 +73,7 @@ bash /home/dask/test_commands.sh
 ###ACTION_DELIMITER###
 pip2 install 'pandas==0.18.1'
 ###ACTION_DELIMITER###
-bash /home/dask/test_commands.sh"""
+bash /home/dask/test_commands.sh""",
             ),
             File(
                 ".",
@@ -84,9 +83,7 @@ cd /home/{pr.repo}
 coverage run $(which py.test) dask pframe pbag --doctest-modules --verbose
 coverage report --show-missing
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -100,9 +97,7 @@ fi
 coverage run $(which py.test) dask pframe pbag --doctest-modules --verbose
 coverage report --show-missing
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -116,9 +111,7 @@ fi
 coverage run $(which py.test) dask pframe pbag --doctest-modules --verbose
 coverage report --show-missing
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -180,7 +173,7 @@ class DASK_0_4_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -194,18 +187,16 @@ class DASK_0_4_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex to match lines like:
         # dask/async.py::dask.async PASSED [  0%]
-        pattern = re.compile(r'^(.*?)\s+(PASSED|FAILED|SKIPPED)\s+\[.*?\]$', re.MULTILINE)
+        pattern = re.compile(
+            r"^(.*?)\s+(PASSED|FAILED|SKIPPED)\s+\[.*?\]$", re.MULTILINE
+        )
         for match in pattern.finditer(log):
             test_name, status = match.group(1), match.group(2)
             if status == "PASSED":
@@ -214,11 +205,6 @@ class DASK_0_4_0(Instance):
                 failed_tests.add(test_name)
             elif status == "SKIPPED":
                 skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -57,7 +56,7 @@ rundoc run --single-session python3 -t python3 README.md' > test_commands.sh
 ###ACTION_DELIMITER###
 cat test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/SDMetrics/test_commands.sh"""
+bash /home/SDMetrics/test_commands.sh""",
             ),
             File(
                 ".",
@@ -68,9 +67,7 @@ python -m pytest ./tests/unit --cov=sdmetrics --cov-report=xml:./unit_cov.xml -v
 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python -m pytest ./tests/integration --reruns 5 --disable-warnings --cov=sdmetrics --cov-report=xml:./integration_cov.xml -v
 rundoc run --single-session python3 -t python3 README.md
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -85,9 +82,7 @@ python -m pytest ./tests/unit --cov=sdmetrics --cov-report=xml:./unit_cov.xml -v
 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python -m pytest ./tests/integration --reruns 5 --disable-warnings --cov=sdmetrics --cov-report=xml:./integration_cov.xml -v
 rundoc run --single-session python3 -t python3 README.md
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -102,9 +97,7 @@ python -m pytest ./tests/unit --cov=sdmetrics --cov-report=xml:./unit_cov.xml -v
 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 python -m pytest ./tests/integration --reruns 5 --disable-warnings --cov=sdmetrics --cov-report=xml:./integration_cov.xml -v
 rundoc run --single-session python3 -t python3 README.md
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -166,7 +159,7 @@ class SDMETRICS_V0_19_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -180,30 +173,26 @@ class SDMETRICS_V0_19_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # Regex for test result lines: <test_path>::<test_name> <STATUS> [ <progress> ]
-        test_line_re = re.compile(r'^(.*?)\s+(PASSED|FAILED|SKIPPED)\s*(\[.*?\])?$')
+        test_line_re = re.compile(r"^(.*?)\s+(PASSED|FAILED|SKIPPED)\s*(\[.*?\])?$")
         # Regex for summary failed lines: FAILED <test_path>::<test_name>
-        failed_line_re = re.compile(r'^FAILED\s+(.*?)$')
+        failed_line_re = re.compile(r"^FAILED\s+(.*?)$")
         # Regex for summary skipped lines: SKIPPED <test_path>::<test_name>
-        skipped_line_re = re.compile(r'^SKIPPED\s+(.*?)$')
+        skipped_line_re = re.compile(r"^SKIPPED\s+(.*?)$")
         for line in log.splitlines():
             m = test_line_re.match(line.strip())
             if m:
                 test_name, status, _ = m.groups()
-                if status == 'PASSED':
+                if status == "PASSED":
                     passed_tests.add(test_name.strip())
-                elif status == 'FAILED':
+                elif status == "FAILED":
                     failed_tests.add(test_name.strip())
-                elif status == 'SKIPPED':
+                elif status == "SKIPPED":
                     skipped_tests.add(test_name.strip())
                 continue
             m = failed_line_re.match(line.strip())
@@ -214,11 +203,6 @@ class SDMETRICS_V0_19_0(Instance):
             if m:
                 skipped_tests.add(m.group(1).strip())
                 continue
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

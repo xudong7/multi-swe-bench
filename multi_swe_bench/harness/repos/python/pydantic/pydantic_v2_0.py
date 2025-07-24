@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.8-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -91,7 +90,7 @@ bash /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
 pdm add --dev pytest-examples
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -100,9 +99,7 @@ bash /home/pydantic/test_commands.sh"""
 cd /home/{pr.repo}
 pdm run coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -115,9 +112,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pdm run coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -130,9 +125,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pdm run coverage run -m pytest --durations=10
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -195,7 +188,7 @@ class PYDANTIC_V2_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -209,31 +202,27 @@ class PYDANTIC_V2_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()
         failed_tests = set()
         skipped_tests = set()
-        import re
-        import json
         # 1. Parse the summary section for failed, error, and skipped tests
         # Find the summary section
-        summary_start = log.rfind('short test summary info')
+        summary_start = log.rfind("short test summary info")
         if summary_start != -1:
             summary = log[summary_start:]
             # Failed tests
-            for m in re.finditer(r'^FAILED (.+?)(?: -|$)', summary, re.MULTILINE):
+            for m in re.finditer(r"^FAILED (.+?)(?: -|$)", summary, re.MULTILINE):
                 failed_tests.add(m.group(1).strip())
             # Error tests
-            for m in re.finditer(r'^ERROR (.+?)(?: -|$)', summary, re.MULTILINE):
+            for m in re.finditer(r"^ERROR (.+?)(?: -|$)", summary, re.MULTILINE):
                 failed_tests.add(m.group(1).strip())
             # Skipped tests are not listed by name in summary, only counted
         # 2. Parse the main test output for passed/skipped tests
         # Each test file line: tests/test_abc.py ..s.x
-        for m in re.finditer(r'^(tests/[^\s:]+\.py) ([.sx]+)', log, re.MULTILINE):
-            testfile = m.group(1)
+        for m in re.finditer(r"^(tests/[^\s:]+\.py) ([.sx]+)", log, re.MULTILINE):
+            m.group(1)
             results = m.group(2)
             # Find all test results in this line
             for idx, ch in enumerate(results):
@@ -248,19 +237,14 @@ class PYDANTIC_V2_0(Instance):
         # Look for lines like: sssssssssssssssssssssssssssssssssssssssssssssssssssss
         # But we can't get test names from these lines
         # Instead, look for 'SKIPPED' in detailed output (if any)
-        for m in re.finditer(r'^SKIPPED (.+?)(?: -|$)', log, re.MULTILINE):
+        for m in re.finditer(r"^SKIPPED (.+?)(?: -|$)", log, re.MULTILINE):
             skipped_tests.add(m.group(1).strip())
         # 4. Parse for passed tests: not listed by name in summary, but can be found in timing lines
         # Example: 0.24s call     tests/test_json_schema.py::test_dataclass
-        for m in re.finditer(r'\d+\.\d+s \w+\s+(tests/[^\s:]+\.py::[\w\[\]\-]+)', log):
+        for m in re.finditer(r"\d+\.\d+s \w+\s+(tests/[^\s:]+\.py::[\w\[\]\-]+)", log):
             testname = m.group(1).strip()
             if testname not in failed_tests:
                 passed_tests.add(testname)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

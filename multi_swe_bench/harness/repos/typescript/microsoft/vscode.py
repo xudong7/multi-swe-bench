@@ -184,9 +184,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(),
                 ),
                 File(
                     ".",
@@ -207,9 +205,7 @@ nvm use || true
 corepack enable || true
 yes | yarn -v || true
 yarn || true
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -226,9 +222,7 @@ yarn || true
 yarn npm-run-all --max-old-space-size=4095 -lp compile "electron x64" playwright-install download-builtin-extensions || true
 yarn --cwd test/integration/browser compile || true
 yarn test-node || true
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -246,9 +240,7 @@ yarn || true
 yarn npm-run-all --max-old-space-size=4095 -lp compile "electron x64" playwright-install download-builtin-extensions || true
 yarn --cwd test/integration/browser compile || true
 yarn test-node || true
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
                 File(
                     ".",
@@ -266,9 +258,7 @@ yarn || true
 yarn npm-run-all --max-old-space-size=4095 -lp compile "electron x64" playwright-install download-builtin-extensions || true
 yarn --cwd test/integration/browser compile || true
 yarn test-node || true
-    """.format(
-                        pr=self.pr
-                    ),
+    """.format(pr=self.pr),
                 ),
             ]
         return [
@@ -301,9 +291,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -323,9 +311,7 @@ nvm install || true
 nvm use || true
 npm ci || npm install || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -342,9 +328,7 @@ npm exec -- npm-run-all -lp compile "electron x64" playwright-install download-b
 npm run compile || true
 npm run test-node || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -362,9 +346,7 @@ npm exec -- npm-run-all -lp compile "electron x64" playwright-install download-b
 npm run compile || true
 npm run test-node || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -382,9 +364,7 @@ npm exec -- npm-run-all -lp compile "electron x64" playwright-install download-b
 npm run compile || true
 npm run test-node || true
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -484,24 +464,26 @@ class vscode(Instance):
         failed_tests = set()
         skipped_tests = set()
 
-        ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
+        ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
 
         pass_patterns = [
-            re.compile(r'^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$'),
+            re.compile(r"^[\s]*[✔✓]\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$"),
         ]
 
         fail_patterns = [
-            re.compile(r'^[\s]*✖\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$'),
-            re.compile(r'^\s*\d+\)\s*\".*? hook for \"(.*?)\"$'),  # mocha: 1) "after each" hook for "test name"
-            re.compile(r'^\s*\d+\)\s*(.+)$')
+            re.compile(r"^[\s]*✖\s+(.*?)(?:\s+\([\d\.]+\s*\w+\))?$"),
+            re.compile(
+                r"^\s*\d+\)\s*\".*? hook for \"(.*?)\"$"
+            ),  # mocha: 1) "after each" hook for "test name"
+            re.compile(r"^\s*\d+\)\s*(.+)$"),
         ]
 
         skip_patterns = [
-            re.compile(r'^\s*-\s+(.*)$'),  # - skipped
+            re.compile(r"^\s*-\s+(.*)$"),  # - skipped
         ]
 
         for line in test_log.splitlines():
-            line = ansi_escape.sub('', line).strip()
+            line = ansi_escape.sub("", line).strip()
             if not line:
                 continue
 

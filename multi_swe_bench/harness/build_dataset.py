@@ -460,9 +460,9 @@ class CliArgs:
                 if repo not in self._repo_commits:
                     self._repo_commits[repo] = repo_commits
 
-                self._repo_commits[repo].commits[
-                    instance.pr.base.sha
-                ] = instance.pr.number
+                self._repo_commits[repo].commits[instance.pr.base.sha] = (
+                    instance.pr.number
+                )
 
             for repo, repo_commits in self._repo_commits.items():
                 self.logger.debug(
@@ -552,7 +552,7 @@ class CliArgs:
             file_path.parent.mkdir(parents=True, exist_ok=True)
             with open(file_path, "w", encoding="utf-8", newline="\n") as f:
                 f.write(file.content)
-        
+
         if not self.force_build and docker_util.exists(image.image_full_name()):
             self.logger.debug(
                 f"Image {image.image_full_name()} already exists, skipping..."
@@ -662,7 +662,7 @@ class CliArgs:
                 f"Report already exists for {instance.name()}, skipping..."
             )
             return
-        
+
         def run_and_save_output(
             image_full_name: str, run_command: str, output_path: Path
         ):
@@ -677,9 +677,9 @@ class CliArgs:
             )
 
             return output
-        
+
         async def run_and_save_output_envagent(prepare_script_path):
-            task_run  = run_and_save_logs(
+            task_run = run_and_save_logs(
                 "run",
                 instance.name(),
                 f"{instance.run(self.run_cmd)} >> /home/run_msb.log 2>&1",
@@ -701,7 +701,7 @@ class CliArgs:
                 global_env=self.global_env,
                 timeout=self.agent_timeout,
             )
-            task_fix  = run_and_save_logs_and_generate_dockerfile(
+            task_fix = run_and_save_logs_and_generate_dockerfile(
                 "fix",
                 instance.name(),
                 f"{instance.fix_patch_run(self.fix_patch_run_cmd)} >> /home/fix_msb.log 2>&1",
@@ -719,17 +719,29 @@ class CliArgs:
                 task_fix,
             )
             return out_run, out_test, out_fix, image_name, temp_dir
-            
-        if self.run_log: 
-            if not self.human_mode: #envagent mode
-                from multi_swe_bench.utils.session_util import run_and_save_logs, run_and_save_logs_and_generate_dockerfile,push_icm_image
-                prepare_script_path= self.workdir / instance.pr.org / instance.pr.repo / "images"  /f"pr-{instance.pr.number}"/ "prepare.sh" 
-                output_run, output_test, output_fix, envagent_image_name, temp_dir = asyncio.run(run_and_save_output_envagent(prepare_script_path))
+
+        if self.run_log:
+            if not self.human_mode:  # envagent mode
+                from multi_swe_bench.utils.session_util import (
+                    run_and_save_logs,
+                    run_and_save_logs_and_generate_dockerfile,
+                    push_icm_image,
+                )
+
+                prepare_script_path = (
+                    self.workdir
+                    / instance.pr.org
+                    / instance.pr.repo
+                    / "images"
+                    / f"pr-{instance.pr.number}"
+                    / "prepare.sh"
+                )
+                output_run, output_test, output_fix, envagent_image_name, temp_dir = (
+                    asyncio.run(run_and_save_output_envagent(prepare_script_path))
+                )
             else:
                 output_run = run_and_save_output(
-                    instance.name(), 
-                    instance.run(), 
-                    instance_dir / RUN_LOG_FILE
+                    instance.name(), instance.run(), instance_dir / RUN_LOG_FILE
                 )
                 output_test = run_and_save_output(
                     instance.name(),
@@ -744,9 +756,13 @@ class CliArgs:
         else:
             with open(instance_dir / RUN_LOG_FILE, "r", encoding="utf-8") as f:
                 output_run = f.read()
-            with open(instance_dir / TEST_PATCH_RUN_LOG_FILE, "r", encoding="utf-8") as f:
+            with open(
+                instance_dir / TEST_PATCH_RUN_LOG_FILE, "r", encoding="utf-8"
+            ) as f:
                 output_test = f.read()
-            with open(instance_dir / FIX_PATCH_RUN_LOG_FILE, "r", encoding="utf-8") as f:
+            with open(
+                instance_dir / FIX_PATCH_RUN_LOG_FILE, "r", encoding="utf-8"
+            ) as f:
                 output_fix = f.read()
 
         if self.parse_log:
@@ -759,15 +775,16 @@ class CliArgs:
                 f.write(report.json())
             self.logger.debug(f"Report for {instance.name()} saved successfully.")
 
-            if not self.human_mode and report.valid: 
-                #envagent mode 而且需要parse log，就需要生成dockerfile
+            if not self.human_mode and report.valid:
+                # envagent mode 而且需要parse log，就需要生成dockerfile
                 from multi_swe_bench.utils.docker_util import build
+
                 try:
                     build(
                         workdir=Path(temp_dir),
                         dockerfile_name="Dockerfile",
                         image_full_name=envagent_image_name,
-                        logger=self.logger
+                        logger=self.logger,
                     )
                     self.logger.info(f"{instance.name()}: image build success")
                 except Exception as e:
@@ -775,13 +792,16 @@ class CliArgs:
                     raise e
                 finally:
                     if temp_dir and os.path.exists(temp_dir):
-                        shutil.rmtree(temp_dir)           
-                    
+                        shutil.rmtree(temp_dir)
+
                 # Push image to ICM with retry mechanism
                 self.logger.info(f"{instance.name()}: push image to ICM")
-                asyncio.run(push_icm_image(envagent_image_name,  instance.name(), self.logger))
-                self.logger.info(f"{envagent_image_name}/{instance.name()}: push image to ICM success")
-
+                asyncio.run(
+                    push_icm_image(envagent_image_name, instance.name(), self.logger)
+                )
+                self.logger.info(
+                    f"{envagent_image_name}/{instance.name()}: push image to ICM success"
+                )
 
     def run_mode_instance_only(self):
         self.logger.info("Running instances...")
@@ -830,7 +850,7 @@ class CliArgs:
             log_dir=self.log_dir,
             log_level=self.log_level,
             log_to_console=self.log_to_console,
-            regen=False
+            regen=False,
         ).run()
 
     def run(self):
@@ -857,7 +877,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error starting nix_swe container: {e}")
         sys.exit(1)
-    
+
     parser = get_parser()
     args = parser.parse_args()
     cli = CliArgs.from_dict(vars(args))

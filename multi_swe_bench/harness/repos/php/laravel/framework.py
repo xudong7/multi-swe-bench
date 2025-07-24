@@ -63,6 +63,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 """
 
+
 class ImageBase7(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -121,6 +122,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 """
 
+
 class ImageDefault(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
@@ -177,9 +179,7 @@ fi
 echo "check_git_changes: No uncommitted changes"
 exit 0
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(),
             ),
             File(
                 ".",
@@ -194,9 +194,7 @@ git checkout {pr.base.sha}
 bash /home/check_git_changes.sh
 composer install --prefer-dist --no-progress --no-suggest --ansi
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -207,9 +205,7 @@ set -e
 cd /home/{pr.repo}
 php -d memory_limit=256M vendor/bin/phpunit  --testdox
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -221,9 +217,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch
 php -d memory_limit=256M vendor/bin/phpunit  --testdox
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -235,9 +229,7 @@ cd /home/{pr.repo}
 git apply /home/test.patch /home/fix.patch
 php -d memory_limit=256M vendor/bin/phpunit  --testdox
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -298,47 +290,48 @@ class framework(Instance):
         return "bash /home/fix-run.sh"
 
     def parse_log(self, test_log: str) -> TestResult:
-            passed_tests = set()
-            failed_tests = set()
-            skipped_tests = set()
+        passed_tests = set()
+        failed_tests = set()
+        skipped_tests = set()
 
-            current_suite = None
+        current_suite = None
 
-            for line in test_log.splitlines():
-                stripped_line = line.strip()
+        for line in test_log.splitlines():
+            stripped_line = line.strip()
 
-                if re.match(r"^[.s]+\s+\d+\s*/\s*\d+\s*\(\s*\d+%\)$", stripped_line):
-                    continue
+            if re.match(r"^[.s]+\s+\d+\s*/\s*\d+\s*\(\s*\d+%\)$", stripped_line):
+                continue
 
-                suite_match = re.match(r"^(.*?) \((.*?)\)$", stripped_line)
-                if suite_match:
-                    current_suite = f"{suite_match.group(2)}::{suite_match.group(1).strip()}"
-                    continue
+            suite_match = re.match(r"^(.*?) \((.*?)\)$", stripped_line)
+            if suite_match:
+                current_suite = (
+                    f"{suite_match.group(2)}::{suite_match.group(1).strip()}"
+                )
+                continue
 
-                passed_match = re.match(r"^\u2714\s+(.*)$", stripped_line)
-                if passed_match and current_suite:
-                    test_name = passed_match.group(1).strip()
-                    passed_tests.add(f"{current_suite}::{test_name}")
-                    continue
+            passed_match = re.match(r"^\u2714\s+(.*)$", stripped_line)
+            if passed_match and current_suite:
+                test_name = passed_match.group(1).strip()
+                passed_tests.add(f"{current_suite}::{test_name}")
+                continue
 
-                failed_match = re.match(r"^\u2718\s+(.*)$", stripped_line)
-                if failed_match and current_suite:
-                    test_name = failed_match.group(1).strip()
-                    failed_tests.add(f"{current_suite}::{test_name}")
-                    continue
+            failed_match = re.match(r"^\u2718\s+(.*)$", stripped_line)
+            if failed_match and current_suite:
+                test_name = failed_match.group(1).strip()
+                failed_tests.add(f"{current_suite}::{test_name}")
+                continue
 
-                skipped_match = re.match(r"^\u21A9\s+(.*)$", stripped_line)
-                if skipped_match and current_suite:
-                    test_name = skipped_match.group(1).strip()
-                    skipped_tests.add(f"{current_suite}::{test_name}")
-                    continue
+            skipped_match = re.match(r"^\u21A9\s+(.*)$", stripped_line)
+            if skipped_match and current_suite:
+                test_name = skipped_match.group(1).strip()
+                skipped_tests.add(f"{current_suite}::{test_name}")
+                continue
 
-            return TestResult(
-                passed_count=len(passed_tests),
-                failed_count=len(failed_tests),
-                skipped_count=len(skipped_tests),
-                passed_tests=passed_tests,
-                failed_tests=failed_tests,
-                skipped_tests=skipped_tests,
-            )
-
+        return TestResult(
+            passed_count=len(passed_tests),
+            failed_count=len(failed_tests),
+            skipped_count=len(skipped_tests),
+            passed_tests=passed_tests,
+            failed_tests=failed_tests,
+            skipped_tests=skipped_tests,
+        )

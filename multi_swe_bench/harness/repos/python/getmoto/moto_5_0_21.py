@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.11-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -58,7 +57,7 @@ MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n
 EOF
 chmod +x /home/moto/test_commands.sh
 ###ACTION_DELIMITER###
-bash /home/moto/test_commands.sh"""
+bash /home/moto/test_commands.sh""",
             ),
             File(
                 ".",
@@ -69,9 +68,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -86,9 +83,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -103,9 +98,7 @@ pytest -sv -rs --cov=moto --cov-report xml ./tests/ --ignore tests/test_batch --
 pytest -sv -rs ./tests/test_xray
 MOTO_CALL_RESET_API=false pytest -sv --cov=moto --cov-report xml --cov-append -n 4 ./tests/test_batch ./tests/test_ec2 ./tests/test_sqs --dist loadscope
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -168,7 +161,7 @@ class MOTO_5_0_21(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -182,21 +175,20 @@ class MOTO_5_0_21(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        import re
-        import json
         from collections import OrderedDict
+
         # Use regex to match test result lines and extract test names and statuses
         # Pattern: <test_path>::<test_name>[<params>] <STATUS> (optional reason)
-        test_result_pattern = re.compile(r'^(\S.*?::\S.*?)\s+(PASSED|FAILED|SKIPPED)(?:\s*\(.*\))?$')
+        test_result_pattern = re.compile(
+            r"^(\S.*?::\S.*?)\s+(PASSED|FAILED|SKIPPED)(?:\s*\(.*\))?$"
+        )
         test_status = OrderedDict()  # test_name -> last status
         for line in log.splitlines():
             line = line.strip()
             # Remove ANSI escape sequences
-            line = re.sub(r'\x1b\[[0-9;]*m', '', line)
+            line = re.sub(r"\x1b\[[0-9;]*m", "", line)
             match = test_result_pattern.match(line)
             if match:
                 test_name, status = match.group(1), match.group(2)
@@ -211,11 +203,6 @@ class MOTO_5_0_21(Instance):
                 failed_tests.add(test_name)
             elif status == "SKIPPED":
                 skipped_tests.add(test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

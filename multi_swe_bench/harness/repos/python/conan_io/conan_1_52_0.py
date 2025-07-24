@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.9-slim"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -71,7 +70,7 @@ echo 'pytest -m "not slow and not tool_svn"' > /home/conan/test_commands.sh
 ###ACTION_DELIMITER###
 bash /home/conan/test_commands.sh
 ###ACTION_DELIMITER###
-echo 'pytest --no-header -rA --tb=no -p no:cacheprovider' > /home/conan/test_commands.sh"""
+echo 'pytest --no-header -rA --tb=no -p no:cacheprovider' > /home/conan/test_commands.sh""",
             ),
             File(
                 ".",
@@ -80,9 +79,7 @@ echo 'pytest --no-header -rA --tb=no -p no:cacheprovider' > /home/conan/test_com
 cd /home/{pr.repo}
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -95,9 +92,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -110,9 +105,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest --no-header -rA --tb=no -p no:cacheprovider
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -175,7 +168,7 @@ class CONAN_1_52_0(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -189,20 +182,20 @@ class CONAN_1_52_0(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
-        passed_tests = set() # Tests that passed successfully
-        failed_tests = set() # Tests that failed
-        skipped_tests = set() # Tests that were skipped
-        import re
-        import json
+        passed_tests = set()  # Tests that passed successfully
+        failed_tests = set()  # Tests that failed
+        skipped_tests = set()  # Tests that were skipped
         # TODO: Implement the parse_log function
         # Regular expression to capture test status and name
-        test_pattern = re.compile(r"^(conans\/test\/.*?\.py)(::\w+)?(\s+)?(.)?(\s+)?\[.*\]$")
+        test_pattern = re.compile(
+            r"^(conans\/test\/.*?\.py)(::\w+)?(\s+)?(.)?(\s+)?\[.*\]$"
+        )
         summary_pattern = re.compile(r"^(PASSED|FAILED|ERROR|SKIPPED)\s+(.*)$")
-        short_test_summary_pattern = re.compile(r"^(.)(\s+)(conans\/test\/.*?\.py::\w+)")
+        short_test_summary_pattern = re.compile(
+            r"^(.)(\s+)(conans\/test\/.*?\.py::\w+)"
+        )
         failed_test_pattern = re.compile(r"^FAILED\s+(.*)$")
         for line in log.splitlines():
             # Check for summary lines first
@@ -248,11 +241,6 @@ class CONAN_1_52_0(Instance):
                         skipped_tests.add(full_test_name)
                     elif status.lower() in ["f", "e"]:
                         failed_tests.add(full_test_name)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

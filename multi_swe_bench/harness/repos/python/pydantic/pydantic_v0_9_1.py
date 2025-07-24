@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -83,7 +82,7 @@ bash /home/pydantic/test_commands.sh
 ###ACTION_DELIMITER###
 sed -i '/addopts =/s/--isort//' setup.cfg
 ###ACTION_DELIMITER###
-bash /home/pydantic/test_commands.sh"""
+bash /home/pydantic/test_commands.sh""",
             ),
             File(
                 ".",
@@ -94,9 +93,7 @@ pytest --cov=pydantic -rA --tb=no -p no:cacheprovider -p no:pytest_isort
 pip uninstall -y msgpack-python ujson email-validator
 pytest --cov=pydantic -rA --tb=no -p no:cacheprovider -p no:pytest_isort
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -111,9 +108,7 @@ pytest --cov=pydantic -rA --tb=no -p no:cacheprovider -p no:pytest_isort
 pip uninstall -y msgpack-python ujson email-validator
 pytest --cov=pydantic -rA --tb=no -p no:cacheprovider -p no:pytest_isort
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -128,9 +123,7 @@ pytest --cov=pydantic -rA --tb=no -p no:cacheprovider -p no:pytest_isort
 pip uninstall -y msgpack-python ujson email-validator
 pytest --cov=pydantic -rA --tb=no -p no:cacheprovider -p no:pytest_isort
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -193,7 +186,7 @@ class PYDANTIC_V0_9_1(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -207,15 +200,11 @@ class PYDANTIC_V0_9_1(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Parse the log content and extract test execution results.
         passed_tests = set()  # Tests that passed successfully
         failed_tests = set()  # Tests that failed
         skipped_tests = set()  # Tests that were skipped
-        import re
-        import json
         # Extract PASSED and FAILED test names
         passed_pattern = re.compile(r"PASSED ([^\s]+)")
         failed_pattern = re.compile(r"FAILED ([^\s]+)")
@@ -239,7 +228,7 @@ class PYDANTIC_V0_9_1(Instance):
                         lines = f.readlines()
                     # Find the nearest preceding function definition
                     func_name = None
-                    for i in range(line_num-1, -1, -1):
+                    for i in range(line_num - 1, -1, -1):
                         match = re.match(r"\s*def (test_[\w\[\]-]+)", lines[i])
                         if match:
                             func_name = match.group(1)
@@ -249,11 +238,6 @@ class PYDANTIC_V0_9_1(Instance):
                 except Exception:
                     # If file can't be read, skip
                     continue
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
 
         return TestResult(
             passed_count=len(passed_tests),

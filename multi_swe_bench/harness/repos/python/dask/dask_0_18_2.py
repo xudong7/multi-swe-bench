@@ -1,6 +1,5 @@
 import re
-import json
-from typing import Optional, Union
+from typing import Optional
 
 from multi_swe_bench.harness.image import Config, File, Image
 from multi_swe_bench.harness.instance import Instance, TestResult
@@ -22,10 +21,10 @@ class ImageDefault(Image):
 
     def dependency(self) -> str:
         return "python:3.6-buster"
-    
+
     def image_prefix(self) -> str:
         return "envagent"
-       
+
     def image_tag(self) -> str:
         return f"pr-{self.pr.number}"
 
@@ -59,7 +58,7 @@ pip3 install Cython && pip3 install bcolz==1.2.1
 ###ACTION_DELIMITER###
 pip3 install blosc bokeh boto3 h5py scikit-learn cytoolz partd cloudpickle coverage requests sqlalchemy lz4 psutil tables scikit-image pandas_datareader graphviz moto cityhash mmh3 xxhash
 ###ACTION_DELIMITER###
-echo 'pytest dask --runslow -v -n 3' > /home/dask/test_commands.sh && chmod +x /home/dask/test_commands.sh"""
+echo 'pytest dask --runslow -v -n 3' > /home/dask/test_commands.sh && chmod +x /home/dask/test_commands.sh""",
             ),
             File(
                 ".",
@@ -68,9 +67,7 @@ echo 'pytest dask --runslow -v -n 3' > /home/dask/test_commands.sh && chmod +x /
 cd /home/{pr.repo}
 pytest dask --runslow -v -n 3
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -83,9 +80,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn /home/test.patch; then
 fi
 pytest dask --runslow -v -n 3
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
             File(
                 ".",
@@ -98,9 +93,7 @@ if ! git -C /home/{pr.repo} apply --whitespace=nowarn  /home/test.patch /home/fi
 fi
 pytest dask --runslow -v -n 3
 
-""".format(
-                    pr=self.pr
-                ),
+""".format(pr=self.pr),
             ),
         ]
 
@@ -162,7 +155,7 @@ class DASK_0_18_2(Instance):
         if run_cmd:
             return run_cmd
 
-        return 'bash /home/run.sh'
+        return "bash /home/run.sh"
 
     def test_patch_run(self, test_patch_run_cmd: str = "") -> str:
         if test_patch_run_cmd:
@@ -176,16 +169,16 @@ class DASK_0_18_2(Instance):
 
         return "bash /home/fix-run.sh"
 
-
     def parse_log(self, log: str) -> TestResult:
-
         # Improved parser: track the latest status for each test, handle reruns and xfail/xpass.
         from collections import OrderedDict
-        import re
+
         # Regex to match lines like:
         # [gw0] [  0%] PASSED dask/array/tests/test_array_core.py::test_getem
         # Also match XPASS, XFAIL, etc.
-        pattern = re.compile(r"\[gw\d+\] \[ *\d+%\] (PASSED|FAILED|SKIPPED|XPASS|XFAIL|XPASS\(strict\)|XFAIL\(strict\)) ([^\s]+::[^\s]+)")
+        pattern = re.compile(
+            r"\[gw\d+\] \[ *\d+%\] (PASSED|FAILED|SKIPPED|XPASS|XFAIL|XPASS\(strict\)|XFAIL\(strict\)) ([^\s]+::[^\s]+)"
+        )
         test_status = OrderedDict()  # test_name -> status (last one wins)
         for match in pattern.finditer(log):
             status, test_name = match.groups()
@@ -203,14 +196,9 @@ class DASK_0_18_2(Instance):
                 # XFAIL is considered skipped/expected fail
                 skipped_tests.add(test_name)
         # Ensure no test is in more than one set
-        passed_tests -= (failed_tests | skipped_tests)
-        failed_tests -= (passed_tests | skipped_tests)
-        skipped_tests -= (passed_tests | failed_tests)
-        parsed_results = {
-            "passed_tests": passed_tests,
-            "failed_tests": failed_tests,
-            "skipped_tests": skipped_tests
-        }
+        passed_tests -= failed_tests | skipped_tests
+        failed_tests -= passed_tests | skipped_tests
+        skipped_tests -= passed_tests | failed_tests
 
         return TestResult(
             passed_count=len(passed_tests),
