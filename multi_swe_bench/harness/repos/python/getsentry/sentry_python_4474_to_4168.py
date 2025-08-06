@@ -154,7 +154,7 @@ RUN git checkout {pr.base.sha}
         return dockerfile_content.format(pr=self.pr)
 
 
-@Instance.register("getsentry", "sentry-python_4474_to_4168")
+@Instance.register("getsentry", "sentry_python_4474_to_4168")
 class SENTRY_PYTHON_4474_TO_4168(Instance):
     def __init__(self, pr: PullRequest, config: Config, *args, **kwargs):
         super().__init__()

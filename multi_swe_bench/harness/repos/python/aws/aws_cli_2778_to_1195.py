@@ -208,7 +208,7 @@ RUN git checkout {pr.base.sha}
         return dockerfile_content.format(pr=self.pr)
 
 
-@Instance.register("aws", "aws-cli_2778_to_1195")
+@Instance.register("aws", "aws_cli_2778_to_1195")
 class AWS_CLI_2778_TO_1195(Instance):
     def __init__(self, pr: PullRequest, config: Config, *args, **kwargs):
         super().__init__()
