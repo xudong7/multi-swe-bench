@@ -61,10 +61,10 @@ RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.s
 && rm -f /tmp/miniconda.sh
 ENV PATH=${{CONDA_DIR}}/bin:${{PATH}}
 
-# 创建 conda 环境（包含 libboost-python=1.85）
+# 创建 conda 环境（包含 libboost-python=1.82）
 RUN conda config --system --set channel_priority strict \\
 && conda create -y -n rdkit-dev -c conda-forge --override-channels \\
-    python=3.11 cmake eigen boost-cpp=1.85 libboost-python=1.85 \\
+    python=3.11 cmake eigen boost-cpp=1.82 libboost-python=1.82 \\
     cairo pillow numpy pandas freetype pkg-config ninja \\
 && conda clean -afy
 
@@ -91,7 +91,8 @@ RUN echo "source /opt/conda/etc/profile.d/conda.sh" >> /root/.bashrc && \\
         return file_text
 
 
-class RDKitImageDefault(Image):
+
+class RDKitImageDefault_gt_7300(Image):
     def __init__(self, pr: PullRequest, config: Config):
         self._pr = pr
         self._config = config
@@ -114,9 +115,6 @@ class RDKitImageDefault(Image):
         return f"pr-{self.pr.number}"
 
     def files(self) -> list[File]:
-
-        import pdb
-        pdb.set_trace()
 
         return [
             File(
@@ -248,6 +246,164 @@ ctest --output-on-failure
 
 
 
+
+
+
+class RDKitImageDefault(Image):
+    def __init__(self, pr: PullRequest, config: Config):
+        self._pr = pr
+        self._config = config
+
+    @property
+    def pr(self) -> PullRequest:
+        return self._pr
+
+    @property
+    def config(self) -> Config:
+        return self._config
+
+    def dependency(self) -> Image | None:
+        return RDKitImageBase(self.pr, self._config)
+
+    def image_tag(self) -> str:
+        return f"pr-{self.pr.number}"
+
+    def workdir(self) -> str:
+        return f"pr-{self.pr.number}"
+
+    def files(self) -> list[File]:
+
+
+        return [
+            File(
+                ".",
+                "fix.patch",
+                f"{self.pr.fix_patch}",
+            ),
+            File(
+                ".",
+                "test.patch",
+                f"{self.pr.test_patch}",
+            ),
+            File(
+                ".",
+                "check_git_changes.sh",
+                """#!/bin/bash
+set -e
+
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+  echo "check_git_changes: Not inside a git repository"
+  exit 1
+fi
+
+if [[ -n $(git status --porcelain) ]]; then
+  echo "check_git_changes: Uncommitted changes"
+  exit 1
+fi
+
+echo "check_git_changes: No uncommitted changes"
+exit 0
+
+""".format(),
+            ),
+            File(
+                ".",
+                "prepare.sh",
+                """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git reset --hard
+bash /home/check_git_changes.sh
+git checkout {pr.base.sha}
+bash /home/check_git_changes.sh
+
+mkdir build
+
+""".format(pr=self.pr),
+            ),
+            File(
+                ".",
+                "run.sh",
+                """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+
+mkdir -p build
+cd build
+
+conda run -n rdkit-dev cmake .. -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_MOLDRAW2D=OFF -DRDK_INSTALL_COMIC_FONTS=OFF
+conda run -n rdkit-dev cmake --build . --target all -j"$(nproc)"
+
+export RDBASE=/home/rdkit
+ctest --output-on-failure
+
+""".format(pr=self.pr),
+            ),
+            File(
+                ".",
+                "test-run.sh",
+                """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply --whitespace=nowarn /home/test.patch
+cd build
+
+conda run -n rdkit-dev cmake .. -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_MOLDRAW2D=OFF -DRDK_INSTALL_COMIC_FONTS=OFF
+conda run -n rdkit-dev cmake --build . --target all -j"$(nproc)"
+
+export RDBASE=/home/rdkit
+ctest --output-on-failure
+
+""".format(pr=self.pr),
+            ),
+            File(
+                ".",
+                "fix-run.sh",
+                """#!/bin/bash
+set -e
+
+cd /home/{pr.repo}
+git apply --whitespace=nowarn /home/test.patch /home/fix.patch
+cd build
+
+conda run -n rdkit-dev cmake .. -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_MOLDRAW2D=OFF -DRDK_INSTALL_COMIC_FONTS=OFF
+conda run -n rdkit-dev cmake --build . --target all -j"$(nproc)"
+
+export RDBASE=/home/rdkit
+ctest --output-on-failure
+
+""".format(pr=self.pr),
+            ),
+        ]
+
+    def dockerfile(self) -> str:
+        image = self.dependency()
+        name = image.image_name()
+        tag = image.image_tag()
+
+        copy_commands = ""
+        for file in self.files():
+            copy_commands += f"COPY {file.name} /home/\n"
+
+        prepare_commands = "RUN bash /home/prepare.sh"
+
+        return f"""FROM {name}:{tag}
+
+{self.global_env}
+
+{copy_commands}
+
+{prepare_commands}
+
+{self.clear_env}
+
+"""
+
+
+
 @Instance.register("rdkit", "rdkit")
 class RDkit(Instance):
     def __init__(self, pr: PullRequest, config: Config, *args, **kwargs):
@@ -259,7 +415,14 @@ class RDkit(Instance):
     def pr(self) -> PullRequest:
         return self._pr
 
-    def dependency(self) -> Optional[Image]:
+    # def dependency(self) -> Optional[Image]:
+    #     return RDKitImageDefault(self.pr, self._config)
+
+    def dependency(self) -> Image | None:
+        if  7300<= self.pr.number:
+            return RDKitImageDefault_gt_7300(self.pr, self._config)
+        elif self.pr.number < 7300:
+            return RDKitImageDefault(self.pr, self._config)
         return RDKitImageDefault(self.pr, self._config)
 
     def run(self, run_cmd: str = "") -> str:
