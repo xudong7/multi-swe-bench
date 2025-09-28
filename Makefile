@@ -19,7 +19,7 @@ install-dev:
 # Install msb package
 install:
 	@echo "Installing multi-swe-bench..."
-	pip install -e .
+	uv pip install -e .
 
 # Format all Python files
 format:

@@ -1,0 +1,18 @@
+[project]
+name = "multi-swe-bench"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "dataclasses-json>=0.6.7",
+    "docker>=7.1.0",
+    "gitpython>=3.1.45",
+    "huggingface-hub>=0.35.1",
+    "pygithub>=2.8.1",
+    "pyyaml>=6.0.3",
+    "swe-rex>=1.4.0",
+    "toml>=0.10.2",
+    "tqdm>=4.67.1",
+    "unidiff>=0.7.5",
+]
