@@ -49,3 +49,19 @@ clean:
 	find . -type f -name "*.pyo" -delete 2>/dev/null || true
 	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
+
+include .env
+
+tokens := $(ACCESS_TOKEN)
+
+# 使用 tokens 变量
+echo-token:
+	echo $(tokens)
+
+collect:
+	@uv run python ./multi_swe_bench/collect/get_pipeline.py \
+	--out_dir /home/dunjia/workspace/multi-swe-bench/output \
+	--tokens $(tokens) \
+	--org openharmony \
+	--repo arkui_ace_engine \
+	--platform gitee

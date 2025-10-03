@@ -31,6 +31,13 @@ def get_parser() -> argparse.ArgumentParser:
         "--out_dir", type=Path, required=True, help="Output directory path."
     )
     parser.add_argument(
+        "--platform",
+        type=str,
+        choices=["github", "gitee"],
+        default="github",
+        help="Platform: github or gitee. Default is github.",
+    )
+    parser.add_argument(
         "--tokens",
         type=str,
         nargs="*",
@@ -66,12 +73,13 @@ def run_pipeline(
     tokens: list[str],
     org: str,
     repo: str,
+    platform: str = "github",
     delay_on_error: int = 300,
     retry_attempts: int = 3,
     skip_commit_message: bool = False,
 ) -> None:
     # step 1: get all pull requests
-    get_all_prs(tokens, out_dir, org, repo)
+    get_all_prs(tokens, out_dir, org, repo, platform)
 
     # step 2: filter to obtain reqired pull requests
     # - closed
@@ -103,6 +111,7 @@ if __name__ == "__main__":
         tokens=tokens,
         org=args.org,
         repo=args.repo,
+        platform=args.platform,
         delay_on_error=args.delay_on_error,
         retry_attempts=args.retry_attempts,
         skip_commit_message=args.skip_commit_message,
